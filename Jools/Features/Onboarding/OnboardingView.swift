@@ -70,6 +70,12 @@ struct OnboardingView: View {
                 .padding(.horizontal, JoolsSpacing.lg)
 
                 Spacer()
+
+                // Build info footer
+                Text(BuildInfo.debugDescription)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.4))
+                    .padding(.bottom, JoolsSpacing.sm)
             }
         }
         .fullScreenCover(isPresented: $showingSafari) {

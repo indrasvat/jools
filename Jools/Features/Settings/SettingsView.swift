@@ -56,12 +56,40 @@ struct SettingsView: View {
                     Link(destination: URL(string: "https://jules.google.com/privacy")!) {
                         Label("Privacy Policy", systemImage: "hand.raised")
                     }
+                }
 
+                // Build Info Section
+                Section("Build Info") {
                     HStack {
                         Label("Version", systemImage: "info.circle")
                         Spacer()
-                        Text("1.0.0")
+                        Text(BuildInfo.fullVersion)
                             .foregroundStyle(.secondary)
+                            .font(.joolsCaption)
+                    }
+
+                    HStack {
+                        Label("Git SHA", systemImage: "number")
+                        Spacer()
+                        Text(BuildInfo.gitSHA)
+                            .foregroundStyle(.secondary)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+
+                    HStack {
+                        Label("Branch", systemImage: "arrow.triangle.branch")
+                        Spacer()
+                        Text(BuildInfo.gitBranch)
+                            .foregroundStyle(.secondary)
+                            .font(.joolsCaption)
+                    }
+
+                    HStack {
+                        Label("Built", systemImage: "clock")
+                        Spacer()
+                        Text(BuildInfo.buildDate)
+                            .foregroundStyle(.secondary)
+                            .font(.joolsCaption)
                     }
                 }
 

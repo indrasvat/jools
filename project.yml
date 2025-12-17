@@ -27,6 +27,36 @@ targets:
           - "**/.DS_Store"
     dependencies:
       - package: JoolsKit
+    preBuildScripts:
+      - name: Generate Build Info
+        script: |
+          # Generate BuildInfo.swift with git SHA and build date
+          OUTPUT_FILE="${SRCROOT}/Jools/Core/BuildInfo.swift"
+          GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+          BUILD_DATE=$(date -u +"%Y-%m-%d %H:%M UTC")
+
+          cat > "$OUTPUT_FILE" << EOF
+          // Auto-generated file - do not edit
+          import Foundation
+
+          enum BuildInfo {
+              static let gitSHA = "$GIT_SHA"
+              static let gitBranch = "$GIT_BRANCH"
+              static let buildDate = "$BUILD_DATE"
+              static let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+              static let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+
+              static var fullVersion: String {
+                  "\(version) (\(build))"
+              }
+
+              static var debugDescription: String {
+                  "\(fullVersion) • \(gitSHA) • \(gitBranch)"
+              }
+          }
+          EOF
+        basedOnDependencyAnalysis: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.indrasvat.jools
