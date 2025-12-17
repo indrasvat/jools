@@ -87,7 +87,7 @@ struct UsageStatsCard: View {
             if isNearLimit {
                 Text("You're approaching your daily limit")
                     .font(.joolsCaption)
-                    .foregroundStyle(.joolsWarning)
+                    .foregroundStyle(Color.joolsWarning)
             }
         }
         .padding()
@@ -122,7 +122,7 @@ struct SourceCard: View {
         VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
             Image(systemName: "folder.fill")
                 .font(.title2)
-                .foregroundStyle(.joolsAccent)
+                .foregroundStyle(Color.joolsAccent)
 
             Text(source.repo)
                 .font(.joolsHeadline)

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import JoolsKit
 
 /// Chat view for interacting with a Jules session
 struct ChatView: View {
@@ -167,7 +168,7 @@ struct SendStatusIcon: View {
         case .failed:
             Image(systemName: "exclamationmark.circle")
                 .font(.caption2)
-                .foregroundStyle(.joolsError)
+                .foregroundStyle(Color.joolsError)
         }
     }
 }
@@ -193,7 +194,7 @@ struct ChatInputBar: View {
             Button(action: { viewModel.sendMessage(sessionId: sessionId) }) {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.title)
-                    .foregroundStyle(viewModel.canSend ? .joolsAccent : .secondary)
+                    .foregroundStyle(viewModel.canSend ? Color.joolsAccent : Color.secondary)
             }
             .disabled(!viewModel.canSend)
         }
@@ -214,7 +215,7 @@ struct PlanCard: View {
         VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
             HStack {
                 Image(systemName: "doc.text")
-                    .foregroundStyle(.joolsPlanBorder)
+                    .foregroundStyle(Color.joolsPlanBorder)
                 Text("Proposed Plan")
                     .font(.joolsHeadline)
                 Spacer()
@@ -259,7 +260,7 @@ struct ProgressUpdateView: View {
     var body: some View {
         HStack {
             Image(systemName: "gearshape.2")
-                .foregroundStyle(.joolsAccent)
+                .foregroundStyle(Color.joolsAccent)
             Text(activity.messageContent ?? "Working...")
                 .font(.joolsCaption)
                 .foregroundStyle(.secondary)
@@ -274,7 +275,7 @@ struct SessionCompletedView: View {
     var body: some View {
         HStack {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.joolsSuccess)
+                .foregroundStyle(Color.joolsSuccess)
             Text("Session completed successfully")
                 .font(.joolsBody)
         }
@@ -292,7 +293,7 @@ struct SessionFailedView: View {
     var body: some View {
         HStack {
             Image(systemName: "xmark.circle.fill")
-                .foregroundStyle(.joolsError)
+                .foregroundStyle(Color.joolsError)
             Text(activity.messageContent ?? "Session failed")
                 .font(.joolsBody)
         }

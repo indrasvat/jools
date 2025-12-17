@@ -157,7 +157,7 @@ struct FeaturePillsView: View {
             ForEach(features, id: \.1) { icon, title in
                 HStack(spacing: JoolsSpacing.xxs) {
                     Image(systemName: icon)
-                        .foregroundStyle(.joolsAccent)
+                        .foregroundStyle(Color.joolsAccent)
                     Text(title)
                 }
                 .font(.joolsCaption)

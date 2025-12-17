@@ -2,6 +2,7 @@ import UIKit
 
 // MARK: - Haptic Manager
 
+@MainActor
 final class HapticManager {
     static let shared = HapticManager()
 
