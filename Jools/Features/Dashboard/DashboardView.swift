@@ -40,17 +40,17 @@ struct DashboardView: View {
             .navigationTitle("Jools")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { viewModel.refresh(using: dependencies) }) {
+                    Button(action: { viewModel.refresh(using: dependencies, modelContext: modelContext) }) {
                         Image(systemName: "arrow.clockwise")
                     }
                 }
             }
             .refreshable {
-                await viewModel.refreshAsync(using: dependencies)
+                await viewModel.refreshAsync(using: dependencies, modelContext: modelContext)
             }
         }
         .task {
-            await viewModel.refreshAsync(using: dependencies)
+            await viewModel.refreshAsync(using: dependencies, modelContext: modelContext)
         }
     }
 }
