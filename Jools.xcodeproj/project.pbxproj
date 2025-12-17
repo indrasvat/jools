@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0CA7E6DE0147F5D21EB9137F /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7425FDADBB351D82E44BDA8 /* AppCoordinator.swift */; };
 		1003079A28DB81B732A25C31 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05CC0D643717615BFD25DF44 /* RootView.swift */; };
+		26233A483DE4A601894F389B /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252B8CDB945E2A635CC39074 /* BuildInfo.swift */; };
 		2B7042B5F7BEB6633A3B23D8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCC578EDB6204DF44EF61C29 /* SettingsView.swift */; };
 		2DB352505475C540E2B938EA /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3C647DA5067D0300D2F4A7 /* ChatView.swift */; };
 		31A3B26995C0A1A927AB1EE3 /* JoolsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A89CE8F6A2B11FF71A6CACD /* JoolsApp.swift */; };
@@ -44,6 +45,7 @@
 		05CC0D643717615BFD25DF44 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		16EE3148567DD030F1F8D620 /* JoolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoolsTests.swift; sourceTree = "<group>"; };
 		24D50484109E67C6A0DB04B9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		252B8CDB945E2A635CC39074 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
 		288FD2F8B8CECF645C9290DF /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		2A89CE8F6A2B11FF71A6CACD /* JoolsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoolsApp.swift; sourceTree = "<group>"; };
 		2C3C647DA5067D0300D2F4A7 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 		8E4A2B0F831E7978FE20CEDD /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				252B8CDB945E2A635CC39074 /* BuildInfo.swift */,
 				C2E897CE94D4F0E08C63906E /* DesignSystem */,
 				F24448F1C49E7CD537FC762E /* Navigation */,
 				7F218BCC65662E942A4073B7 /* Persistence */,
@@ -257,6 +260,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 75305221DFBE2502A42B733F /* Build configuration list for PBXNativeTarget "Jools" */;
 			buildPhases = (
+				70BB4C974BC667DEB11EA1D7 /* Generate Build Info */,
 				739605B3C62EE21980BC19C3 /* Sources */,
 				3C8C16178897834DA30E5A34 /* Resources */,
 				73404605F1B761347FB4A2E5 /* Frameworks */,
@@ -322,6 +326,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		70BB4C974BC667DEB11EA1D7 /* Generate Build Info */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Build Info";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Generate BuildInfo.swift with git SHA and build date\nOUTPUT_FILE=\"${SRCROOT}/Jools/Core/BuildInfo.swift\"\nGIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo \"unknown\")\nGIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo \"unknown\")\nBUILD_DATE=$(date -u +\"%Y-%m-%d %H:%M UTC\")\n\ncat > \"$OUTPUT_FILE\" << EOF\n// Auto-generated file - do not edit\nimport Foundation\n\nenum BuildInfo {\n    static let gitSHA = \"$GIT_SHA\"\n    static let gitBranch = \"$GIT_BRANCH\"\n    static let buildDate = \"$BUILD_DATE\"\n    static let version = Bundle.main.infoDictionary?[\"CFBundleShortVersionString\"] as? String ?? \"1.0.0\"\n    static let build = Bundle.main.infoDictionary?[\"CFBundleVersion\"] as? String ?? \"1\"\n\n    static var fullVersion: String {\n        \"\\(version) (\\(build))\"\n    }\n\n    static var debugDescription: String {\n        \"\\(fullVersion) • \\(gitSHA) • \\(gitBranch)\"\n    }\n}\nEOF\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		739605B3C62EE21980BC19C3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -329,6 +355,7 @@
 			files = (
 				0CA7E6DE0147F5D21EB9137F /* AppCoordinator.swift in Sources */,
 				549EFAFF1C10E40C5BE8B1F9 /* AppDependency.swift in Sources */,
+				26233A483DE4A601894F389B /* BuildInfo.swift in Sources */,
 				2DB352505475C540E2B938EA /* ChatView.swift in Sources */,
 				5198CCAEDBF5F086B1B9FE35 /* ChatViewModel.swift in Sources */,
 				720B07E20C9153A13E5E77F0 /* Colors.swift in Sources */,
