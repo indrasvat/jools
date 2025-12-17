@@ -1,0 +1,164 @@
+# SwiftLint configuration for Jools
+
+# Paths to include
+included:
+  - Jools
+  - JoolsKit/Sources
+  - JoolsKit/Tests
+  - JoolsTests
+
+# Paths to exclude
+excluded:
+  - .build
+  - DerivedData
+  - .local
+  - Pods
+  - Carthage
+
+# Enabled rules
+opt_in_rules:
+  - array_init
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - discouraged_object_literal
+  - empty_collection_literal
+  - empty_count
+  - empty_string
+  - enum_case_associated_values_count
+  - explicit_init
+  - extension_access_modifier
+  - fallthrough
+  - fatal_error_message
+  - file_name
+  - first_where
+  - flatmap_over_map_reduce
+  - identical_operands
+  - joined_default_parameter
+  - last_where
+  - legacy_multiple
+  - literal_expression_end_indentation
+  - lower_acl_than_parent
+  - modifier_order
+  - nimble_operator
+  - nslocalizedstring_key
+  - number_separator
+  - object_literal
+  - operator_usage_whitespace
+  - overridden_super_call
+  - override_in_extension
+  - pattern_matching_keywords
+  - prefer_self_type_over_type_of_self
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - quick_discouraged_call
+  - quick_discouraged_focused_test
+  - quick_discouraged_pending_test
+  - reduce_into
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - single_test_class
+  - sorted_first_last
+  - static_operator
+  - strong_iboutlet
+  - toggle_bool
+  - unavailable_function
+  - unneeded_parentheses_in_closure_argument
+  - unowned_variable_capture
+  - untyped_error_in_catch
+  - vertical_parameter_alignment_on_call
+  - vertical_whitespace_closing_braces
+  - yoda_condition
+
+# Disabled rules
+disabled_rules:
+  - trailing_whitespace
+  - line_length  # We'll use a custom configuration instead
+  - type_body_length
+  - file_length
+
+# Rule configurations
+line_length:
+  warning: 120
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+  ignores_function_declarations: true
+
+type_name:
+  min_length: 2
+  max_length:
+    warning: 50
+    error: 60
+
+identifier_name:
+  min_length:
+    warning: 1
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - x
+    - y
+    - z
+    - i
+    - j
+    - k
+
+function_body_length:
+  warning: 60
+  error: 100
+
+function_parameter_count:
+  warning: 6
+  error: 8
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+nesting:
+  type_level:
+    warning: 3
+  function_level:
+    warning: 5
+
+vertical_whitespace:
+  max_empty_lines: 2
+
+trailing_comma:
+  mandatory_comma: true
+
+force_cast:
+  severity: warning
+
+force_try:
+  severity: warning
+
+force_unwrapping:
+  severity: warning
+
+implicitly_unwrapped_optional:
+  severity: warning
+
+# Custom rules
+custom_rules:
+  no_print_in_release:
+    included: ".*\\.swift"
+    excluded: ".*Tests\\.swift"
+    name: "No print statements"
+    regex: "\\bprint\\s*\\("
+    message: "Use os.log or Logger instead of print statements"
+    severity: warning
+
+  mark_comment_spacing:
+    included: ".*\\.swift"
+    name: "MARK comment spacing"
+    regex: "// MARK:[^ ]"
+    message: "MARK comments should have a space after the colon"
+    severity: warning

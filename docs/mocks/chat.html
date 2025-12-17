@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Chat</title>
+    <style>
+        :root {
+            /* Purple-inspired Jools palette */
+            --accent: #8B5CF6;
+            --accent-secondary: #A855F7;
+            --accent-dark: #7C3AED;
+            --accent-gradient: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #C084FC 100%);
+            --accent-glow: rgba(139, 92, 246, 0.5);
+            --green: #34C759;
+            --orange: #F59E0B;
+            --red: #EF4444;
+            --background: #0A0A0F;
+            --surface: rgba(139, 92, 246, 0.08);
+            --surface-elevated: #1A1A24;
+            --bubble-user: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+            --bubble-agent: #1A1A24;
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+            --border: rgba(139, 92, 246, 0.15);
+            --separator: rgba(139, 92, 246, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+            background: #08080C;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(139, 92, 246, 0.25);
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 47px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 28px 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Navigation Header */
+        .nav-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px 12px;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--accent);
+            font-size: 17px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .nav-back:hover {
+            color: var(--accent-secondary);
+        }
+
+        .nav-back svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--accent);
+        }
+
+        .nav-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .nav-subtitle {
+            font-size: 12px;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .nav-subtitle-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.9); }
+        }
+
+        .nav-action {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-action svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--accent);
+        }
+
+        /* Chat Area */
+        .chat-area {
+            height: calc(100% - 47px - 56px - 80px);
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-area::-webkit-scrollbar { display: none; }
+
+        /* Messages */
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message.agent {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: var(--radius-xl);
+            font-size: 16px;
+            line-height: 1.45;
+        }
+
+        .message.user .message-bubble {
+            background: var(--bubble-user);
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 16px -4px var(--accent-glow);
+        }
+
+        .message.agent .message-bubble {
+            background: var(--bubble-agent);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .message-status svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-tertiary);
+        }
+
+        /* Plan Card */
+        .plan-card {
+            background: var(--surface-elevated);
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--orange);
+            overflow: hidden;
+            max-width: 90%;
+        }
+
+        .plan-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(245, 158, 11, 0.1);
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .plan-header svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--orange);
+        }
+
+        .plan-header span {
+            font-weight: 600;
+            color: var(--orange);
+        }
+
+        .plan-steps {
+            padding: 12px 16px;
+        }
+
+        .plan-step {
+            display: flex;
+            gap: 10px;
+            padding: 8px 0;
+        }
+
+        .plan-step:not(:last-child) {
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .plan-step-number {
+            width: 24px;
+            height: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .plan-step-text {
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--separator);
+        }
+
+        .plan-action {
+            flex: 1;
+            height: 44px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .plan-action svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .plan-action.reject {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .plan-action.reject:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--red);
+        }
+
+        .plan-action.reject svg { fill: var(--text-primary); }
+
+        .plan-action.approve {
+            background: var(--green);
+            color: white;
+        }
+
+        .plan-action.approve:hover {
+            background: #2DB64B;
+            box-shadow: 0 4px 16px -4px rgba(52, 199, 89, 0.5);
+        }
+
+        .plan-action.approve svg { fill: white; }
+
+        /* Progress Update */
+        .progress-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            max-width: 90%;
+        }
+
+        .progress-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--surface);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Input Bar */
+        .input-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 16px 34px;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--separator);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .input-attach {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .input-attach:hover {
+            transform: scale(1.1);
+        }
+
+        .input-attach svg {
+            width: 26px;
+            height: 26px;
+            fill: var(--accent);
+        }
+
+        .input-field {
+            flex: 1;
+            min-height: 36px;
+            max-height: 100px;
+            padding: 8px 14px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 16px;
+            color: var(--text-primary);
+            resize: none;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-send {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px -2px var(--accent-glow);
+        }
+
+        .input-send:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px -2px var(--accent-glow);
+        }
+
+        .input-send svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+            transform: rotate(-45deg);
+        }
+
+        .input-send.disabled {
+            background: var(--surface);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .input-send.disabled svg {
+            fill: var(--text-tertiary);
+        }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: white;
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.6;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: var(--bubble-agent);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            border-bottom-left-radius: 4px;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0D0D12;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 13px;
+            color: #e5e5e5;
+            white-space: pre;
+        }
+
+        .code-lang {
+            font-size: 11px;
+            color: var(--accent);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+            <span>9:41</span>
+            <span style="display: flex; gap: 4px; align-items: center;">
+                <svg width="18" height="12" viewBox="0 0 18 12" fill="white"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h2C5.33 3 6 3.67 6 4.5v5c0 .83-.67 1.5-1.5 1.5h-2C1.67 11 1 10.33 1 9.5v-5zM7 3.5C7 2.67 7.67 2 8.5 2h2c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-2C7.67 11 7 10.33 7 9.5v-6zM13 2.5c0-.83.67-1.5 1.5-1.5h2c.83 0 1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5h-2c-.83 0-1.5-.67-1.5-1.5v-7z"/></svg>
+                <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><path d="M8.5 2.5a7.5 7.5 0 0 1 7.12 5.15.75.75 0 0 0 1.42-.47A9 9 0 0 0 8.5 1a9 9 0 0 0-8.54 6.18.75.75 0 1 0 1.42.47A7.5 7.5 0 0 1 8.5 2.5z"/><path d="M8.5 5.5a4.5 4.5 0 0 1 4.24 3 .75.75 0 1 0 1.41-.5A6 6 0 0 0 8.5 4a6 6 0 0 0-5.65 4 .75.75 0 1 0 1.41.5 4.5 4.5 0 0 1 4.24-3z"/><circle cx="8.5" cy="10" r="2"/></svg>
+                <svg width="25" height="12" viewBox="0 0 25 12" fill="white"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="white" fill="none"/><rect x="22.5" y="3.5" width="2" height="5" rx="1"/><rect x="2" y="2" width="17" height="8" rx="1" fill="white"/></svg>
+            </span>
+        </div>
+
+        <!-- Navigation Header -->
+        <div class="nav-header">
+            <div class="nav-back">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                <span>Back</span>
+            </div>
+            <div class="nav-center">
+                <div class="nav-title">Add dark mode toggle</div>
+                <div class="nav-subtitle">
+                    <span class="nav-subtitle-dot"></span>
+                    Running
+                </div>
+            </div>
+            <div class="nav-action">
+                <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <!-- User Message -->
+            <div class="message user">
+                <div class="message-bubble">
+                    Add a dark mode toggle to the settings screen with system preference detection and persistent storage
+                </div>
+                <div class="message-meta">
+                    <span>9:30 AM</span>
+                    <span class="message-status">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Agent Message -->
+            <div class="message agent">
+                <div class="message-bubble">
+                    I'll help you add a dark mode toggle. Let me analyze your codebase first to understand the current structure.
+                </div>
+                <div class="message-meta">
+                    <span>9:30 AM</span>
+                </div>
+            </div>
+
+            <!-- Progress Update -->
+            <div class="progress-card">
+                <div class="progress-spinner"></div>
+                <span class="progress-text">Analyzing project structure...</span>
+            </div>
+
+            <!-- Plan Card -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    <span>Proposed Plan</span>
+                </div>
+                <div class="plan-steps">
+                    <div class="plan-step">
+                        <span class="plan-step-number">1</span>
+                        <span class="plan-step-text">Create ThemeManager class to handle theme state and persistence using UserDefaults</span>
+                    </div>
+                    <div class="plan-step">
+                        <span class="plan-step-number">2</span>
+                        <span class="plan-step-text">Add colorScheme environment detection for system preference</span>
+                    </div>
+                    <div class="plan-step">
+                        <span class="plan-step-number">3</span>
+                        <span class="plan-step-text">Create DarkModeToggle component with three options: Light, Dark, System</span>
+                    </div>
+                    <div class="plan-step">
+                        <span class="plan-step-number">4</span>
+                        <span class="plan-step-text">Add toggle to SettingsView under Appearance section</span>
+                    </div>
+                    <div class="plan-step">
+                        <span class="plan-step-number">5</span>
+                        <span class="plan-step-text">Apply preferredColorScheme modifier to root view</span>
+                    </div>
+                </div>
+                <div class="plan-actions">
+                    <button class="plan-action reject">
+                        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                        Reject
+                    </button>
+                    <button class="plan-action approve">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Approve
+                    </button>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="message agent">
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="input-bar">
+            <div class="input-container">
+                <div class="input-attach">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                </div>
+                <input type="text" class="input-field" placeholder="Message...">
+                <div class="input-send disabled">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </div>
+            </div>
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+</body>
+</html>

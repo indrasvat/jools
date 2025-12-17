@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Onboarding</title>
+    <style>
+        :root {
+            /* Purple-inspired Jools palette */
+            --accent: #8B5CF6;
+            --accent-secondary: #A855F7;
+            --accent-dark: #7C3AED;
+            --accent-gradient: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #C084FC 100%);
+            --accent-glow: rgba(139, 92, 246, 0.5);
+            --background: #0A0A0F;
+            --surface: rgba(139, 92, 246, 0.08);
+            --surface-elevated: rgba(139, 92, 246, 0.12);
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+            --border: rgba(139, 92, 246, 0.2);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(139, 92, 246, 0.3);
+        }
+
+        .status-bar {
+            height: 47px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 28px 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .screen-content {
+            height: calc(100% - 47px);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated Gradient Background - Purple theme */
+        .gradient-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 15%, rgba(139, 92, 246, 0.4) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 85%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 40%, rgba(192, 132, 252, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 30% 70%, rgba(124, 58, 237, 0.25) 0%, transparent 45%);
+            animation: gradientShift 10s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+            50% { opacity: 0.85; transform: scale(1.05) rotate(1deg); }
+        }
+
+        /* Floating orbs effect */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 200px;
+            height: 200px;
+            background: rgba(139, 92, 246, 0.3);
+            top: 10%;
+            left: -30%;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 150px;
+            height: 150px;
+            background: rgba(168, 85, 247, 0.25);
+            bottom: 20%;
+            right: -20%;
+            animation-delay: -3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-30px) translateX(20px); }
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 0 24px;
+        }
+
+        .logo-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .app-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--accent-gradient);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            box-shadow:
+                0 20px 60px -10px var(--accent-glow),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            animation: iconPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { box-shadow: 0 20px 60px -10px var(--accent-glow), 0 0 0 1px rgba(255, 255, 255, 0.1) inset; }
+            50% { box-shadow: 0 25px 80px -10px var(--accent-glow), 0 0 0 1px rgba(255, 255, 255, 0.15) inset; }
+        }
+
+        .app-icon svg {
+            width: 56px;
+            height: 56px;
+            fill: none;
+            stroke: white;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .app-title {
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: -1.5px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #FFFFFF 0%, rgba(255,255,255,0.85) 50%, #C084FC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .app-subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-section {
+            padding-bottom: 48px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .text-input {
+            width: 100%;
+            height: 52px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0 16px;
+            font-size: 17px;
+            color: var(--text-primary);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25), 0 0 20px rgba(139, 92, 246, 0.15);
+            background: var(--surface-elevated);
+        }
+
+        .text-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .primary-button {
+            width: 100%;
+            height: 52px;
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .primary-button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px -5px var(--accent-glow);
+        }
+
+        .primary-button:hover::before {
+            opacity: 1;
+        }
+
+        .primary-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .primary-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .help-link {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            color: var(--accent);
+            font-size: 15px;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .help-link:hover {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+        }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: white;
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.6;
+        }
+
+        /* Feature Pills */
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        .feature-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+
+        .feature-pill:hover {
+            background: var(--surface-elevated);
+            border-color: var(--accent);
+        }
+
+        .feature-pill svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+            <span>9:41</span>
+            <span style="display: flex; gap: 4px; align-items: center;">
+                <svg width="18" height="12" viewBox="0 0 18 12" fill="white"><path d="M1 4.5C1 3.67 1.67 3 2.5 3h2C5.33 3 6 3.67 6 4.5v5c0 .83-.67 1.5-1.5 1.5h-2C1.67 11 1 10.33 1 9.5v-5zM7 3.5C7 2.67 7.67 2 8.5 2h2c.83 0 1.5.67 1.5 1.5v6c0 .83-.67 1.5-1.5 1.5h-2C7.67 11 7 10.33 7 9.5v-6zM13 2.5c0-.83.67-1.5 1.5-1.5h2c.83 0 1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5h-2c-.83 0-1.5-.67-1.5-1.5v-7z"/></svg>
+                <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><path d="M8.5 2.5a7.5 7.5 0 0 1 7.12 5.15.75.75 0 0 0 1.42-.47A9 9 0 0 0 8.5 1a9 9 0 0 0-8.54 6.18.75.75 0 1 0 1.42.47A7.5 7.5 0 0 1 8.5 2.5z"/><path d="M8.5 5.5a4.5 4.5 0 0 1 4.24 3 .75.75 0 1 0 1.41-.5A6 6 0 0 0 8.5 4a6 6 0 0 0-5.65 4 .75.75 0 1 0 1.41.5 4.5 4.5 0 0 1 4.24-3z"/><circle cx="8.5" cy="10" r="2"/></svg>
+                <svg width="25" height="12" viewBox="0 0 25 12" fill="white"><rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="white" fill="none"/><rect x="22.5" y="3.5" width="2" height="5" rx="1"/><rect x="2" y="2" width="17" height="8" rx="1" fill="white"/></svg>
+            </span>
+        </div>
+
+        <div class="screen-content">
+            <div class="gradient-bg"></div>
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+
+            <div class="content-wrapper">
+                <div class="logo-section">
+                    <div class="app-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <h1 class="app-title">Jools</h1>
+                    <p class="app-subtitle">Your Pocket CTO</p>
+
+                    <div class="features">
+                        <div class="feature-pill">
+                            <svg viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" fill="none"/></svg>
+                            Plan Review
+                        </div>
+                        <div class="feature-pill">
+                            <svg viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2" stroke="white" stroke-width="2" fill="none"/></svg>
+                            Real-time Updates
+                        </div>
+                        <div class="feature-pill">
+                            <svg viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="2" fill="none"/></svg>
+                            Offline Ready
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="input-group">
+                        <label class="input-label">API Key</label>
+                        <input type="password" class="text-input" placeholder="Enter your Jules API key" value="">
+                    </div>
+
+                    <button class="primary-button">Connect</button>
+
+                    <a href="#" class="help-link">Get your API key from jules.google.com</a>
+                </div>
+            </div>
+
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+</body>
+</html>
