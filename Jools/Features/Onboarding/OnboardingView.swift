@@ -1,9 +1,12 @@
+import SafariServices
 import SwiftUI
 
-/// Onboarding view for API key entry
+/// Onboarding view for API key entry with Safari-based flow
 struct OnboardingView: View {
     @EnvironmentObject private var dependencies: AppDependency
     @StateObject private var viewModel = OnboardingViewModel()
+    @State private var showingSafari = false
+    @State private var showingManualEntry = false
 
     var body: some View {
         ZStack {
@@ -40,63 +43,169 @@ struct OnboardingView: View {
 
                 Spacer()
 
-                // API Key input section
+                // Action buttons
                 VStack(spacing: JoolsSpacing.md) {
-                    VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
-                        Text("API KEY")
-                            .font(.joolsCaption)
-                            .foregroundStyle(.white.opacity(0.7))
-                            .textCase(.uppercase)
-
-                        SecureField("Enter your Jules API key", text: $viewModel.apiKey)
-                            .textFieldStyle(.plain)
-                            .padding()
-                            .background(Color.joolsAccent.opacity(0.12))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: JoolsRadius.md)
-                                    .stroke(Color.joolsAccent.opacity(0.4), lineWidth: 1)
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
-                    }
-
-                    Button(action: {
-                        Task {
-                            await viewModel.connect(using: dependencies)
+                    // Primary: Open Safari to get API key
+                    Button(action: { showingSafari = true }) {
+                        HStack(spacing: JoolsSpacing.xs) {
+                            Image(systemName: "safari")
+                            Text("Connect to Jules")
                         }
-                    }) {
-                        Group {
-                            if viewModel.isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Connect")
-                                    .font(.joolsBody)
-                                    .fontWeight(.semibold)
-                            }
-                        }
+                        .font(.joolsBody)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(LinearGradient.joolsAccentGradient)
                         .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
                     }
-                    .opacity(viewModel.apiKey.isEmpty || viewModel.isLoading ? 0.5 : 1.0)
-                    .disabled(viewModel.apiKey.isEmpty || viewModel.isLoading)
 
-                    Link("Get your API key from jules.google.com",
-                         destination: URL(string: "https://jules.google.com/settings")!)
-                        .font(.joolsCaption)
-                        .foregroundStyle(.white.opacity(0.7))
+                    // Secondary: Manual entry
+                    Button(action: { showingManualEntry = true }) {
+                        Text("I already have a key")
+                            .font(.joolsCaption)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
                 }
                 .padding(.horizontal, JoolsSpacing.lg)
 
                 Spacer()
             }
         }
+        .fullScreenCover(isPresented: $showingSafari) {
+            SafariView(url: URL(string: "https://jules.google.com/settings/api")!)
+                .onDisappear {
+                    viewModel.checkClipboardForAPIKey()
+                }
+                .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showingManualEntry) {
+            ManualKeyEntrySheet(viewModel: viewModel)
+        }
+        .alert("Use this API key?", isPresented: $viewModel.showKeyConfirmation) {
+            Button("Use Key") {
+                viewModel.confirmDetectedKey()
+                Task {
+                    await viewModel.validateAndSaveKey(using: dependencies)
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel.clearDetectedKey()
+            }
+        } message: {
+            Text("Found key ending in ...\(viewModel.detectedKeySuffix)")
+        }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK") {}
+            if viewModel.canRetry {
+                Button("Retry") {
+                    Task {
+                        await viewModel.validateAndSaveKey(using: dependencies)
+                    }
+                }
+            }
         } message: {
             Text(viewModel.errorMessage)
+        }
+        .overlay {
+            // Loading overlay
+            if viewModel.isValidating {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .overlay {
+                        VStack(spacing: JoolsSpacing.md) {
+                            ProgressView()
+                                .tint(.white)
+                                .scaleEffect(1.5)
+                            Text("Validating...")
+                                .font(.joolsBody)
+                                .foregroundStyle(.white)
+                        }
+                        .padding(JoolsSpacing.xl)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.lg))
+                    }
+            }
+        }
+    }
+}
+
+// MARK: - Safari Wrapper
+
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let config = SFSafariViewController.Configuration()
+        config.entersReaderIfAvailable = false
+        let safari = SFSafariViewController(url: url, configuration: config)
+        return safari
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+
+// MARK: - Manual Entry Sheet
+
+struct ManualKeyEntrySheet: View {
+    @ObservedObject var viewModel: OnboardingViewModel
+    @EnvironmentObject private var dependencies: AppDependency
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: JoolsSpacing.lg) {
+                Text("Paste your Jules API key below")
+                    .font(.joolsBody)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, JoolsSpacing.lg)
+
+                SecureField("API Key", text: $viewModel.manualKey)
+                    .textFieldStyle(.plain)
+                    .padding()
+                    .background(Color.joolsSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: JoolsRadius.md)
+                            .stroke(Color.joolsAccent.opacity(0.3), lineWidth: 1)
+                    )
+                    .focused($isFocused)
+
+                Button(action: {
+                    viewModel.useManualKey()
+                    dismiss()
+                    Task {
+                        await viewModel.validateAndSaveKey(using: dependencies)
+                    }
+                }) {
+                    Text("Connect")
+                        .font(.joolsBody)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            viewModel.manualKey.isEmpty
+                                ? Color.gray
+                                : Color.joolsAccent
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+                }
+                .disabled(viewModel.manualKey.isEmpty)
+
+                Spacer()
+            }
+            .padding(.horizontal, JoolsSpacing.lg)
+            .navigationTitle("Enter API Key")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .onAppear { isFocused = true }
         }
     }
 }
@@ -225,7 +334,9 @@ struct FlowLayout: Layout {
         return result.size
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(
+        in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()
+    ) {
         let result = arrange(maxWidth: bounds.width, subviews: subviews)
 
         // Center each row
@@ -239,7 +350,9 @@ struct FlowLayout: Layout {
         }
     }
 
-    private func arrange(maxWidth: CGFloat, subviews: Subviews) -> (size: CGSize, positions: [CGPoint], rowWidths: [CGFloat], rowIndices: [Int]) {
+    private func arrange(maxWidth: CGFloat, subviews: Subviews) -> (
+        size: CGSize, positions: [CGPoint], rowWidths: [CGFloat], rowIndices: [Int]
+    ) {
         var positions: [CGPoint] = []
         var rowWidths: [CGFloat] = []
         var rowIndices: [Int] = []

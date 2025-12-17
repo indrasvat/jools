@@ -1371,72 +1371,343 @@ extension View {
 
 ## 8. Feature Specifications
 
-### 8.1 Onboarding Flow
+### 8.1 Onboarding & Authentication Flow
+
+#### 8.1.1 Flow Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      AUTHENTICATION FLOW                                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐                                                       │
+│  │  Onboarding  │                                                       │
+│  │    Screen    │                                                       │
+│  └──────┬───────┘                                                       │
+│         │                                                               │
+│         ├─────────────────────┬─────────────────────┐                   │
+│         ▼                     ▼                     ▼                   │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐            │
+│  │ "Connect to  │     │ "I have a    │     │  Clipboard   │            │
+│  │   Jules"     │     │    key"      │     │  detected    │            │
+│  └──────┬───────┘     └──────┬───────┘     └──────┬───────┘            │
+│         │                    │                    │                     │
+│         ▼                    ▼                    ▼                     │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐            │
+│  │ Safari opens │     │ Manual entry │     │ Confirmation │            │
+│  │ jules.google │     │    field     │     │   dialog     │            │
+│  │ .com/settings│     └──────┬───────┘     └──────┬───────┘            │
+│  └──────┬───────┘            │                    │                     │
+│         │                    │                    │                     │
+│         ▼                    └────────────────────┤                     │
+│  ┌──────────────┐                                 │                     │
+│  │ User copies  │                                 │                     │
+│  │  API key     │                                 │                     │
+│  └──────┬───────┘                                 │                     │
+│         │                                         │                     │
+│         ▼                                         ▼                     │
+│  ┌──────────────┐                         ┌──────────────┐             │
+│  │ Safari Done  │                         │  Validate    │             │
+│  │ → Clipboard  │─────────────────────────│  via API     │             │
+│  │   check      │                         └──────┬───────┘             │
+│  └──────────────┘                                │                     │
+│                                                  │                     │
+│                              ┌───────────────────┼───────────────────┐ │
+│                              │                   │                   │ │
+│                              ▼                   ▼                   ▼ │
+│                       ┌──────────┐        ┌──────────┐        ┌──────────┐
+│                       │  Valid   │        │ Invalid  │        │ Network  │
+│                       │  → Save  │        │  → Error │        │  Error   │
+│                       │  → Dash  │        │  → Retry │        │  → Retry │
+│                       └──────────┘        └──────────┘        └──────────┘
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 8.1.2 Edge Cases & Handling
+
+| Scenario | Detection | Handling |
+|----------|-----------|----------|
+| Safari dismissed without copying | Clipboard empty or no key pattern | Return to onboarding silently |
+| Clipboard has non-key content | Doesn't match `looksLikeAPIKey()` | No prompt, stay on onboarding |
+| User cancels confirmation | Taps "Cancel" on dialog | Return to onboarding |
+| Invalid API key | API returns 401 | Show "Invalid API key" error |
+| Network error | Request fails/times out | Show "Check connection" + Retry |
+| App launched with key in clipboard | Key pattern detected on appear | Show confirmation proactively |
+
+#### 8.1.3 API Key Detection Heuristics
+
+```swift
+/// Detects Jules API keys in clipboard
+/// Current format: AQ.Ab8RN6... (53 chars, alphanumeric + -_.)
+private func looksLikeJulesAPIKey(_ string: String) -> Bool {
+    // Strong match: current Jules format (53 chars, AQ. prefix)
+    if string.count == 53 && string.hasPrefix("AQ.") {
+        let allowedChars = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_."))
+        if string.unicodeScalars.allSatisfy({ allowedChars.contains($0) }) {
+            return true
+        }
+    }
+
+    // Loose fallback: any token-like string (future-proofing)
+    guard (40...100).contains(string.count) else { return false }
+    guard !string.contains(where: { $0.isWhitespace }) else { return false }
+    guard Set(string).count > 10 else { return false } // Has complexity
+
+    return true
+}
+```
+
+#### 8.1.4 Implementation
 
 ```swift
 // OnboardingView.swift
+import SwiftUI
+import SafariServices
+
 struct OnboardingView: View {
     @EnvironmentObject private var dependencies: AppDependency
     @StateObject private var viewModel = OnboardingViewModel()
+    @State private var showingSafari = false
+    @State private var showingManualEntry = false
 
     var body: some View {
         ZStack {
-            // Animated gradient background
-            AnimatedGradientMesh()
+            AnimatedGradientBackground()
                 .ignoresSafeArea()
 
             VStack(spacing: JoolsSpacing.xl) {
                 Spacer()
 
-                // Logo
-                Text("JOOLS")
-                    .font(.joolsLargeTitle)
-                    .foregroundStyle(.white)
-
-                Text("Your Pocket CTO")
-                    .font(.joolsTitle)
-                    .foregroundStyle(.white.opacity(0.8))
+                // Logo section
+                LogoSection()
 
                 Spacer()
 
-                // API Key Input
+                // Action buttons
                 VStack(spacing: JoolsSpacing.md) {
-                    SecureField("Enter API Key", text: $viewModel.apiKey)
-                        .textFieldStyle(.plain)
-                        .padding()
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
-
-                    Button(action: viewModel.connect) {
-                        Group {
-                            if viewModel.isLoading {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Connect")
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
+                    // Primary: Open Safari
+                    Button(action: { showingSafari = true }) {
+                        Label("Connect to Jules", systemImage: "safari")
+                            .font(.joolsBody)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(LinearGradient.joolsAccentGradient)
+                            .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.apiKey.isEmpty || viewModel.isLoading)
+
+                    // Secondary: Manual entry
+                    Button(action: { showingManualEntry = true }) {
+                        Text("I already have a key")
+                            .font(.joolsCaption)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
                 }
                 .padding(.horizontal, JoolsSpacing.lg)
-
-                // Help link
-                Link("Get your API key", destination: URL(string: "https://jules.google.com/settings")!)
-                    .font(.joolsCaption)
-                    .foregroundStyle(.white.opacity(0.7))
 
                 Spacer()
             }
         }
+        .fullScreenCover(isPresented: $showingSafari) {
+            SafariView(url: URL(string: "https://jules.google.com/settings/api")!)
+                .onDisappear {
+                    viewModel.checkClipboardForAPIKey()
+                }
+                .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showingManualEntry) {
+            ManualKeyEntrySheet(viewModel: viewModel)
+        }
+        .alert("Use this API key?", isPresented: $viewModel.showKeyConfirmation) {
+            Button("Use Key") {
+                Task { await viewModel.validateAndSaveKey() }
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel.detectedKey = nil
+            }
+        } message: {
+            Text("Found key ending in ...\(viewModel.detectedKeySuffix)")
+        }
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK") {}
+            if viewModel.canRetry {
+                Button("Retry") {
+                    Task { await viewModel.validateAndSaveKey() }
+                }
+            }
         } message: {
             Text(viewModel.errorMessage)
         }
+        .onAppear {
+            viewModel.setDependencies(dependencies)
+        }
+    }
+}
+
+// MARK: - Safari Wrapper
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let config = SFSafariViewController.Configuration()
+        config.entersReaderIfAvailable = false
+        let safari = SFSafariViewController(url: url, configuration: config)
+        safari.preferredControlTintColor = UIColor(Color.joolsAccent)
+        return safari
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
+}
+
+// MARK: - Manual Entry Sheet
+struct ManualKeyEntrySheet: View {
+    @ObservedObject var viewModel: OnboardingViewModel
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: JoolsSpacing.lg) {
+                Text("Paste your Jules API key below")
+                    .font(.joolsBody)
+                    .foregroundStyle(.secondary)
+
+                SecureField("API Key", text: $viewModel.manualKey)
+                    .textFieldStyle(.plain)
+                    .padding()
+                    .background(Color.joolsSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+                    .focused($isFocused)
+
+                Button(action: {
+                    viewModel.detectedKey = viewModel.manualKey
+                    dismiss()
+                    Task { await viewModel.validateAndSaveKey() }
+                }) {
+                    if viewModel.isValidating {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Connect")
+                    }
+                }
+                .font(.joolsBody)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(viewModel.manualKey.isEmpty ? Color.gray : Color.joolsAccent)
+                .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+                .disabled(viewModel.manualKey.isEmpty || viewModel.isValidating)
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Enter API Key")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .onAppear { isFocused = true }
+        }
+    }
+}
+```
+
+#### 8.1.5 ViewModel
+
+```swift
+// OnboardingViewModel.swift
+import SwiftUI
+import Observation
+
+@MainActor
+final class OnboardingViewModel: ObservableObject {
+    // MARK: - Published State
+    @Published var manualKey: String = ""
+    @Published var detectedKey: String?
+    @Published var isValidating: Bool = false
+    @Published var showKeyConfirmation: Bool = false
+    @Published var showError: Bool = false
+    @Published var errorMessage: String = ""
+    @Published var canRetry: Bool = false
+
+    // MARK: - Dependencies
+    private var apiClient: APIClient?
+    private var keychainManager: KeychainManager?
+    private var coordinator: AppCoordinator?
+
+    var detectedKeySuffix: String {
+        guard let key = detectedKey, key.count >= 6 else { return "***" }
+        return String(key.suffix(6))
+    }
+
+    func setDependencies(_ dependencies: AppDependency) {
+        self.apiClient = dependencies.apiClient
+        self.keychainManager = dependencies.keychainManager
+        self.coordinator = dependencies.coordinator
+    }
+
+    // MARK: - Clipboard Detection
+    func checkClipboardForAPIKey() {
+        guard let clipboard = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
+              looksLikeJulesAPIKey(clipboard) else {
+            return
+        }
+        detectedKey = clipboard
+        showKeyConfirmation = true
+    }
+
+    private func looksLikeJulesAPIKey(_ string: String) -> Bool {
+        // Strong match: current Jules format (53 chars, AQ. prefix)
+        if string.count == 53 && string.hasPrefix("AQ.") {
+            let allowedChars = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_."))
+            if string.unicodeScalars.allSatisfy({ allowedChars.contains($0) }) {
+                return true
+            }
+        }
+
+        // Loose fallback: any token-like string
+        guard (40...100).contains(string.count) else { return false }
+        guard !string.contains(where: { $0.isWhitespace }) else { return false }
+        guard Set(string).count > 10 else { return false }
+
+        return true
+    }
+
+    // MARK: - Validation
+    func validateAndSaveKey() async {
+        guard let key = detectedKey, !key.isEmpty else { return }
+        guard let apiClient = apiClient, let keychainManager = keychainManager else { return }
+
+        isValidating = true
+        canRetry = false
+
+        do {
+            let isValid = try await apiClient.validateAPIKey(key)
+
+            if isValid {
+                try keychainManager.saveAPIKey(key)
+                coordinator?.isAuthenticated = true
+                // Clear sensitive data
+                detectedKey = nil
+                manualKey = ""
+                UIPasteboard.general.string = "" // Clear clipboard
+            } else {
+                errorMessage = "Invalid API key. Please check and try again."
+                canRetry = false
+                showError = true
+            }
+        } catch {
+            errorMessage = "Couldn't connect to Jules. Check your internet connection."
+            canRetry = true
+            showError = true
+        }
+
+        isValidating = false
     }
 }
 ```

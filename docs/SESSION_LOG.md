@@ -116,6 +116,58 @@
 - PR ready at: https://github.com/indrasvat/jools/pull/new/create-jools
 
 ### Next Steps
-- [ ] Begin Phase 1: Authentication flow implementation
+- [x] Begin Phase 1: Authentication flow implementation
 - [ ] Wire up APIClient to views
 - [ ] Implement SwiftData persistence sync
+
+---
+
+## Session 3: Phase 1 - Authentication Flow
+**Date:** 2025-12-17 00:07
+**Agent:** Claude (Opus 4.5)
+**Status:** In Progress
+
+### Authentication UX Design
+- Designed user-friendly Safari-based auth flow (vs manual copy/paste)
+- Flow: Onboarding → Safari (jules.google.com/settings/api) → Copy key → Return → Clipboard detection
+
+### Implementation Completed
+- [x] Updated implementation plan with auth flow design (Section 8.1)
+- [x] Documented all edge cases and error states
+- [x] Created app icon matching onboarding logo (purple gradient + layers icon)
+  - `scripts/generate_icon.py` - Python script to generate 1024x1024 icon
+  - `Jools/Assets.xcassets/AppIcon.appiconset/`
+- [x] Rewrote `OnboardingView.swift` with Safari-based flow:
+  - SFSafariViewController for in-app browser
+  - ManualKeyEntrySheet for fallback manual entry
+  - Animated gradient background with floating orbs
+  - Feature pills: Plan Review, Real-time Updates, Offline Ready
+  - Loading overlay during validation
+  - Confirmation and error alerts
+- [x] Rewrote `OnboardingViewModel.swift` with clipboard detection:
+  - `checkClipboardForAPIKey()` - detects potential API keys
+  - `looksLikeJulesAPIKey()` - heuristics (53 chars, "AQ." prefix)
+  - `validateAndSaveKey()` - validates via API before saving
+  - Proper error handling for all NetworkError cases
+- [x] Verified build on iPhone 17 Pro simulator (iOS 26.1)
+- [x] Fixed iOS 26 deprecation warning (preferredControlTintColor)
+
+### API Key Detection Heuristics
+- **Strong match:** 53 characters, starts with "AQ.", alphanumeric + `-_.`
+- **Loose fallback:** 40-100 characters, no whitespace, valid characters
+
+### Auth Flow States
+| State | Trigger | Action |
+|-------|---------|--------|
+| Safari opened | "Connect to Jules" tap | Show SFSafariViewController |
+| Key detected | Safari dismissed + valid key in clipboard | Show confirmation alert |
+| No key detected | Safari dismissed + no valid key | No action (silent) |
+| Manual entry | "I already have a key" tap | Show ManualKeyEntrySheet |
+| Validating | Key confirmed or manual submit | Show loading overlay |
+| Success | API returns valid | Navigate to Dashboard |
+| Error | API returns error | Show error alert with retry |
+
+### Next Steps
+- [ ] Test Safari flow end-to-end with real API key
+- [ ] Implement Dashboard data loading
+- [ ] Wire up PollingService for live updates
