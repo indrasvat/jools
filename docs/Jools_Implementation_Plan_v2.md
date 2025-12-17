@@ -3771,6 +3771,87 @@ struct ApprovePlanPayload: Codable {
 // - DEVELOPMENT_TEAM = <Your Team ID>
 ```
 
+### 19.4 Testing on Physical Devices
+
+You can test on a real iPhone without a paid Apple Developer account using **Free Provisioning**.
+
+#### Setup Steps
+
+1. **Sign in with Apple ID in Xcode:**
+   - Xcode → Settings (⌘,) → Accounts → Add (+) → Apple ID
+   - Use any Apple ID (your iCloud account works)
+
+2. **Open the project:**
+   ```bash
+   open Jools.xcodeproj
+   ```
+
+3. **Configure signing:**
+   - Select **Jools** target → **Signing & Capabilities** tab
+   - Check "Automatically manage signing"
+   - Select your **"Personal Team"** from the Team dropdown
+   - Xcode auto-creates a free signing certificate
+
+4. **Connect & Run:**
+   - Connect iPhone via USB cable
+   - Select your iPhone as the build destination (top toolbar)
+   - Press Run (⌘R)
+
+5. **Trust developer on device:**
+   - On iPhone: Settings → General → VPN & Device Management
+   - Tap your Apple ID email → Trust
+
+#### Free vs Paid Developer Account
+
+| Feature | Free (Personal Team) | Paid ($99/year) |
+|---------|---------------------|-----------------|
+| Test on your devices | ✅ | ✅ |
+| App expires after | **7 days** | 1 year |
+| Max apps at a time | 3 | Unlimited |
+| App Store distribution | ❌ | ✅ |
+| Push notifications | ❌ | ✅ |
+| CloudKit | ❌ | ✅ |
+| In-App Purchase | ❌ | ✅ |
+
+#### Re-installing After Expiry
+
+With free provisioning, the app expires after 7 days. Simply:
+1. Connect device to Mac
+2. Run from Xcode again (⌘R)
+
+The app data persists; only the certificate expires.
+
+#### Persisting Team ID in project.yml
+
+To avoid re-selecting team each time:
+
+1. Find your Team ID:
+   ```bash
+   # From keychain (10-char alphanumeric)
+   security find-identity -v -p codesigning | grep "Apple Development" | head -1
+   ```
+
+2. Update `project.yml`:
+   ```yaml
+   settings:
+     base:
+       DEVELOPMENT_TEAM: "XXXXXXXXXX"  # Your Team ID
+   ```
+
+3. Regenerate project:
+   ```bash
+   xcodegen generate
+   ```
+
+#### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "Untrusted Developer" | Settings → General → VPN & Device Management → Trust |
+| "Device not found" | Unlock iPhone, tap "Trust" when prompted on device |
+| "Provisioning profile" error | Select team again in Signing & Capabilities |
+| "App installation failed" | Delete old app from device, try again |
+
 ---
 
 ## 20. Accessibility Guidelines
