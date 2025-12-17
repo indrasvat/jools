@@ -88,6 +88,28 @@
   - Added missing `import JoolsKit` statements
 - [x] Verified successful build on iPhone 17 Pro simulator
 
+### Build Automation Setup (Completed 2025-12-16)
+- [x] Rewrote Makefile from scratch:
+  - Comprehensive targets: setup, build, test, lint, ci, clean, xcode
+  - Auto-detection and installation of missing dependencies
+  - Colorful help output with categorized commands
+  - CI target runs full pipeline (lint → kit-build → kit-test → build → test-app)
+- [x] Configured Lefthook for git hooks:
+  - Pre-push hook only (runs `make ci` before every push)
+  - Fixed PATH issue for homebrew binaries in hook environment
+- [x] Created `scripts/bootstrap` for first-time setup:
+  - Checks for Homebrew and Xcode
+  - Installs dependencies (swiftlint, xcodegen, lefthook, xcpretty)
+  - Installs git hooks
+  - Resolves Swift packages
+  - Generates Xcode project
+- [x] Created README.md with:
+  - Quick start instructions
+  - Development setup guide
+  - Available make commands
+  - Project structure documentation
+  - Architecture overview
+
 ### Git Operations
 - [x] Pushed to remote: `git@github.com:indrasvat/jools.git`
 - Branch: `create-jools`
