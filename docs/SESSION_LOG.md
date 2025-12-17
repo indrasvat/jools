@@ -83,6 +83,6 @@
 ### Next Steps
 - [ ] Create Xcode project in Xcode IDE
 - [ ] Add JoolsKit as local package dependency
-- [ ] Configure iOS 18.0 deployment target
+- [ ] Configure iOS 26.0 deployment target
 - [ ] Configure Swift 6 strict concurrency
 - [ ] Begin Phase 1: Authentication flow implementation
