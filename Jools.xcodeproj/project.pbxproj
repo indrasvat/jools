@@ -14,6 +14,7 @@
 		31A3B26995C0A1A927AB1EE3 /* JoolsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A89CE8F6A2B11FF71A6CACD /* JoolsApp.swift */; };
 		39F64D299AABC06E653809D4 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = D19268781A8710BBE00FCBFA /* Typography.swift */; };
 		3EB7A1B655D0AB046BA574F6 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5189B5350A2DE2BCEEA50333 /* DashboardView.swift */; };
+		46052E6C181403303FBE536F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 24D50484109E67C6A0DB04B9 /* Assets.xcassets */; };
 		49D3C4DF76FDFBCD3C6C5248 /* Spacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8A9B1FB7AA68B646D2D858 /* Spacing.swift */; };
 		5198CCAEDBF5F086B1B9FE35 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAAF4A8948E2B9D3ED24714 /* ChatViewModel.swift */; };
 		549EFAFF1C10E40C5BE8B1F9 /* AppDependency.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48B25E1C01D41F2A82468D4 /* AppDependency.swift */; };
@@ -42,6 +43,7 @@
 		03D6623D9D0FC7D69F1C7144 /* Entities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entities.swift; sourceTree = "<group>"; };
 		05CC0D643717615BFD25DF44 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		16EE3148567DD030F1F8D620 /* JoolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoolsTests.swift; sourceTree = "<group>"; };
+		24D50484109E67C6A0DB04B9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		288FD2F8B8CECF645C9290DF /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		2A89CE8F6A2B11FF71A6CACD /* JoolsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoolsApp.swift; sourceTree = "<group>"; };
 		2C3C647DA5067D0300D2F4A7 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -153,6 +155,7 @@
 		A01B3137E62F8B9EDAEF8F9F /* Jools */ = {
 			isa = PBXGroup;
 			children = (
+				24D50484109E67C6A0DB04B9 /* Assets.xcassets */,
 				8DBE9228B3B98327C1EE70DA /* App */,
 				8E4A2B0F831E7978FE20CEDD /* Core */,
 				B0BEAF7B929C228E8C03AD44 /* Features */,
@@ -255,6 +258,7 @@
 			buildConfigurationList = 75305221DFBE2502A42B733F /* Build configuration list for PBXNativeTarget "Jools" */;
 			buildPhases = (
 				739605B3C62EE21980BC19C3 /* Sources */,
+				3C8C16178897834DA30E5A34 /* Resources */,
 				73404605F1B761347FB4A2E5 /* Frameworks */,
 			);
 			buildRules = (
@@ -306,6 +310,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3C8C16178897834DA30E5A34 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				46052E6C181403303FBE536F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		739605B3C62EE21980BC19C3 /* Sources */ = {
