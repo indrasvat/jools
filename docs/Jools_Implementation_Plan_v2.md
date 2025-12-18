@@ -3853,6 +3853,42 @@ To avoid re-selecting team each time:
 | "Provisioning profile" error | Select team again in Signing & Capabilities |
 | "App installation failed" | Delete old app from device, try again |
 
+### 19.5 Build Automation (Makefile)
+
+The project includes a comprehensive `Makefile` for common development tasks. **Always prefer using existing Makefile targets** over running raw commands.
+
+#### Key Targets
+
+| Target | Description |
+|--------|-------------|
+| `make sim-run` | Full cycle: build + boot + install + launch |
+| `make sim-reload` | Quick reload: kill + install + launch (no rebuild) |
+| `make sim-build` | Build app for simulator |
+| `make sim-screenshot` | Take simulator screenshot |
+| `make build` | Build with xcpretty output |
+| `make test` | Run all tests (JoolsKit + app) |
+| `make lint` | Run SwiftLint |
+| `make ci` | Full CI pipeline (lint → build → test) |
+
+#### Customization
+
+Override parameters via command line:
+
+```bash
+# Use different simulator
+make sim-run SIMULATOR="iPhone 17 Pro Max"
+
+# Custom screenshot path
+make sim-screenshot SCREENSHOT=~/Desktop/jools.png
+```
+
+#### Guidelines for Agents
+
+1. **Use existing targets**: Check `make help` before running raw commands
+2. **Add reusable targets**: If a command is used repeatedly, add it as a Makefile target
+3. **Keep targets composable**: Prefer small targets that can be combined (e.g., `sim-reload` = `sim-kill` + `sim-install` + `sim-launch`)
+4. **Document parameters**: Use `?=` for overridable variables and add comments
+
 ---
 
 ## 20. Accessibility Guidelines
