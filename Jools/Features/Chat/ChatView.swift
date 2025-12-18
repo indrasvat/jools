@@ -14,20 +14,45 @@ struct ChatView: View {
             // Chat header
             ChatHeader(session: session)
 
+            // Status banner
+            SessionStatusBanner(state: session.state, isPolling: viewModel.isPolling)
+
             Divider()
 
             // Messages
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: JoolsSpacing.md) {
-                        ForEach(session.activities.sorted(by: { $0.createdAt < $1.createdAt }), id: \.id) { activity in
-                            ActivityView(activity: activity, viewModel: viewModel)
-                                .id(activity.id)
+            ZStack {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: JoolsSpacing.md) {
+                            ForEach(sortedActivities, id: \.id) { activity in
+                                ActivityView(activity: activity, session: session, viewModel: viewModel)
+                                    .id(activity.id)
+                            }
+
+                            // Show typing indicator when session is actively working
+                            if session.state == .running || session.state == .inProgress || session.state == .queued {
+                                TypingIndicatorView()
+                                    .id("typing-indicator")
+                            }
                         }
+                        .padding(.vertical)
                     }
-                    .padding(.vertical)
+                    .onChange(of: session.activities.count) { oldValue, newValue in
+                        // Only scroll when new activities are added
+                        guard newValue > oldValue, let last = sortedActivities.last else { return }
+                        proxy.scrollTo(last.id, anchor: .bottom)
+                    }
                 }
-                .defaultScrollAnchor(.bottom)
+
+                if viewModel.isLoading && session.activities.isEmpty {
+                    ProgressView("Loading activities...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.joolsBackground)
+                }
+
+                if !viewModel.isLoading && session.activities.isEmpty {
+                    EmptyActivitiesView()
+                }
             }
 
             Divider()
@@ -36,12 +61,63 @@ struct ChatView: View {
             ChatInputBar(viewModel: viewModel, sessionId: session.id)
         }
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK") {}
+        } message: {
+            Text(viewModel.error ?? "An error occurred")
+        }
+        .overlay(alignment: .top) {
+            if viewModel.messageSentConfirmation {
+                MessageSentConfirmation()
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .animation(.spring(duration: 0.3), value: viewModel.messageSentConfirmation)
+            }
+        }
         .onAppear {
+            configureViewModel()
             dependencies.pollingService.startPolling(sessionId: session.id)
+            Task {
+                await viewModel.loadActivities()
+            }
         }
         .onDisappear {
             dependencies.pollingService.stopPolling()
         }
+    }
+
+    private var sortedActivities: [ActivityEntity] {
+        session.activities.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    private func configureViewModel() {
+        viewModel.configure(
+            apiClient: dependencies.apiClient,
+            modelContext: modelContext,
+            pollingService: dependencies.pollingService,
+            sessionId: session.id
+        )
+    }
+}
+
+// MARK: - Empty State
+
+struct EmptyActivitiesView: View {
+    var body: some View {
+        VStack(spacing: JoolsSpacing.md) {
+            Image(systemName: "bubble.left.and.bubble.right")
+                .font(.system(size: 48))
+                .foregroundStyle(Color.joolsAccent.opacity(0.5))
+
+            Text("No messages yet")
+                .font(.joolsHeadline)
+                .foregroundStyle(.secondary)
+
+            Text("Jules is working on your task.\nMessages will appear here.")
+                .font(.joolsCaption)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -84,29 +160,45 @@ struct ChatHeader: View {
 
 struct ActivityView: View {
     let activity: ActivityEntity
+    let session: SessionEntity
     @ObservedObject var viewModel: ChatViewModel
 
     var body: some View {
         switch activity.type {
-        case .userMessaged, .agentMessaged:
-            MessageBubble(activity: activity)
+        case .userMessaged:
+            UserMessageBubble(activity: activity)
                 .transition(.scale.combined(with: .opacity))
 
+        case .agentMessaged:
+            AgentMessageBubble(
+                content: activity.messageContent ?? "",
+                timestamp: activity.createdAt
+            )
+            .transition(.scale.combined(with: .opacity))
+
         case .planGenerated:
-            PlanCard(
+            PlanCardView(
                 activity: activity,
                 onApprove: { viewModel.approvePlan(activityId: activity.id) },
-                onReject: { viewModel.rejectPlan(activityId: activity.id) }
+                onRevise: { viewModel.rejectPlan(activityId: activity.id) }
             )
 
         case .progressUpdated:
             ProgressUpdateView(activity: activity)
 
         case .sessionCompleted:
-            SessionCompletedView(activity: activity)
+            CompletionCardView(
+                session: session,
+                activity: activity,
+                diffStats: .empty, // TODO: Parse from API response when available
+                duration: session.updatedAt.timeIntervalSince(session.createdAt)
+            )
 
         case .sessionFailed:
             SessionFailedView(activity: activity)
+
+        case .planApproved:
+            PlanApprovedView()
 
         default:
             EmptyView()
@@ -114,26 +206,22 @@ struct ActivityView: View {
     }
 }
 
-// MARK: - Message Bubble
+// MARK: - User Message Bubble
 
-struct MessageBubble: View {
+struct UserMessageBubble: View {
     let activity: ActivityEntity
-
-    private var isUser: Bool {
-        activity.type == .userMessaged
-    }
 
     var body: some View {
         HStack {
-            if isUser { Spacer(minLength: 60) }
+            Spacer(minLength: 60)
 
-            VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: .trailing, spacing: 4) {
                 Text(activity.messageContent ?? "")
                     .font(.joolsBody)
                     .padding(.horizontal, JoolsSpacing.md)
                     .padding(.vertical, JoolsSpacing.sm)
-                    .background(isUser ? Color.joolsBubbleUser : Color.joolsBubbleAgent)
-                    .foregroundStyle(isUser ? .white : .primary)
+                    .background(Color.joolsBubbleUser)
+                    .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.lg))
 
                 HStack(spacing: JoolsSpacing.xxs) {
@@ -141,13 +229,9 @@ struct MessageBubble: View {
                         .font(.joolsCaption)
                         .foregroundStyle(.secondary)
 
-                    if isUser {
-                        SendStatusIcon(status: activity.sendStatus)
-                    }
+                    SendStatusIcon(status: activity.sendStatus)
                 }
             }
-
-            if !isUser { Spacer(minLength: 60) }
         }
         .padding(.horizontal, JoolsSpacing.md)
     }
@@ -190,11 +274,22 @@ struct ChatInputBar: View {
                 .padding(.vertical, JoolsSpacing.xs)
                 .background(Color.joolsSurface)
                 .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.lg))
+                .onSubmit {
+                    if viewModel.canSend {
+                        viewModel.sendMessage(sessionId: sessionId)
+                    }
+                }
 
             Button(action: { viewModel.sendMessage(sessionId: sessionId) }) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.title)
-                    .foregroundStyle(viewModel.canSend ? Color.joolsAccent : Color.secondary)
+                if viewModel.isSending {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .frame(width: 28, height: 28)
+                } else {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title)
+                        .foregroundStyle(viewModel.canSend ? Color.joolsAccent : Color.secondary)
+                }
             }
             .disabled(!viewModel.canSend)
         }
@@ -206,50 +301,15 @@ struct ChatInputBar: View {
 
 // MARK: - Supporting Views
 
-struct PlanCard: View {
-    let activity: ActivityEntity
-    let onApprove: () -> Void
-    let onReject: () -> Void
-
+struct PlanApprovedView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
-            HStack {
-                Image(systemName: "doc.text")
-                    .foregroundStyle(Color.joolsPlanBorder)
-                Text("Proposed Plan")
-                    .font(.joolsHeadline)
-                Spacer()
-            }
-
-            Divider()
-
-            Text("Plan details would appear here...")
-                .font(.joolsBody)
+        HStack {
+            Image(systemName: "checkmark.seal.fill")
+                .foregroundStyle(Color.joolsSuccess)
+            Text("Plan approved - Jules is implementing...")
+                .font(.joolsCaption)
                 .foregroundStyle(.secondary)
-
-            Divider()
-
-            HStack(spacing: JoolsSpacing.md) {
-                Button(action: onReject) {
-                    Label("Reject", systemImage: "xmark")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button(action: onApprove) {
-                    Label("Approve", systemImage: "checkmark")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-            }
         }
-        .padding(JoolsSpacing.md)
-        .background(Color.joolsSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: JoolsRadius.md)
-                .stroke(Color.joolsPlanBorder, lineWidth: 2)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
         .padding(.horizontal, JoolsSpacing.md)
     }
 }
@@ -258,12 +318,46 @@ struct ProgressUpdateView: View {
     let activity: ActivityEntity
 
     var body: some View {
-        HStack {
-            Image(systemName: "gearshape.2")
-                .foregroundStyle(Color.joolsAccent)
-            Text(activity.messageContent ?? "Working...")
-                .font(.joolsCaption)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
+            // Show bash commands if present
+            ForEach(Array(activity.bashCommands.enumerated()), id: \.offset) { _, bashOutput in
+                if let command = bashOutput.command {
+                    CommandCardView(
+                        command: command,
+                        output: bashOutput.output,
+                        success: !bashOutput.isLikelyFailure,
+                        isRunning: false
+                    )
+                }
+            }
+
+            // Show progress title/description as a "Working" card
+            if let message = activity.messageContent, !message.isEmpty {
+                WorkingCard(message: message)
+            }
+        }
+    }
+}
+
+/// Card showing what Jules is currently working on
+struct WorkingCard: View {
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: JoolsSpacing.sm) {
+            ThinkingAvatarView(size: 24)
+
+            VStack(alignment: .leading, spacing: JoolsSpacing.xxs) {
+                Text(message)
+                    .font(.joolsBody)
+                    .foregroundStyle(.primary)
+            }
+            .padding(.horizontal, JoolsSpacing.md)
+            .padding(.vertical, JoolsSpacing.sm)
+            .background(Color.joolsBubbleAgent)
+            .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.lg))
+
+            Spacer(minLength: 40)
         }
         .padding(.horizontal, JoolsSpacing.md)
     }
@@ -323,7 +417,7 @@ struct SessionStateBadge: View {
 
     private var stateColor: Color {
         switch state {
-        case .running:
+        case .running, .inProgress:
             return .joolsRunning
         case .queued:
             return .joolsQueued
@@ -338,6 +432,27 @@ struct SessionStateBadge: View {
         case .unspecified:
             return .secondary
         }
+    }
+}
+
+// MARK: - Message Sent Confirmation
+
+struct MessageSentConfirmation: View {
+    var body: some View {
+        HStack(spacing: JoolsSpacing.xs) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(Color.joolsSuccess)
+
+            Text("Message sent - Jules is processing")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, JoolsSpacing.md)
+        .padding(.vertical, JoolsSpacing.sm)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        .padding(.top, 100) // Position below header and status banner
     }
 }
 

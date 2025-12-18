@@ -139,16 +139,12 @@ final class ActivityEntity {
     }
 
     convenience init(from dto: ActivityDTO) {
-        let contentData: Data
-        if let content = dto.content {
-            contentData = (try? JSONEncoder().encode(content)) ?? Data()
-        } else {
-            contentData = Data()
-        }
+        // Use the unified content accessor from the DTO
+        let contentData = (try? JSONEncoder().encode(dto.content)) ?? Data()
 
         self.init(
             id: dto.id,
-            type: ActivityType(rawValue: dto.type) ?? .unknown,
+            type: dto.activityType,
             createdAt: dto.createTime ?? Date(),
             contentJSON: contentData,
             isOptimistic: false,
@@ -180,9 +176,55 @@ final class ActivityEntity {
     }
 
     var messageContent: String? {
-        guard let dict = try? JSONDecoder().decode([String: String].self, from: contentJSON) else {
-            return nil
+        // First try to decode as ActivityContentDTO for full API response structure
+        if let content = try? JSONDecoder().decode(ActivityContentDTO.self, from: contentJSON) {
+            // Return message for user/agent messages
+            if let message = content.message {
+                return message
+            }
+            // Return formatted plan steps for plan activities
+            if let plan = content.plan, let steps = plan.steps {
+                return steps.compactMap { $0.description }.joined(separator: "\n• ")
+            }
+            // Return progress title or description for progress updates
+            if let title = content.progressTitle {
+                return title
+            }
+            if let description = content.progressDescription {
+                return description
+            }
+            // Return progress updates
+            if let progress = content.progress {
+                return progress
+            }
+            // Return summary for completed sessions
+            if let summary = content.summary {
+                return summary
+            }
+            // Return error for failed sessions
+            if let error = content.error {
+                return error
+            }
         }
-        return dict["message"]
+
+        // Fallback: try simple dictionary decode for optimistic messages
+        if let dict = try? JSONDecoder().decode([String: String].self, from: contentJSON) {
+            return dict["message"]
+        }
+
+        return nil
+    }
+
+    /// Get bash command executions from this activity
+    var bashCommands: [BashOutputDTO] {
+        guard let content = try? JSONDecoder().decode(ActivityContentDTO.self, from: contentJSON) else {
+            return []
+        }
+        return content.bashCommands
+    }
+
+    /// Check if this activity has tool executions
+    var hasToolExecutions: Bool {
+        !bashCommands.isEmpty
     }
 }

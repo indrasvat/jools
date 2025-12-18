@@ -9,10 +9,14 @@
 /* Begin PBXBuildFile section */
 		0CA7E6DE0147F5D21EB9137F /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7425FDADBB351D82E44BDA8 /* AppCoordinator.swift */; };
 		1003079A28DB81B732A25C31 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05CC0D643717615BFD25DF44 /* RootView.swift */; };
+		113E640740C7E211F8A01D88 /* CreateSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FECDD3C8EC5285EF98459C4B /* CreateSessionViewModel.swift */; };
+		1337F0AB31DCBF2AEAF64751 /* CommandCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9088B1547DB4E3F2573B726B /* CommandCardView.swift */; };
+		18D2CB9BBD6B2EFACC2F4AB9 /* CompletionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E9101694FA23EE0C261EF2 /* CompletionCardView.swift */; };
 		26233A483DE4A601894F389B /* BuildInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 252B8CDB945E2A635CC39074 /* BuildInfo.swift */; };
 		2B7042B5F7BEB6633A3B23D8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCC578EDB6204DF44EF61C29 /* SettingsView.swift */; };
 		2DB352505475C540E2B938EA /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C3C647DA5067D0300D2F4A7 /* ChatView.swift */; };
 		31A3B26995C0A1A927AB1EE3 /* JoolsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A89CE8F6A2B11FF71A6CACD /* JoolsApp.swift */; };
+		379A4C97F5AFADA4798685DD /* JulesAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A815BAA05D5FAE09D3574EA2 /* JulesAvatarView.swift */; };
 		39F64D299AABC06E653809D4 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = D19268781A8710BBE00FCBFA /* Typography.swift */; };
 		3EB7A1B655D0AB046BA574F6 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5189B5350A2DE2BCEEA50333 /* DashboardView.swift */; };
 		46052E6C181403303FBE536F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 24D50484109E67C6A0DB04B9 /* Assets.xcassets */; };
@@ -20,14 +24,18 @@
 		5198CCAEDBF5F086B1B9FE35 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAAF4A8948E2B9D3ED24714 /* ChatViewModel.swift */; };
 		549EFAFF1C10E40C5BE8B1F9 /* AppDependency.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48B25E1C01D41F2A82468D4 /* AppDependency.swift */; };
 		5AF12302F51A3369C9E8F734 /* Entities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D6623D9D0FC7D69F1C7144 /* Entities.swift */; };
+		694E2DC6F2E4B8C8623DA448 /* CreateSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898E0E608FDB38A8ADE72E15 /* CreateSessionView.swift */; };
 		720B07E20C9153A13E5E77F0 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D2A326FD5B525C349C7A1A7 /* Colors.swift */; };
 		88C3D472854ACB73136B6244 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D2225EE84F7ED0D259A09D /* OnboardingViewModel.swift */; };
+		932ED57E3B7FD8444726D063 /* PlanCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A3B30BFED7D0264ADE04BE4 /* PlanCardView.swift */; };
 		B56E5F823E44681CED001F72 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75EF4E3FF816718B4811F603 /* Haptics.swift */; };
+		B58C33D4DA434BE37D341EB8 /* SessionStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 425B67829FCDB7DCDECCB419 /* SessionStatusBanner.swift */; };
 		B5D192367B5E7EB83EDBE8CE /* JoolsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A7F80469173E19E5304563B /* JoolsKit */; };
 		C23BD34EAA8584E3406BA65D /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 944C302473B5E438F545CB89 /* OnboardingView.swift */; };
 		C27696D43AEDDCD4A047AFA8 /* JoolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16EE3148567DD030F1F8D620 /* JoolsTests.swift */; };
 		EBFF70E6B7DB3711F0B743D3 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 288FD2F8B8CECF645C9290DF /* DashboardViewModel.swift */; };
 		ECB31ECBBB363DF149E30721 /* SessionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDDA2EFE4958BD6C81DFFD3D /* SessionsListView.swift */; };
+		EF11B0FB91A8B5AFC6F29ADD /* FilePillView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E8FC2819C3ADD06CE146BCF /* FilePillView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,18 +53,25 @@
 		05CC0D643717615BFD25DF44 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		16EE3148567DD030F1F8D620 /* JoolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoolsTests.swift; sourceTree = "<group>"; };
 		24D50484109E67C6A0DB04B9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		24E9101694FA23EE0C261EF2 /* CompletionCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionCardView.swift; sourceTree = "<group>"; };
 		252B8CDB945E2A635CC39074 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
 		288FD2F8B8CECF645C9290DF /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		2A89CE8F6A2B11FF71A6CACD /* JoolsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoolsApp.swift; sourceTree = "<group>"; };
 		2C3C647DA5067D0300D2F4A7 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		425B67829FCDB7DCDECCB419 /* SessionStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStatusBanner.swift; sourceTree = "<group>"; };
 		4EAAF4A8948E2B9D3ED24714 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		5189B5350A2DE2BCEEA50333 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		5A3B30BFED7D0264ADE04BE4 /* PlanCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanCardView.swift; sourceTree = "<group>"; };
 		5D2A326FD5B525C349C7A1A7 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		75EF4E3FF816718B4811F603 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		7A8A9B1FB7AA68B646D2D858 /* Spacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Spacing.swift; sourceTree = "<group>"; };
+		7E8FC2819C3ADD06CE146BCF /* FilePillView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePillView.swift; sourceTree = "<group>"; };
+		898E0E608FDB38A8ADE72E15 /* CreateSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSessionView.swift; sourceTree = "<group>"; };
+		9088B1547DB4E3F2573B726B /* CommandCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCardView.swift; sourceTree = "<group>"; };
 		944C302473B5E438F545CB89 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		9FF85BCD4D8D93E930FC46B3 /* JoolsTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = JoolsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A7425FDADBB351D82E44BDA8 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		A815BAA05D5FAE09D3574EA2 /* JulesAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JulesAvatarView.swift; sourceTree = "<group>"; };
 		BA441F491D4B7A8A8B17794C /* Jools.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Jools.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBFC9588307A53A2002F8532 /* JoolsKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = JoolsKit; path = JoolsKit; sourceTree = SOURCE_ROOT; };
 		C48B25E1C01D41F2A82468D4 /* AppDependency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependency.swift; sourceTree = "<group>"; };
@@ -64,6 +79,7 @@
 		DCC578EDB6204DF44EF61C29 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DDDA2EFE4958BD6C81DFFD3D /* SessionsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionsListView.swift; sourceTree = "<group>"; };
 		E0D2225EE84F7ED0D259A09D /* OnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingViewModel.swift; sourceTree = "<group>"; };
+		FECDD3C8EC5285EF98459C4B /* CreateSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateSessionViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,6 +187,7 @@
 			isa = PBXGroup;
 			children = (
 				F7012A1265D00334CA622888 /* Chat */,
+				FAD88FC1C07DD2680F8DB572 /* CreateSession */,
 				5C5EC898958098FB5BC7922C /* Dashboard */,
 				FD4D16A1C7EC6D02A8D093B2 /* Onboarding */,
 				30FEC143517FF37763676F60 /* Plan */,
@@ -208,6 +225,19 @@
 			);
 			sourceTree = "<group>";
 		};
+		D4DBD4903F01685D87B3CA2A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				9088B1547DB4E3F2573B726B /* CommandCardView.swift */,
+				24E9101694FA23EE0C261EF2 /* CompletionCardView.swift */,
+				7E8FC2819C3ADD06CE146BCF /* FilePillView.swift */,
+				A815BAA05D5FAE09D3574EA2 /* JulesAvatarView.swift */,
+				5A3B30BFED7D0264ADE04BE4 /* PlanCardView.swift */,
+				425B67829FCDB7DCDECCB419 /* SessionStatusBanner.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		F24448F1C49E7CD537FC762E /* Navigation */ = {
 			isa = PBXGroup;
 			children = (
@@ -222,8 +252,18 @@
 			children = (
 				2C3C647DA5067D0300D2F4A7 /* ChatView.swift */,
 				4EAAF4A8948E2B9D3ED24714 /* ChatViewModel.swift */,
+				D4DBD4903F01685D87B3CA2A /* Views */,
 			);
 			path = Chat;
+			sourceTree = "<group>";
+		};
+		FAD88FC1C07DD2680F8DB572 /* CreateSession */ = {
+			isa = PBXGroup;
+			children = (
+				898E0E608FDB38A8ADE72E15 /* CreateSessionView.swift */,
+				FECDD3C8EC5285EF98459C4B /* CreateSessionViewModel.swift */,
+			);
+			path = CreateSession;
 			sourceTree = "<group>";
 		};
 		FD4D16A1C7EC6D02A8D093B2 /* Onboarding */ = {
@@ -359,14 +399,22 @@
 				2DB352505475C540E2B938EA /* ChatView.swift in Sources */,
 				5198CCAEDBF5F086B1B9FE35 /* ChatViewModel.swift in Sources */,
 				720B07E20C9153A13E5E77F0 /* Colors.swift in Sources */,
+				1337F0AB31DCBF2AEAF64751 /* CommandCardView.swift in Sources */,
+				18D2CB9BBD6B2EFACC2F4AB9 /* CompletionCardView.swift in Sources */,
+				694E2DC6F2E4B8C8623DA448 /* CreateSessionView.swift in Sources */,
+				113E640740C7E211F8A01D88 /* CreateSessionViewModel.swift in Sources */,
 				3EB7A1B655D0AB046BA574F6 /* DashboardView.swift in Sources */,
 				EBFF70E6B7DB3711F0B743D3 /* DashboardViewModel.swift in Sources */,
 				5AF12302F51A3369C9E8F734 /* Entities.swift in Sources */,
+				EF11B0FB91A8B5AFC6F29ADD /* FilePillView.swift in Sources */,
 				B56E5F823E44681CED001F72 /* Haptics.swift in Sources */,
 				31A3B26995C0A1A927AB1EE3 /* JoolsApp.swift in Sources */,
+				379A4C97F5AFADA4798685DD /* JulesAvatarView.swift in Sources */,
 				C23BD34EAA8584E3406BA65D /* OnboardingView.swift in Sources */,
 				88C3D472854ACB73136B6244 /* OnboardingViewModel.swift in Sources */,
+				932ED57E3B7FD8444726D063 /* PlanCardView.swift in Sources */,
 				1003079A28DB81B732A25C31 /* RootView.swift in Sources */,
+				B58C33D4DA434BE37D341EB8 /* SessionStatusBanner.swift in Sources */,
 				ECB31ECBBB363DF149E30721 /* SessionsListView.swift in Sources */,
 				2B7042B5F7BEB6633A3B23D8 /* SettingsView.swift in Sources */,
 				49D3C4DF76FDFBCD3C6C5248 /* Spacing.swift in Sources */,
