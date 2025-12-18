@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Session Complete</title>
+    <style>
+        :root {
+            --accent: #8B5CF6;
+            --accent-light: rgba(139, 92, 246, 0.15);
+            --success: #22C55E;
+            --success-light: rgba(34, 197, 94, 0.1);
+            --error: #EF4444;
+            --background: #FFFFFF;
+            --surface: #F5F5F7;
+            --surface-elevated: #FFFFFF;
+            --separator: rgba(0, 0, 0, 0.06);
+            --text-primary: #1C1C1E;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --accent: #A78BFA;
+                --accent-light: rgba(167, 139, 250, 0.2);
+                --success: #34D399;
+                --success-light: rgba(52, 211, 153, 0.15);
+                --error: #F87171;
+                --background: #000000;
+                --surface: #1C1C1E;
+                --surface-elevated: #2C2C2E;
+                --separator: rgba(255, 255, 255, 0.08);
+                --text-primary: #FFFFFF;
+                --text-secondary: #A1A1AA;
+                --text-tertiary: #71717A;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #1C1C1E;
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 54px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 28px 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px 12px;
+            background: var(--background);
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--accent);
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .nav-back svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--accent);
+        }
+
+        .nav-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-subtitle {
+            font-size: 12px;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* Content */
+        .content {
+            padding: 24px 16px;
+            overflow-y: auto;
+            height: calc(100% - 54px - 56px - 100px);
+        }
+
+        /* Success Hero */
+        .success-hero {
+            text-align: center;
+            padding: 24px;
+            background: var(--success-light);
+            border-radius: 20px;
+            margin-bottom: 24px;
+        }
+
+        .success-icon {
+            width: 72px;
+            height: 72px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+
+        .success-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .success-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-value.green { color: var(--success); }
+        .stat-value.red { color: var(--error); }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* PR Card */
+        .pr-card {
+            background: var(--surface);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .pr-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .pr-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-light);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pr-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--accent);
+        }
+
+        .pr-info {
+            flex: 1;
+        }
+
+        .pr-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .pr-number {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .pr-status {
+            padding: 4px 10px;
+            background: var(--success-light);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--success);
+        }
+
+        .pr-title {
+            padding: 0 16px 16px;
+            font-size: 16px;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .pr-meta {
+            display: flex;
+            gap: 16px;
+            padding: 12px 16px;
+            background: var(--background);
+            border-top: 1px solid var(--separator);
+        }
+
+        .pr-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .pr-meta-item svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-tertiary);
+        }
+
+        /* Commit Message */
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .commit-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .commit-hash {
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 13px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .commit-message {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Feedback Section */
+        .feedback-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .feedback-question {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .feedback-btn {
+            flex: 1;
+            height: 48px;
+            border-radius: 10px;
+            border: 1px solid var(--separator);
+            background: var(--background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 15px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .feedback-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .feedback-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-secondary);
+        }
+
+        .feedback-btn:hover svg {
+            fill: var(--accent);
+        }
+
+        /* Bottom Actions */
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--background);
+            border-top: 1px solid var(--separator);
+            padding: 12px 16px 34px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 50px;
+            border-radius: 12px;
+            border: none;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-btn.secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+
+        .action-btn.secondary svg {
+            fill: var(--text-primary);
+        }
+
+        .action-btn.primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .action-btn.primary svg {
+            fill: white;
+        }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: var(--text-primary);
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+            <span>7:41</span>
+            <span>...</span>
+        </div>
+
+        <div class="nav-header">
+            <div class="nav-back">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                Sessions
+            </div>
+            <div class="nav-center">
+                <div class="nav-title">Add PasteFlow mocks</div>
+                <div class="nav-subtitle">Completed</div>
+            </div>
+            <div style="width: 70px;"></div>
+        </div>
+
+        <div class="content">
+            <div class="success-hero">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <div class="success-title">Session Complete!</div>
+                <div class="success-subtitle">Jules finished in 22 minutes</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Files</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value green">+1,492</div>
+                    <div class="stat-label">Additions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value red">-234</div>
+                    <div class="stat-label">Deletions</div>
+                </div>
+            </div>
+
+            <div class="pr-card">
+                <div class="pr-header">
+                    <div class="pr-icon">
+                        <svg viewBox="0 0 24 24"><path d="M6 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm12 0a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm0 9a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm12 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM6 9v3m12 0v-1.5c0-1.5-1.5-3-3-3H9"/></svg>
+                    </div>
+                    <div class="pr-info">
+                        <div class="pr-label">Pull Request</div>
+                        <div class="pr-number">#142</div>
+                    </div>
+                    <div class="pr-status">Open</div>
+                </div>
+                <div class="pr-title">
+                    feat: add PasteFlow requirements and HTML mockups
+                </div>
+                <div class="pr-meta">
+                    <div class="pr-meta-item">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        All checks passed
+                    </div>
+                    <div class="pr-meta-item">
+                        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+                        2 reviewers
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">Commit</div>
+            <div class="commit-card">
+                <div class="commit-hash">a3f8b21</div>
+                <div class="commit-message">
+                    feat: add PasteFlow requirements and HTML mockups
+                    <br><br>
+                    - Added REQUIREMENTS.md detailing the product vision
+                    - Created interactive HTML mockups in mockups/
+                    - Added clipboard history and settings screens
+                </div>
+            </div>
+
+            <div class="section-title">Feedback</div>
+            <div class="feedback-section">
+                <div class="feedback-question">How did Jules do?</div>
+                <div class="feedback-buttons">
+                    <button class="feedback-btn">
+                        <svg viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+                        Good
+                    </button>
+                    <button class="feedback-btn">
+                        <svg viewBox="0 0 24 24"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+                        Needs Work
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <button class="action-btn secondary">
+                <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                Share
+            </button>
+            <button class="action-btn primary">
+                <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                View PR
+            </button>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+</body>
+</html>

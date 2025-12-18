@@ -1,0 +1,14 @@
+{
+  "name": "sessions/14365396085129174100",
+  "title": "Come up with the requirements for a highly sophisticated clipboard manager for macOS Sequoia+. It should improve the standard clipboard in every possible way, while remaining out of the way. It should _just work_. It should provide tangibly smart features that enhance my overall experience as a developer, power user and even as a normal user.\n\nIt should be a native, lightweight, blazingly fast, aesthetically beautiful menubar app that integrates with all relevant macOS features seamlessly, is a good macOS citizen, follows all best practices. It should be very forgiving/idiot-proof.\n\nIt should be built in Swift 6.2 (and SwiftUI, if applicable). It should have best-in-class keyboard support.\n\nGround everything in the latest features available as of December, 2025. It should work on both Silicon and Intel Macs.\n\nEvery feature should work extremely well. Special attention should be paid to DX/UX. The app should be a pleasure to use.\n\nInclude extensive HTML mocks that clearly describe how the app looks, what state transitions look like.",
+  "createTime": "2025-12-13T21:40:44.485451923Z",
+  "updateTime": "2025-12-16T21:36:42.937953Z",
+  "state": "AWAITING_PLAN_APPROVAL",
+  "sourceContext": {
+    "source": "sources/",
+    "githubRepoContext": {}
+  },
+  "prompt": "Come up with the requirements for a highly sophisticated clipboard manager for macOS Sequoia+. It should improve the standard clipboard in every possible way, while remaining out of the way. It should _just work_. It should provide tangibly smart features that enhance my overall experience as a developer, power user and even as a normal user.\n\nIt should be a native, lightweight, blazingly fast, aesthetically beautiful menubar app that integrates with all relevant macOS features seamlessly, is a good macOS citizen, follows all best practices. It should be very forgiving/idiot-proof.\n\nIt should be built in Swift 6.2 (and SwiftUI, if applicable). It should have best-in-class keyboard support.\n\nGround everything in the latest features available as of December, 2025. It should work on both Silicon and Intel Macs.\n\nEvery feature should work extremely well. Special attention should be paid to DX/UX. The app should be a pleasure to use.\n\nInclude extensive HTML mocks that clearly describe how the app looks, what state transitions look like.",
+  "url": "https://jules.google.com/session/14365396085129174100",
+  "id": "14365396085129174100"
+}

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Plan Detail View</title>
+    <style>
+        :root {
+            --accent: #8B5CF6;
+            --accent-light: rgba(139, 92, 246, 0.15);
+            --success: #22C55E;
+            --success-light: rgba(34, 197, 94, 0.1);
+            --warning: #F59E0B;
+            --warning-light: rgba(245, 158, 11, 0.1);
+            --error: #EF4444;
+            --background: #FFFFFF;
+            --surface: #F5F5F7;
+            --surface-elevated: #FFFFFF;
+            --separator: rgba(0, 0, 0, 0.06);
+            --text-primary: #1C1C1E;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --accent: #A78BFA;
+                --accent-light: rgba(167, 139, 250, 0.2);
+                --success: #34D399;
+                --success-light: rgba(52, 211, 153, 0.15);
+                --warning: #FBBF24;
+                --warning-light: rgba(251, 191, 36, 0.15);
+                --error: #F87171;
+                --background: #000000;
+                --surface: #1C1C1E;
+                --surface-elevated: #2C2C2E;
+                --separator: rgba(255, 255, 255, 0.08);
+                --text-primary: #FFFFFF;
+                --text-secondary: #A1A1AA;
+                --text-tertiary: #71717A;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #1C1C1E;
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 54px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 28px 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Navigation Header */
+        .nav-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px 12px;
+            background: var(--background);
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--accent);
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .nav-back svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--accent);
+        }
+
+        .nav-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-subtitle {
+            font-size: 12px;
+            color: var(--warning);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        /* Plan Header */
+        .plan-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--warning-light);
+        }
+
+        .plan-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--warning);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .plan-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .plan-info {
+            flex: 1;
+        }
+
+        .plan-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .plan-meta {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Steps List */
+        .steps-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 100px;
+        }
+
+        .step {
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            cursor: pointer;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .step.completed .step-number {
+            background: var(--success-light);
+            color: var(--success);
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 16px;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .step.completed .step-title {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .step-status {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .step-status.in-progress {
+            color: var(--warning);
+        }
+
+        .step-chevron {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-tertiary);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .step.expanded .step-chevron {
+            transform: rotate(90deg);
+        }
+
+        .step-detail {
+            display: none;
+            padding: 0 16px 16px 56px;
+        }
+
+        .step.expanded .step-detail {
+            display: block;
+        }
+
+        .step-description {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            background: var(--surface);
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .step-files {
+            margin-top: 12px;
+        }
+
+        .step-files-label {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .step-file-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .step-file {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--surface);
+            border-radius: 8px;
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+
+        .step-file svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--accent);
+        }
+
+        /* Bottom Actions */
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--background);
+            border-top: 1px solid var(--separator);
+            padding: 12px 16px 34px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 50px;
+            border-radius: 12px;
+            border: none;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-btn.revise {
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+
+        .action-btn.revise svg {
+            fill: var(--text-primary);
+        }
+
+        .action-btn.approve {
+            background: var(--success);
+            color: white;
+        }
+
+        .action-btn.approve svg {
+            fill: white;
+        }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: var(--text-primary);
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+            <span>7:41</span>
+            <span>...</span>
+        </div>
+
+        <div class="nav-header">
+            <div class="nav-back">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                Chat
+            </div>
+            <div class="nav-center">
+                <div class="nav-title">Implementation Plan</div>
+                <div class="nav-subtitle">Awaiting Approval</div>
+            </div>
+            <div style="width: 50px;"></div>
+        </div>
+
+        <div class="plan-header">
+            <div class="plan-icon">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+            </div>
+            <div class="plan-info">
+                <div class="plan-title">Add PasteFlow HTML mocks</div>
+                <div class="plan-meta">6 steps - Estimated 15-20 mins</div>
+            </div>
+        </div>
+
+        <div class="steps-container">
+            <div class="step completed">
+                <div class="step-header">
+                    <span class="step-number">1</span>
+                    <div class="step-content">
+                        <div class="step-title">Analyze existing mockup structure</div>
+                        <div class="step-status">Completed</div>
+                    </div>
+                    <svg class="step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+            </div>
+
+            <div class="step expanded">
+                <div class="step-header">
+                    <span class="step-number">2</span>
+                    <div class="step-content">
+                        <div class="step-title">Create REQUIREMENTS.md with product specification</div>
+                        <div class="step-status in-progress">In Progress</div>
+                    </div>
+                    <svg class="step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+                <div class="step-detail">
+                    <div class="step-description">
+                        Create a comprehensive requirements document that includes:
+                        <br><br>
+                        - Product vision and goals<br>
+                        - Core features and user flows<br>
+                        - Technical requirements<br>
+                        - UI/UX specifications<br>
+                        - Success metrics
+                    </div>
+                    <div class="step-files">
+                        <div class="step-files-label">Files to create:</div>
+                        <div class="step-file-list">
+                            <span class="step-file">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                                REQUIREMENTS.md
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-number">3</span>
+                    <div class="step-content">
+                        <div class="step-title">Design main clipboard interface mockup</div>
+                        <div class="step-status">Pending</div>
+                    </div>
+                    <svg class="step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-number">4</span>
+                    <div class="step-content">
+                        <div class="step-title">Create clipboard history view mockup</div>
+                        <div class="step-status">Pending</div>
+                    </div>
+                    <svg class="step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-number">5</span>
+                    <div class="step-content">
+                        <div class="step-title">Design settings and preferences screen</div>
+                        <div class="step-status">Pending</div>
+                    </div>
+                    <svg class="step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-header">
+                    <span class="step-number">6</span>
+                    <div class="step-content">
+                        <div class="step-title">Add interactive JavaScript behaviors</div>
+                        <div class="step-status">Pending</div>
+                    </div>
+                    <svg class="step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <div class="action-row">
+                <button class="action-btn revise">
+                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    Revise
+                </button>
+                <button class="action-btn approve">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    Approve Plan
+                </button>
+            </div>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+</body>
+</html>

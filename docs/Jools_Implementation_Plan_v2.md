@@ -35,6 +35,7 @@
 20. [Accessibility Guidelines](#20-accessibility-guidelines)
 21. [HTML UI Mocks](#21-html-ui-mocks)
 22. [Appendices](#22-appendices)
+23. [Jules Web UI Feature Parity](#23-jules-web-ui-feature-parity)
 
 ---
 
@@ -3967,11 +3968,12 @@ SessionCard(session: session)
 
 Interactive HTML mockups are provided in the `docs/mocks/` directory. These follow Apple Human Interface Guidelines and iOS 26 design language with:
 
-- **Dark Mode First:** All designs optimized for dark appearance
+- **Light & Dark Mode:** Complete designs for both appearances with auto-switching support
 - **Dynamic Island:** Proper safe area handling
 - **SF Pro Typography:** System fonts with proper weights
 - **iOS 26 Visual Language:** Glassmorphism, depth, and subtle animations
 - **Accessibility Ready:** Proper contrast ratios and touch targets
+- **Enhanced Chat Features:** Jules avatar, command execution, file pills, collapsible plan steps, completion card with diff stats
 
 ### 21.1 Available Mocks
 
@@ -3980,28 +3982,38 @@ Interactive HTML mockups are provided in the `docs/mocks/` directory. These foll
 | **Onboarding** | `mocks/onboarding.html` | API key entry with animated gradient background |
 | **Dashboard** | `mocks/dashboard.html` | Main screen with usage stats, sources, and sessions |
 | **Chat** | `mocks/chat.html` | Session conversation with plan approval UI |
+| **Chat Enhanced (Light)** | `mocks/chat-enhanced.html` | Enhanced chat with Jules avatar, file pills, collapsible plan, completion card |
+| **Chat Enhanced (Dark)** | `mocks/chat-enhanced-dark.html` | Dark mode version of enhanced chat |
+| **Chat Enhanced (Auto)** | `mocks/chat-enhanced-auto.html` | Auto theme switching with toggle buttons |
+| **Create Session** | `mocks/create-session.html` | Full create session flow with mode selection and options |
+| **Session Running** | `mocks/session-running.html` | Active session with progress card, typing indicator, running commands |
+| **Session Complete** | `mocks/session-complete.html` | Completed session with success hero, PR card, stats, feedback |
+| **Plan Detail** | `mocks/plan-detail.html` | Full plan view with expandable steps and approve/revise actions |
+| **Code Viewer** | `mocks/code-viewer.html` | Sheet for viewing file diffs with syntax highlighting |
+| **Files List** | `mocks/files-list.html` | Sheet showing all changed files grouped by status |
+| **Feedback Sheet** | `mocks/feedback-sheet.html` | Bottom sheet for submitting session feedback |
 | **Settings** | `mocks/settings.html` | Grouped list settings with iOS styling |
 
 ### 21.2 Design System Tokens (CSS)
 
+#### Dark Mode (Default)
 ```css
 :root {
     /* Primary Colors */
-    --accent: #007AFF;
-    --green: #34C759;
-    --orange: #FF9500;
-    --red: #FF3B30;
-    --purple: #5856D6;
+    --accent: #A78BFA;  /* Violet 400 */
+    --success: #34D399; /* Emerald 400 */
+    --warning: #FBBF24; /* Amber 400 */
+    --error: #F87171;   /* Red 400 */
 
     /* Backgrounds */
     --background: #000000;
-    --surface: rgba(255, 255, 255, 0.08);
-    --surface-elevated: #1C1C1E;
+    --surface: #1C1C1E;
+    --surface-elevated: #2C2C2E;
 
     /* Text */
     --text-primary: #FFFFFF;
-    --text-secondary: rgba(255, 255, 255, 0.6);
-    --text-tertiary: rgba(255, 255, 255, 0.4);
+    --text-secondary: #A1A1AA;
+    --text-tertiary: #71717A;
 
     /* Borders */
     --border: rgba(255, 255, 255, 0.1);
@@ -4011,7 +4023,38 @@ Interactive HTML mockups are provided in the `docs/mocks/` directory. These foll
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
-    --radius-xl: 24px;
+    --radius-xl: 20px;
+}
+```
+
+#### Light Mode
+```css
+:root {
+    /* Primary Colors */
+    --accent: #8B5CF6;  /* Violet 500 */
+    --success: #22C55E; /* Green 500 */
+    --warning: #F59E0B; /* Amber 500 */
+    --error: #EF4444;   /* Red 500 */
+
+    /* Backgrounds */
+    --background: #FFFFFF;
+    --surface: #F5F5F7;
+    --surface-elevated: #FFFFFF;
+
+    /* Text */
+    --text-primary: #1C1C1E;
+    --text-secondary: #6B7280;
+    --text-tertiary: #9CA3AF;
+
+    /* Borders */
+    --border: rgba(0, 0, 0, 0.08);
+    --separator: rgba(0, 0, 0, 0.06);
+
+    /* Radii - same as dark mode */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
 }
 ```
 
@@ -4020,11 +4063,26 @@ Interactive HTML mockups are provided in the `docs/mocks/` directory. These foll
 Open the HTML files directly in a browser:
 
 ```bash
-# From project root
+# From project root - Core screens
 open docs/mocks/onboarding.html
 open docs/mocks/dashboard.html
-open docs/mocks/chat.html
 open docs/mocks/settings.html
+
+# Session flow
+open docs/mocks/create-session.html      # Creating a new session
+open docs/mocks/session-running.html     # Active session with progress
+open docs/mocks/session-complete.html    # Completed session with PR
+
+# Chat screens (auto theme recommended)
+open docs/mocks/chat-enhanced-auto.html  # Auto light/dark switching
+open docs/mocks/chat-enhanced.html       # Light mode only
+open docs/mocks/chat-enhanced-dark.html  # Dark mode only
+
+# Sheet modals
+open docs/mocks/plan-detail.html         # Full plan view
+open docs/mocks/code-viewer.html         # File diff viewer
+open docs/mocks/files-list.html          # Changed files list
+open docs/mocks/feedback-sheet.html      # Feedback submission
 ```
 
 ---
@@ -4116,6 +4174,802 @@ chore: lighten pre-push hook to lint + kit-build only
   - Added polling service implementation
   - Added component library
   - Restructured implementation phases
+
+---
+
+## 23. Jules Web UI Feature Parity
+
+> **Goal:** Match or exceed the official Jules web UI in functionality and polish.
+> **Reference:** Screenshots from jules.google.com (December 2025)
+
+### 23.1 Activity Types & Rich Rendering
+
+The web UI displays various activity types with rich formatting:
+
+| Activity Type | Web UI Display | iOS Implementation |
+|---------------|----------------|-------------------|
+| **Command Execution** | `Ran: mkdir -p mockups` with ✓ icon, expandable chevron | `CommandActivityView` with disclosure group |
+| **File Updates** | `Updated` + clickable file pill badges | `FileUpdateView` with tappable `FilePill` components |
+| **Multiple Files** | `file1.js file2.css and 2 more` (overflow) | `FileUpdateView` with "+N more" truncation |
+| **Agent Messages** | Text with optional embedded images | `AgentMessageView` with `AsyncImage` support |
+| **User Messages** | Right-aligned bubble | `UserMessageBubble` (existing) |
+| **Progress Updates** | Inline status with gear icon | `ProgressUpdateView` (existing) |
+| **Plan Generated** | Numbered collapsible steps | `PlanCard` with `DisclosureGroup` per step |
+| **Plan Approved** | "Plan approved 🎉" indicator | `PlanApprovedBadge` |
+| **Session Completed** | Success banner | `SessionCompletedView` (existing) |
+| **Session Failed** | Error banner | `SessionFailedView` (existing) |
+
+### 23.2 Plan Display Component
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  📋 Proposed Plan                                    [Hide] │
+├─────────────────────────────────────────────────────────────┤
+│  ① Draft the Comprehensive Requirements Document      ▼     │
+│  ② Create the Interactive HTML Mock (mockups/)        ▼     │
+│  ③ Create Static Flow Mocks (mockups/flows/)          ▼     │
+│  ④ Verify and Refine                                  ▼     │
+│  ⑤ Complete pre-submit steps                          ▼     │
+│  ⑥ Submit                                             ▼     │
+├─────────────────────────────────────────────────────────────┤
+│  [Revise]                              [Approve Plan ✓]     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Features:**
+- Numbered steps (1-6) with titles
+- Each step expandable via chevron (shows details when tapped)
+- "Hide" button to collapse entire plan
+- Step status indicators (pending/in-progress/completed)
+- Approve/Revise action buttons
+
+**Implementation:**
+```swift
+struct PlanStepsCard: View {
+    let steps: [PlanStepDTO]
+    @State private var isExpanded = true
+    @State private var expandedSteps: Set<Int> = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header with Hide button
+            HStack {
+                Label("Proposed Plan", systemImage: "doc.text")
+                Spacer()
+                Button(isExpanded ? "Hide" : "Show") {
+                    withAnimation { isExpanded.toggle() }
+                }
+            }
+
+            if isExpanded {
+                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                    PlanStepRow(
+                        number: index + 1,
+                        step: step,
+                        isExpanded: expandedSteps.contains(index),
+                        onToggle: { toggleStep(index) }
+                    )
+                }
+            }
+        }
+    }
+}
+```
+
+### 23.3 Completion Card
+
+When a session completes successfully:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Ready for review 🎉                          +1492  -0     │
+├─────────────────────────────────────────────────────────────┤
+│  feat: add PasteFlow requirements and mocks                 │
+│                                                             │
+│  - Added `REQUIREMENTS.md` detailing the product vision,    │
+│    features, and technical stack.                           │
+│  - Created interactive HTML mocks in `mockups/`             │
+│  - Verified mocks with Playwright screenshots.              │
+├─────────────────────────────────────────────────────────────┤
+│  👍 👎 Feedback                              Time: 22 mins  │
+│                                              [Download zip] │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Features:**
+- "Ready for review 🎉" header with party emoji
+- **Diff statistics**: `+N` (green) `-M` (red) for lines added/removed
+- Commit message preview (multi-line, markdown supported)
+- **Feedback buttons**: Thumbs up/down for rating
+- **Duration**: "Time: X mins" showing session duration
+- **Download zip**: Button to download code changes (opens web URL)
+
+**Implementation:**
+```swift
+struct CompletionCard: View {
+    let session: SessionEntity
+    let diffStats: DiffStats? // +additions, -deletions
+    let commitMessage: String
+    let duration: TimeInterval
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: JoolsSpacing.md) {
+            // Header with diff stats
+            HStack {
+                Text("Ready for review 🎉")
+                    .font(.joolsHeadline)
+                Spacer()
+                DiffStatsView(additions: diffStats?.additions ?? 0,
+                              deletions: diffStats?.deletions ?? 0)
+            }
+
+            Divider()
+
+            // Commit message
+            Text(commitMessage)
+                .font(.joolsBody)
+
+            Divider()
+
+            // Footer
+            HStack {
+                FeedbackButtons(sessionId: session.id)
+                Spacer()
+                Text("Time: \(formatDuration(duration))")
+                    .font(.joolsCaption)
+                DownloadZipButton(session: session)
+            }
+        }
+        .padding()
+        .background(Color.joolsSurface)
+        .overlay(
+            RoundedRectangle(cornerRadius: JoolsRadius.md)
+                .stroke(Color.joolsSuccess, lineWidth: 2)
+        )
+    }
+}
+
+struct DiffStatsView: View {
+    let additions: Int
+    let deletions: Int
+
+    var body: some View {
+        HStack(spacing: JoolsSpacing.xs) {
+            Text("+\(additions)")
+                .foregroundStyle(Color.joolsSuccess)
+                .fontWeight(.semibold)
+            Text("-\(deletions)")
+                .foregroundStyle(Color.joolsError)
+                .fontWeight(.semibold)
+        }
+        .font(.joolsCaption)
+    }
+}
+```
+
+### 23.4 Code Panel (iPad/macOS)
+
+On larger screens, show a code diff panel on the right:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Code                                           ⬇️  ⤢        │
+├──────────────────────────────────────────────────────────────┤
+│  📄 mockup...  +98                                           │
+├──────────────────────────────────────────────────────────────┤
+│  35 + </head>                                                │
+│  36 + <body>                                                 │
+│  37 +                                                        │
+│  38 +     <div class="app-container">                        │
+│  39 +                                                        │
+│  40 +         <!-- Sidebar -->                               │
+│  41 +         <div class="sidebar">                          │
+│  ...                                                         │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Features:**
+- File tabs with diff count badges (`+98`)
+- Line numbers with `+` (addition) / `-` (deletion) indicators
+- Syntax highlighting (Swift, HTML, CSS, JS, etc.)
+- Download button (⬇️)
+- Fullscreen/expand button (⤢)
+
+**Implementation Notes:**
+- Use `Highlightr` or similar for syntax highlighting
+- Show on iPad in split view, macOS in sidebar
+- On iPhone, show as modal when file pill is tapped
+
+### 23.5 File Pills (Clickable Badges)
+
+Files mentioned in activities should be tappable badges:
+
+```swift
+struct FilePill: View {
+    let filename: String
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            Text(filename)
+                .font(.joolsCaption)
+                .fontDesign(.monospaced)
+                .padding(.horizontal, JoolsSpacing.sm)
+                .padding(.vertical, JoolsSpacing.xxs)
+                .background(Color.joolsSurface)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.secondary.opacity(0.3)))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct FileUpdateView: View {
+    let files: [String]
+    let maxVisible: Int = 3
+
+    var body: some View {
+        HStack(spacing: JoolsSpacing.xs) {
+            Text("Updated")
+                .font(.joolsCaption)
+                .foregroundStyle(.secondary)
+
+            ForEach(files.prefix(maxVisible), id: \.self) { file in
+                FilePill(filename: file) {
+                    // Show file content in modal/sheet
+                }
+            }
+
+            if files.count > maxVisible {
+                Text("and \(files.count - maxVisible) more")
+                    .font(.joolsCaption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+```
+
+### 23.6 Command Execution View
+
+Show executed commands with expandable output:
+
+```swift
+struct CommandExecutionView: View {
+    let command: String
+    let output: String?
+    let success: Bool
+    @State private var isExpanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            if let output = output {
+                Text(output)
+                    .font(.system(.caption, design: .monospaced))
+                    .padding()
+                    .background(Color.black.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.sm))
+            }
+        } label: {
+            HStack(spacing: JoolsSpacing.sm) {
+                Image(systemName: success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundStyle(success ? Color.joolsSuccess : Color.joolsError)
+
+                Text("Ran:")
+                    .font(.joolsCaption)
+                    .foregroundStyle(.secondary)
+
+                Text(command)
+                    .font(.system(.body, design: .monospaced))
+                    .lineLimit(1)
+            }
+        }
+    }
+}
+```
+
+### 23.7 Jules Avatar (Animated)
+
+The web UI shows a small animated Jules avatar (octopus) next to agent responses:
+
+```swift
+struct JulesAvatar: View {
+    @State private var offsetY: CGFloat = 0
+
+    var body: some View {
+        Image("jules-avatar") // Custom asset or SF Symbol fallback
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24, height: 24)
+            .offset(y: offsetY)
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: 1.5)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    offsetY = -4
+                }
+            }
+    }
+}
+
+// Usage in agent message bubble:
+struct AgentMessageBubble: View {
+    let content: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: JoolsSpacing.sm) {
+            JulesAvatar()
+
+            Text(content)
+                .font(.joolsBody)
+                .padding()
+                .background(Color.joolsBubbleAgent)
+                .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.lg))
+
+            Spacer(minLength: 60)
+        }
+    }
+}
+```
+
+### 23.8 Bottom Bar Enhancements
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Daily session limit (0/100)                                │
+├─────────────────────────────────────────────────────────────┤
+│  [📎]  Talk to Jules...                              [➤]   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Features:**
+- Usage indicator showing daily limit
+- Attachment button (📎) for uploading files/images
+- Placeholder text: "Talk to Jules"
+- Animated send button
+
+```swift
+struct EnhancedInputBar: View {
+    @Binding var text: String
+    let usageCount: Int
+    let usageLimit: Int
+    let onAttach: () -> Void
+    let onSend: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Usage indicator
+            HStack {
+                Text("Daily session limit (\(usageCount)/\(usageLimit))")
+                    .font(.joolsCaption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.vertical, JoolsSpacing.xs)
+
+            Divider()
+
+            // Input bar
+            HStack(spacing: JoolsSpacing.sm) {
+                Button(action: onAttach) {
+                    Image(systemName: "paperclip")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+
+                TextField("Talk to Jules", text: $text, axis: .vertical)
+                    .lineLimit(1...5)
+
+                AnimatedSendButton(isEnabled: !text.isEmpty, action: onSend)
+            }
+            .padding()
+        }
+        .background(.bar)
+    }
+}
+
+struct AnimatedSendButton: View {
+    let isEnabled: Bool
+    let action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3)) {
+                isPressed = true
+            }
+            action()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                isPressed = false
+            }
+        }) {
+            Image(systemName: "arrow.up.circle.fill")
+                .font(.title)
+                .foregroundStyle(isEnabled ? Color.joolsAccent : .secondary)
+                .scaleEffect(isPressed ? 0.9 : 1.0)
+        }
+        .disabled(!isEnabled)
+    }
+}
+```
+
+### 23.9 Embedded Images in Messages
+
+Support for viewing screenshots and images inline:
+
+```swift
+struct EmbeddedImageView: View {
+    let imageURL: URL
+    @State private var showFullscreen = false
+
+    var body: some View {
+        AsyncImage(url: imageURL) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 300)
+                    .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+                    .onTapGesture { showFullscreen = true }
+            case .failure:
+                Image(systemName: "photo")
+                    .foregroundStyle(.secondary)
+            case .empty:
+                ProgressView()
+            @unknown default:
+                EmptyView()
+            }
+        }
+        .fullScreenCover(isPresented: $showFullscreen) {
+            ImageViewer(imageURL: imageURL)
+        }
+    }
+}
+```
+
+### 23.10 Feedback Component
+
+Thumbs up/down for rating session quality:
+
+```swift
+struct FeedbackButtons: View {
+    let sessionId: String
+    @State private var feedback: Feedback? = nil
+
+    enum Feedback { case positive, negative }
+
+    var body: some View {
+        HStack(spacing: JoolsSpacing.sm) {
+            Button {
+                HapticManager.shared.lightImpact()
+                feedback = .positive
+                // TODO: Send to analytics/API
+            } label: {
+                Image(systemName: feedback == .positive ? "hand.thumbsup.fill" : "hand.thumbsup")
+                    .foregroundStyle(feedback == .positive ? Color.joolsAccent : .secondary)
+            }
+
+            Button {
+                HapticManager.shared.lightImpact()
+                feedback = .negative
+                // TODO: Send to analytics/API
+            } label: {
+                Image(systemName: feedback == .negative ? "hand.thumbsdown.fill" : "hand.thumbsdown")
+                    .foregroundStyle(feedback == .negative ? Color.joolsError : .secondary)
+            }
+
+            Text("Feedback")
+                .font(.joolsCaption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+```
+
+### 23.11 iOS Mobile Adaptations
+
+The web UI is designed for wide desktop screens. On iPhone, we must be creative with limited space while maintaining functionality and aesthetics.
+
+#### Design Principles for Mobile
+
+1. **Vertical-First Layout** - Stack elements vertically, not horizontally
+2. **Progressive Disclosure** - Hide complexity until needed (sheets, expandable sections)
+3. **Touch-Friendly** - Minimum 44pt tap targets, swipe gestures
+4. **Native Patterns** - Use iOS idioms (sheets, context menus, navigation stacks)
+5. **Glanceable Info** - Show key metrics prominently, details on demand
+
+#### Feature-by-Feature Adaptations
+
+| Feature | Web UI | iOS Adaptation |
+|---------|--------|----------------|
+| **Code Panel** | Right sidebar (always visible) | Full-screen sheet on file tap; iPad: split view |
+| **Plan Steps** | Wide card with inline expansion | `DisclosureGroup` with step details as expandable rows |
+| **File Pills** | Horizontal row | Wrap to multiple lines; "+N more" opens sheet with full list |
+| **Completion Card** | Full-width with all info | Compact card; tap for full details in sheet |
+| **Diff Stats** | `+1492 -0` inline | Tappable badge → sheet with file-by-file breakdown |
+| **Download Zip** | Button | Share sheet (more iOS-native) |
+| **Command Output** | Inline expandable | Expandable with horizontal scroll for long commands |
+| **Embedded Images** | Medium inline | Thumbnail → full-screen viewer with zoom/pan |
+| **Usage Indicator** | In input bar | Navigation bar subtitle or collapsible header |
+| **Feedback** | Inline buttons | Same, but with haptic feedback on tap |
+
+#### Compact Plan Card (iPhone)
+
+```
+┌─────────────────────────────────────────┐
+│  📋 Plan (6 steps)              [Hide]  │
+├─────────────────────────────────────────┤
+│  ▶ ① Draft requirements document        │
+│  ▶ ② Create HTML mock                   │
+│  ▶ ③ Create flow mocks                  │
+│    ⋮ 3 more steps                       │
+├─────────────────────────────────────────┤
+│  [Revise]              [Approve ✓]      │
+└─────────────────────────────────────────┘
+
+Tapping a step expands it inline:
+┌─────────────────────────────────────────┐
+│  ▼ ① Draft requirements document        │
+│     Create REQUIREMENTS.md with:        │
+│     • Product vision                    │
+│     • Feature list                      │
+│     • Technical stack                   │
+└─────────────────────────────────────────┘
+```
+
+#### Compact Completion Card (iPhone)
+
+```
+┌─────────────────────────────────────────┐
+│  🎉 Ready for review        +1.5k  -0   │
+├─────────────────────────────────────────┤
+│  feat: add PasteFlow requirements...    │
+│                          [See full ▶]   │
+├─────────────────────────────────────────┤
+│  👍 👎    22 mins            [Share ↗]  │
+└─────────────────────────────────────────┘
+
+Tapping "See full" opens sheet with:
+• Full commit message
+• File-by-file diff breakdown
+• View PR button
+• Download options
+```
+
+#### File Pills with Overflow
+
+```
+When 2 files:
+┌──────────────────────────────────────┐
+│ Updated [app.js] [styles.css]        │
+└──────────────────────────────────────┘
+
+When 5+ files:
+┌──────────────────────────────────────┐
+│ Updated [app.js] [styles.css] +3 ▶   │
+└──────────────────────────────────────┘
+
+Tapping "+3" opens sheet:
+┌──────────────────────────────────────┐
+│  Updated Files (5)            [Done] │
+├──────────────────────────────────────┤
+│  📄 app.js                           │
+│  📄 styles.css                       │
+│  📄 index.html                       │
+│  📄 settings.html                    │
+│  📄 utils.js                         │
+└──────────────────────────────────────┘
+```
+
+#### Code Viewer (Full-Screen Sheet)
+
+When user taps a file pill on iPhone:
+
+```
+┌──────────────────────────────────────┐
+│  ← app.js                 +98 lines  │
+├──────────────────────────────────────┤
+│  35 │ + </head>                      │
+│  36 │ + <body>                       │
+│  37 │ +                              │
+│  38 │ +   <div class="app">          │
+│  39 │ +     <!-- Sidebar -->         │
+│  40 │ +     <div class="sidebar">    │
+│  41 │ +       <h2>Menu</h2>          │
+│     │   ⋮                            │
+├──────────────────────────────────────┤
+│  [Copy All]    [Open in GitHub ↗]    │
+└──────────────────────────────────────┘
+```
+
+#### Context Menus for Power Users
+
+Long-press actions throughout the app:
+
+```swift
+// File pill long-press
+.contextMenu {
+    Button("Copy Filename") { ... }
+    Button("Copy Full Path") { ... }
+    Button("View in GitHub") { ... }
+    Button("Share") { ... }
+}
+
+// Command execution long-press
+.contextMenu {
+    Button("Copy Command") { ... }
+    Button("Copy Output") { ... }
+}
+
+// Message bubble long-press
+.contextMenu {
+    Button("Copy Text") { ... }
+    Button("Share") { ... }
+}
+```
+
+#### Swipe Actions
+
+```swift
+// Session row in list
+.swipeActions(edge: .trailing) {
+    Button("Delete", role: .destructive) { ... }
+}
+.swipeActions(edge: .leading) {
+    Button("Archive") { ... }
+        .tint(.orange)
+}
+
+// Plan step row
+.swipeActions(edge: .trailing) {
+    Button("Skip") { ... }
+        .tint(.secondary)
+}
+```
+
+#### Adaptive Layout for iPad
+
+```swift
+struct ChatView: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
+
+    var body: some View {
+        if sizeClass == .regular {
+            // iPad: Side-by-side layout
+            HStack(spacing: 0) {
+                chatContent
+                    .frame(maxWidth: .infinity)
+
+                Divider()
+
+                CodePanelView()
+                    .frame(width: 400)
+            }
+        } else {
+            // iPhone: Chat only, code in sheets
+            chatContent
+        }
+    }
+}
+```
+
+#### Compact Jules Avatar
+
+On iPhone, use a smaller avatar that doesn't take too much horizontal space:
+
+```swift
+struct CompactJulesAvatar: View {
+    @State private var offsetY: CGFloat = 0
+
+    var body: some View {
+        Image(systemName: "bubble.left.fill") // Or custom asset
+            .font(.system(size: 16))
+            .foregroundStyle(Color.joolsAccent)
+            .offset(y: offsetY)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                    offsetY = -2
+                }
+            }
+    }
+}
+```
+
+#### Smart Input Bar
+
+Collapse usage indicator when keyboard is shown to maximize chat space:
+
+```swift
+struct SmartInputBar: View {
+    @FocusState private var isFocused: Bool
+    let usageCount: Int
+    let usageLimit: Int
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Only show when keyboard hidden
+            if !isFocused {
+                UsageIndicator(count: usageCount, limit: usageLimit)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            InputField(isFocused: $isFocused)
+        }
+        .animation(.easeInOut(duration: 0.2), value: isFocused)
+    }
+}
+```
+
+### 23.12 Implementation Priority
+
+| Priority | Feature | Complexity | Impact |
+|----------|---------|------------|--------|
+| P0 | Plan steps with collapse | Medium | High |
+| P0 | File pills (tappable) | Low | High |
+| P0 | Command execution view | Low | High |
+| P0 | Completion card with diff stats | Medium | High |
+| P1 | Jules avatar (animated) | Low | Medium |
+| P1 | Embedded images | Medium | Medium |
+| P1 | Feedback buttons | Low | Low |
+| P2 | Code panel (iPad) | High | Medium |
+| P2 | Syntax highlighting | High | Medium |
+| P2 | Download zip button | Low | Low |
+
+### 23.12 Activity Content DTO Mapping
+
+The API returns different content structures per activity type:
+
+```swift
+// Enhanced ActivityContentDTO parsing
+extension ActivityEntity {
+    var richContent: RichActivityContent {
+        guard let content = try? JSONDecoder().decode(ActivityContentDTO.self, from: contentJSON) else {
+            return .unknown
+        }
+
+        switch type {
+        case .userMessaged, .agentMessaged:
+            return .message(content.message ?? "")
+
+        case .planGenerated:
+            if let plan = content.plan {
+                return .plan(steps: plan.steps ?? [])
+            }
+            return .unknown
+
+        case .progressUpdated:
+            if let command = content.command {
+                return .command(cmd: command, output: content.output, success: content.success ?? true)
+            }
+            return .progress(content.progress ?? "Working...")
+
+        case .sessionCompleted:
+            return .completion(
+                summary: content.summary,
+                diffStats: content.diffStats,
+                commitMessage: content.commitMessage
+            )
+
+        default:
+            return .unknown
+        }
+    }
+}
+
+enum RichActivityContent {
+    case message(String)
+    case plan(steps: [PlanStepDTO])
+    case command(cmd: String, output: String?, success: Bool)
+    case progress(String)
+    case fileUpdate(files: [String])
+    case completion(summary: String?, diffStats: DiffStats?, commitMessage: String?)
+    case image(url: URL)
+    case unknown
+}
+```
 
 ---
 

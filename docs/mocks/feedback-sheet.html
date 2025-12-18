@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Feedback Sheet</title>
+    <style>
+        :root {
+            --accent: #8B5CF6;
+            --accent-light: rgba(139, 92, 246, 0.15);
+            --success: #22C55E;
+            --success-light: rgba(34, 197, 94, 0.1);
+            --error: #EF4444;
+            --error-light: rgba(239, 68, 68, 0.1);
+            --background: #FFFFFF;
+            --surface: #F5F5F7;
+            --surface-elevated: #FFFFFF;
+            --separator: rgba(0, 0, 0, 0.06);
+            --text-primary: #1C1C1E;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --accent: #A78BFA;
+                --accent-light: rgba(167, 139, 250, 0.2);
+                --success: #34D399;
+                --success-light: rgba(52, 211, 153, 0.15);
+                --error: #F87171;
+                --error-light: rgba(248, 113, 113, 0.15);
+                --background: #000000;
+                --surface: #1C1C1E;
+                --surface-elevated: #2C2C2E;
+                --separator: rgba(255, 255, 255, 0.08);
+                --text-primary: #FFFFFF;
+                --text-secondary: #A1A1AA;
+                --text-tertiary: #71717A;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #1C1C1E;
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .sheet-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--background);
+            border-radius: 20px 20px 0 0;
+            padding-bottom: 34px;
+        }
+
+        .sheet-handle {
+            width: 36px;
+            height: 5px;
+            background: var(--text-tertiary);
+            border-radius: 3px;
+            margin: 8px auto;
+            opacity: 0.5;
+        }
+
+        .sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px 16px;
+        }
+
+        .sheet-cancel {
+            font-size: 17px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .sheet-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .sheet-submit {
+            font-size: 17px;
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .sheet-submit.disabled {
+            color: var(--text-tertiary);
+        }
+
+        /* Rating Section */
+        .rating-section {
+            padding: 0 16px 24px;
+            text-align: center;
+        }
+
+        .rating-question {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .rating-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .rating-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .rating-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--separator);
+            transition: all 0.2s;
+        }
+
+        .rating-icon svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--text-tertiary);
+            transition: fill 0.2s;
+        }
+
+        .rating-btn:hover .rating-icon {
+            border-color: var(--accent);
+        }
+
+        .rating-btn:hover .rating-icon svg {
+            fill: var(--accent);
+        }
+
+        .rating-btn.selected.positive .rating-icon {
+            background: var(--success-light);
+            border-color: var(--success);
+        }
+
+        .rating-btn.selected.positive .rating-icon svg {
+            fill: var(--success);
+        }
+
+        .rating-btn.selected.negative .rating-icon {
+            background: var(--error-light);
+            border-color: var(--error);
+        }
+
+        .rating-btn.selected.negative .rating-icon svg {
+            fill: var(--error);
+        }
+
+        .rating-label {
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        /* Feedback Categories */
+        .categories-section {
+            padding: 0 16px 20px;
+        }
+
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .category-chip {
+            padding: 8px 16px;
+            background: var(--surface);
+            border-radius: 20px;
+            font-size: 15px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .category-chip:hover {
+            background: var(--accent-light);
+        }
+
+        .category-chip.selected {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Comment Section */
+        .comment-section {
+            padding: 0 16px 20px;
+        }
+
+        .comment-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 14px;
+            background: var(--surface);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            color: var(--text-primary);
+            resize: none;
+            font-family: inherit;
+        }
+
+        .comment-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .comment-input:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+        }
+
+        .comment-hint {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-top: 8px;
+        }
+
+        /* Privacy Note */
+        .privacy-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 16px;
+            background: var(--surface);
+            margin: 0 16px;
+            border-radius: 12px;
+        }
+
+        .privacy-note svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-tertiary);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .privacy-note p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: var(--text-primary);
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+
+        <div class="sheet-backdrop"></div>
+
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+
+            <div class="sheet-header">
+                <div class="sheet-cancel">Cancel</div>
+                <div class="sheet-title">Feedback</div>
+                <div class="sheet-submit">Submit</div>
+            </div>
+
+            <div class="rating-section">
+                <div class="rating-question">How did Jules do?</div>
+                <div class="rating-buttons">
+                    <div class="rating-btn selected positive">
+                        <div class="rating-icon">
+                            <svg viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+                        </div>
+                        <span class="rating-label">Good</span>
+                    </div>
+                    <div class="rating-btn negative">
+                        <div class="rating-icon">
+                            <svg viewBox="0 0 24 24"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+                        </div>
+                        <span class="rating-label">Needs Work</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="categories-section">
+                <div class="section-label">What went well? (Optional)</div>
+                <div class="category-chips">
+                    <div class="category-chip selected">Code quality</div>
+                    <div class="category-chip">Fast completion</div>
+                    <div class="category-chip selected">Good plan</div>
+                    <div class="category-chip">Followed instructions</div>
+                    <div class="category-chip">Clean commits</div>
+                </div>
+            </div>
+
+            <div class="comment-section">
+                <div class="section-label">Additional comments (Optional)</div>
+                <textarea class="comment-input" placeholder="Tell us more about your experience..."></textarea>
+                <div class="comment-hint">Your feedback helps improve Jules</div>
+            </div>
+
+            <div class="privacy-note">
+                <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                <p>Your feedback is anonymous and helps us improve Jules. Session details may be included for context.</p>
+            </div>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+</body>
+</html>

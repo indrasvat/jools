@@ -1,0 +1,14 @@
+{
+  "name": "sessions/1351893935901700478",
+  "title": "API Test Session",
+  "sourceContext": {
+    "source": "sources/github/indrasvat/hews",
+    "githubRepoContext": {
+      "startingBranch": "main"
+    }
+  },
+  "prompt": "API test - list files in root directory",
+  "url": "https://jules.google.com/session/1351893935901700478",
+  "requirePlanApproval": true,
+  "id": "1351893935901700478"
+}

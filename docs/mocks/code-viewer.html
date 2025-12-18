@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Code Viewer Sheet</title>
+    <style>
+        :root {
+            --accent: #8B5CF6;
+            --accent-light: rgba(139, 92, 246, 0.15);
+            --success: #22C55E;
+            --success-light: rgba(34, 197, 94, 0.1);
+            --error: #EF4444;
+            --error-light: rgba(239, 68, 68, 0.1);
+            --background: #FFFFFF;
+            --surface: #F5F5F7;
+            --surface-elevated: #FFFFFF;
+            --border: rgba(0, 0, 0, 0.08);
+            --separator: rgba(0, 0, 0, 0.06);
+            --text-primary: #1C1C1E;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+            --code-bg: #1C1C1E;
+            --code-text: #E5E5E5;
+            --line-add-bg: rgba(34, 197, 94, 0.15);
+            --line-remove-bg: rgba(239, 68, 68, 0.15);
+            --line-add-text: #166534;
+            --line-remove-text: #991B1B;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --accent: #A78BFA;
+                --accent-light: rgba(167, 139, 250, 0.2);
+                --success: #34D399;
+                --success-light: rgba(52, 211, 153, 0.15);
+                --error: #F87171;
+                --error-light: rgba(248, 113, 113, 0.15);
+                --background: #000000;
+                --surface: #1C1C1E;
+                --surface-elevated: #2C2C2E;
+                --border: rgba(255, 255, 255, 0.1);
+                --separator: rgba(255, 255, 255, 0.08);
+                --text-primary: #FFFFFF;
+                --text-secondary: #A1A1AA;
+                --text-tertiary: #71717A;
+                --code-bg: #0D0D0D;
+                --code-text: #E5E5E5;
+                --line-add-bg: rgba(34, 197, 94, 0.2);
+                --line-remove-bg: rgba(248, 113, 113, 0.2);
+                --line-add-text: #34D399;
+                --line-remove-text: #F87171;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #1C1C1E;
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        /* Sheet appears from bottom */
+        .sheet-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 85%;
+            background: var(--background);
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sheet-handle {
+            width: 36px;
+            height: 5px;
+            background: var(--text-tertiary);
+            border-radius: 3px;
+            margin: 8px auto;
+            opacity: 0.5;
+        }
+
+        .sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .sheet-close {
+            width: 30px;
+            height: 30px;
+            background: var(--surface);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .sheet-close svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-secondary);
+        }
+
+        .sheet-title-area {
+            flex: 1;
+            text-align: center;
+        }
+
+        .sheet-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .sheet-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', Menlo, monospace;
+        }
+
+        .sheet-action {
+            font-size: 17px;
+            color: var(--accent);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* File Info Bar */
+        .file-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .file-path {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-icon {
+            width: 20px;
+            height: 20px;
+            fill: var(--accent);
+        }
+
+        .file-name {
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .diff-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .diff-add { color: var(--success); }
+        .diff-remove { color: var(--error); }
+
+        /* View Mode Toggle */
+        .view-toggle {
+            display: flex;
+            padding: 8px 16px;
+            gap: 8px;
+            background: var(--surface);
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: transparent;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: var(--background);
+            color: var(--text-primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Code View */
+        .code-container {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--code-bg);
+        }
+
+        .code-line {
+            display: flex;
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .line-number {
+            width: 44px;
+            padding: 0 8px;
+            text-align: right;
+            color: #6B7280;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .line-marker {
+            width: 20px;
+            text-align: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .line-content {
+            flex: 1;
+            padding-right: 16px;
+            color: var(--code-text);
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .code-line.added {
+            background: var(--line-add-bg);
+        }
+
+        .code-line.added .line-marker {
+            color: var(--line-add-text);
+        }
+
+        .code-line.removed {
+            background: var(--line-remove-bg);
+        }
+
+        .code-line.removed .line-marker {
+            color: var(--line-remove-text);
+        }
+
+        /* Syntax Highlighting */
+        .keyword { color: #FF79C6; }
+        .string { color: #F1FA8C; }
+        .comment { color: #6272A4; }
+        .function { color: #50FA7B; }
+        .type { color: #8BE9FD; }
+        .number { color: #BD93F9; }
+
+        /* Bottom Actions */
+        .bottom-actions {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            padding-bottom: 34px;
+            background: var(--background);
+            border-top: 1px solid var(--separator);
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 50px;
+            border-radius: 12px;
+            border: none;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-btn.secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+
+        .action-btn.secondary svg {
+            fill: var(--text-primary);
+        }
+
+        .action-btn.primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .action-btn.primary svg {
+            fill: white;
+        }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: var(--text-primary);
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+
+        <div class="sheet-backdrop"></div>
+
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+
+            <div class="sheet-header">
+                <div class="sheet-close">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </div>
+                <div class="sheet-title-area">
+                    <div class="sheet-title">File Changes</div>
+                    <div class="sheet-subtitle">1 of 5 files</div>
+                </div>
+                <div class="sheet-action">Done</div>
+            </div>
+
+            <div class="file-info">
+                <div class="file-path">
+                    <svg class="file-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    <span class="file-name">ChatViewModel.swift</span>
+                </div>
+                <div class="diff-stats">
+                    <span class="diff-add">+45</span>
+                    <span class="diff-remove">-12</span>
+                </div>
+            </div>
+
+            <div class="view-toggle">
+                <div class="toggle-btn active">Unified</div>
+                <div class="toggle-btn">Split</div>
+                <div class="toggle-btn">Raw</div>
+            </div>
+
+            <div class="code-container">
+                <div class="code-line">
+                    <span class="line-number">42</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content"><span class="keyword">import</span> <span class="type">SwiftUI</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">43</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content"><span class="keyword">import</span> <span class="type">SwiftData</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">44</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content"></span>
+                </div>
+                <div class="code-line removed">
+                    <span class="line-number">45</span>
+                    <span class="line-marker">-</span>
+                    <span class="line-content"><span class="keyword">class</span> <span class="type">ChatViewModel</span>: <span class="type">ObservableObject</span> {</span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">45</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content"><span class="keyword">@MainActor</span></span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">46</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content"><span class="keyword">final class</span> <span class="type">ChatViewModel</span>: <span class="type">ObservableObject</span> {</span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">47</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content">    <span class="keyword">@Published var</span> messages: [<span class="type">Message</span>] = []</span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">48</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content">    <span class="keyword">@Published var</span> isLoading = <span class="keyword">false</span></span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">49</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">    <span class="keyword">@Published var</span> planSteps: [<span class="type">PlanStep</span>] = []</span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">50</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">    <span class="keyword">@Published var</span> showPlanCard = <span class="keyword">false</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">51</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content"></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">52</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content">    <span class="keyword">private let</span> apiClient: <span class="type">JulesAPIClient</span></span>
+                </div>
+                <div class="code-line removed">
+                    <span class="line-number">53</span>
+                    <span class="line-marker">-</span>
+                    <span class="line-content">    <span class="keyword">private var</span> timer: <span class="type">Timer</span>?</span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">53</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">    <span class="keyword">private let</span> pollingService: <span class="type">PollingService</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">54</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content"></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">55</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content">    <span class="comment">// MARK: - Initialization</span></span>
+                </div>
+                <div class="code-line">
+                    <span class="line-number">56</span>
+                    <span class="line-marker"></span>
+                    <span class="line-content"></span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">57</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">    <span class="keyword">init</span>(apiClient: <span class="type">JulesAPIClient</span>, session: <span class="type">SessionEntity</span>) {</span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">58</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">        <span class="keyword">self</span>.apiClient = apiClient</span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">59</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">        <span class="keyword">self</span>.pollingService = <span class="type">PollingService</span>()</span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">60</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">        <span class="keyword">self</span>.pollingService.delegate = <span class="keyword">self</span></span>
+                </div>
+                <div class="code-line added">
+                    <span class="line-number">61</span>
+                    <span class="line-marker">+</span>
+                    <span class="line-content">    }</span>
+                </div>
+            </div>
+
+            <div class="bottom-actions">
+                <button class="action-btn secondary">
+                    <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    Previous
+                </button>
+                <button class="action-btn primary">
+                    Next
+                    <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+</body>
+</html>

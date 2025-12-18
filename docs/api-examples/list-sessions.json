@@ -1,0 +1,72 @@
+{
+  "sessions": [
+    {
+      "name": "sessions/2948989708192274074",
+      "title": "What is the next open issue to work on based on cr",
+      "createTime": "2025-12-18T04:28:49.806457166Z",
+      "updateTime": "2025-12-18T04:30:51.870324Z",
+      "state": "COMPLETED",
+      "sourceContext": {
+        "source": "sources/github/indrasvat/hews",
+        "githubRepoContext": {
+          "startingBranch": "main"
+        }
+      },
+      "prompt": "What is the next open issue to work on based on creation date?",
+      "url": "https://jules.google.com/session/2948989708192274074",
+      "id": "2948989708192274074"
+    },
+    {
+      "name": "sessions/2217485836236350684",
+      "title": "Show me the next open GitHub issue in order of cre",
+      "createTime": "2025-12-18T04:17:42.369594131Z",
+      "updateTime": "2025-12-18T04:19:08.795279Z",
+      "state": "COMPLETED",
+      "sourceContext": {
+        "source": "sources/github/indrasvat/hews",
+        "githubRepoContext": {
+          "startingBranch": "main"
+        }
+      },
+      "prompt": "Show me the next open GitHub issue in order of creation date",
+      "url": "https://jules.google.com/session/2217485836236350684",
+      "id": "2217485836236350684"
+    },
+    {
+      "name": "sessions/14365396085129174100",
+      "title": "Come up with the requirements for a highly sophisticated clipboard manager for macOS Sequoia+. It should improve the standard clipboard in every possible way, while remaining out of the way. It should _just work_. It should provide tangibly smart features that enhance my overall experience as a developer, power user and even as a normal user.\n\nIt should be a native, lightweight, blazingly fast, aesthetically beautiful menubar app that integrates with all relevant macOS features seamlessly, is a good macOS citizen, follows all best practices. It should be very forgiving/idiot-proof.\n\nIt should be built in Swift 6.2 (and SwiftUI, if applicable). It should have best-in-class keyboard support.\n\nGround everything in the latest features available as of December, 2025. It should work on both Silicon and Intel Macs.\n\nEvery feature should work extremely well. Special attention should be paid to DX/UX. The app should be a pleasure to use.\n\nInclude extensive HTML mocks that clearly describe how the app looks, what state transitions look like.",
+      "createTime": "2025-12-13T21:40:44.485451923Z",
+      "updateTime": "2025-12-16T21:36:42.937953Z",
+      "state": "AWAITING_PLAN_APPROVAL",
+      "sourceContext": {
+        "source": "sources/",
+        "githubRepoContext": {}
+      },
+      "prompt": "Come up with the requirements for a highly sophisticated clipboard manager for macOS Sequoia+. It should improve the standard clipboard in every possible way, while remaining out of the way. It should _just work_. It should provide tangibly smart features that enhance my overall experience as a developer, power user and even as a normal user.\n\nIt should be a native, lightweight, blazingly fast, aesthetically beautiful menubar app that integrates with all relevant macOS features seamlessly, is a good macOS citizen, follows all best practices. It should be very forgiving/idiot-proof.\n\nIt should be built in Swift 6.2 (and SwiftUI, if applicable). It should have best-in-class keyboard support.\n\nGround everything in the latest features available as of December, 2025. It should work on both Silicon and Intel Macs.\n\nEvery feature should work extremely well. Special attention should be paid to DX/UX. The app should be a pleasure to use.\n\nInclude extensive HTML mocks that clearly describe how the app looks, what state transitions look like.",
+      "url": "https://jules.google.com/session/14365396085129174100",
+      "id": "14365396085129174100"
+    },
+    {
+      "name": "sessions/201591559012419636",
+      "title": "Task: Research online (check X, Reddit, popular blogs/forums/articles) and see what developer tools folks are building, leveraging LLMs. Look at what's being built using Claude Code, Codex, Gemini, Amp etc. What are some really interesting and useful examples. I'm also very interested in TUIs of all sorts (but not limited to).\n\nBased on all the research, come up with proposals for 5 really interesting, non-trivial, unique and different apps/tools that can be built.",
+      "createTime": "2025-12-01T04:04:43.764979434Z",
+      "updateTime": "2025-12-01T07:38:33.112712Z",
+      "state": "AWAITING_PLAN_APPROVAL",
+      "sourceContext": {
+        "source": "sources/",
+        "githubRepoContext": {}
+      },
+      "prompt": "Task: Research online (check X, Reddit, popular blogs/forums/articles) and see what developer tools folks are building, leveraging LLMs. Look at what's being built using Claude Code, Codex, Gemini, Amp etc. What are some really interesting and useful examples. I'm also very interested in TUIs of all sorts (but not limited to).\n\nBased on all the research, come up with proposals for 5 really interesting, non-trivial, unique and different apps/tools that can be built.",
+      "url": "https://jules.google.com/session/201591559012419636",
+      "id": "201591559012419636"
+    },
+    {
+      "name": "sessions/3991945197082491247",
+      "title": "List the open issues in order of creation.",
+      "createTime": "2025-05-20T18:23:57.716355413Z",
+      "prompt": "List the open issues in order of creation.",
+      "url": "https://jules.google.com/session/3991945197082491247",
+      "id": "3991945197082491247"
+    }
+  ]
+}

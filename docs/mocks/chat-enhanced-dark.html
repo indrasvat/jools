@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Enhanced Chat (Dark Mode)</title>
+    <style>
+        :root {
+            /* Jools Dark Mode Palette - matching iOS dark mode */
+            --accent: #A78BFA;
+            --accent-light: rgba(167, 139, 250, 0.2);
+            --accent-glow: rgba(167, 139, 250, 0.35);
+            --success: #34D399;
+            --success-light: rgba(52, 211, 153, 0.15);
+            --warning: #FBBF24;
+            --warning-light: rgba(251, 191, 36, 0.15);
+            --error: #F87171;
+            --error-light: rgba(248, 113, 113, 0.15);
+            --background: #000000;
+            --surface: #1C1C1E;
+            --surface-elevated: #2C2C2E;
+            --border: rgba(255, 255, 255, 0.1);
+            --separator: rgba(255, 255, 255, 0.08);
+            --text-primary: #FFFFFF;
+            --text-secondary: #A1A1AA;
+            --text-tertiary: #71717A;
+            --bubble-user: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+            --bubble-agent: #2C2C2E;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+            background: #1C1C1E;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 54px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 28px 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Navigation Header */
+        .nav-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px 12px;
+            background: var(--background);
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--accent);
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        .nav-back svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--accent);
+        }
+
+        .nav-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .nav-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-subtitle {
+            font-size: 12px;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .nav-subtitle-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Chat Area */
+        .chat-area {
+            height: calc(100% - 54px - 56px - 80px);
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: var(--background);
+        }
+
+        .chat-area::-webkit-scrollbar { display: none; }
+
+        /* Jules Avatar */
+        .jules-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            animation: bobbing 2s ease-in-out infinite;
+        }
+
+        .jules-avatar svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--accent);
+        }
+
+        @keyframes bobbing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        /* Messages */
+        .message {
+            display: flex;
+            gap: 8px;
+            max-width: 85%;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.agent {
+            align-self: flex-start;
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .message.user .message-content {
+            align-items: flex-end;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: var(--radius-xl);
+            font-size: 16px;
+            line-height: 1.45;
+        }
+
+        .message.user .message-bubble {
+            background: var(--bubble-user);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.agent .message-bubble {
+            background: var(--bubble-agent);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-meta {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* Command Execution */
+        .command-card {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .command-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            cursor: pointer;
+        }
+
+        .command-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .command-status.success {
+            background: var(--success-light);
+        }
+
+        .command-status.success svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--success);
+        }
+
+        .command-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .command-text {
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .command-chevron {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-tertiary);
+            transition: transform 0.2s;
+        }
+
+        .command-card.expanded .command-chevron {
+            transform: rotate(90deg);
+        }
+
+        .command-output {
+            display: none;
+            padding: 12px 14px;
+            background: #0D0D0D;
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 12px;
+            color: #E5E5E5;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .command-card.expanded .command-output {
+            display: block;
+        }
+
+        /* File Update */
+        .file-update {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+
+        .file-update-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .file-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--surface);
+            border-radius: 12px;
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .file-pill:hover {
+            background: var(--accent-light);
+        }
+
+        .file-pill svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--accent);
+        }
+
+        .file-more {
+            font-size: 13px;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        /* Plan Card - Collapsible Steps */
+        .plan-card {
+            background: var(--surface-elevated);
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--warning);
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .plan-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--warning-light);
+        }
+
+        .plan-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .plan-header svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--warning);
+        }
+
+        .plan-header-title {
+            font-weight: 600;
+            color: var(--warning);
+        }
+
+        .plan-header-count {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .plan-toggle {
+            font-size: 14px;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .plan-steps {
+            padding: 0;
+        }
+
+        .plan-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--separator);
+            cursor: pointer;
+        }
+
+        .plan-step:last-child {
+            border-bottom: none;
+        }
+
+        .plan-step-chevron {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-tertiary);
+            margin-top: 2px;
+            transition: transform 0.2s;
+        }
+
+        .plan-step.expanded .plan-step-chevron {
+            transform: rotate(90deg);
+        }
+
+        .plan-step-number {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .plan-step-content {
+            flex: 1;
+        }
+
+        .plan-step-title {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .plan-step-detail {
+            display: none;
+            margin-top: 8px;
+            padding: 10px;
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .plan-step.expanded .plan-step-detail {
+            display: block;
+        }
+
+        .plan-more {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 12px;
+            padding: 14px 16px;
+        }
+
+        .plan-action {
+            flex: 1;
+            height: 44px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .plan-action svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .plan-action.revise {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .plan-action.revise:hover {
+            background: var(--error-light);
+            border-color: var(--error);
+        }
+
+        .plan-action.approve {
+            background: var(--success);
+            color: #000;
+        }
+
+        .plan-action.approve svg {
+            fill: #000;
+        }
+
+        /* Plan Approved Badge */
+        .plan-approved {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--success-light);
+            border-radius: var(--radius-md);
+        }
+
+        .plan-approved svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--success);
+        }
+
+        .plan-approved span {
+            font-size: 14px;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        /* Completion Card */
+        .completion-card {
+            background: var(--surface-elevated);
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--success);
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .completion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--success-light);
+        }
+
+        .completion-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .diff-stats {
+            display: flex;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .diff-add {
+            color: var(--success);
+        }
+
+        .diff-remove {
+            color: var(--error);
+        }
+
+        .completion-body {
+            padding: 14px 16px;
+        }
+
+        .commit-message {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .commit-message-truncated {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .see-full {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .completion-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-top: 1px solid var(--separator);
+        }
+
+        .feedback-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .feedback-btn:hover {
+            background: var(--accent-light);
+        }
+
+        .feedback-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-secondary);
+        }
+
+        .feedback-btn.active svg {
+            fill: var(--accent);
+        }
+
+        .completion-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .completion-time {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .share-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--accent);
+            color: #000;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .share-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: #000;
+        }
+
+        /* Input Bar */
+        .input-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--background);
+            border-top: 1px solid var(--separator);
+        }
+
+        .usage-indicator {
+            padding: 8px 16px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-align: center;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 10px 16px 34px;
+        }
+
+        .input-attach {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .input-attach svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-secondary);
+        }
+
+        .input-field {
+            flex: 1;
+            min-height: 36px;
+            padding: 8px 14px;
+            background: var(--surface);
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-send {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .input-send:hover {
+            transform: scale(1.05);
+        }
+
+        .input-send svg {
+            width: 18px;
+            height: 18px;
+            fill: #000;
+        }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: var(--text-primary);
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+        <div class="status-bar">
+            <span>7:41</span>
+            <span style="display: flex; gap: 5px; align-items: center;">
+                <span style="font-size: 12px;">...</span>
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="#FFF"><path d="M8 2a6 6 0 0 1 5.66 4 .75.75 0 1 0 1.42-.5A7.5 7.5 0 0 0 8 .5 7.5 7.5 0 0 0 .92 5.5a.75.75 0 1 0 1.42.5A6 6 0 0 1 8 2z"/><path d="M8 5a3 3 0 0 1 2.83 2 .75.75 0 1 0 1.42-.5A4.5 4.5 0 0 0 8 3.5a4.5 4.5 0 0 0-4.25 3 .75.75 0 1 0 1.42.5A3 3 0 0 1 8 5z"/><circle cx="8" cy="9" r="1.5"/></svg>
+                <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="#FFF"/><rect x="21.5" y="3.5" width="1.5" height="5" rx="0.75" fill="#FFF"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="#FFF"/></svg>
+            </span>
+        </div>
+
+        <!-- Navigation Header -->
+        <div class="nav-header">
+            <div class="nav-back">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </div>
+            <div class="nav-center">
+                <div class="nav-title">Add PasteFlow mocks</div>
+                <div class="nav-subtitle">
+                    <span class="nav-subtitle-dot"></span>
+                    Running
+                </div>
+            </div>
+            <div style="width: 20px;"></div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <!-- User Message -->
+            <div class="message user">
+                <div class="message-content">
+                    <div class="message-bubble">
+                        Create requirements and HTML mocks for PasteFlow clipboard manager
+                    </div>
+                    <div class="message-meta">9:30 AM</div>
+                </div>
+            </div>
+
+            <!-- Agent Message with Avatar -->
+            <div class="message agent">
+                <div class="jules-avatar">
+                    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        I'll create comprehensive requirements and interactive HTML mocks for PasteFlow. Let me start by setting up the project structure.
+                    </div>
+                    <div class="message-meta">9:30 AM</div>
+                </div>
+            </div>
+
+            <!-- Command Execution -->
+            <div class="command-card expanded">
+                <div class="command-header">
+                    <div class="command-status success">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </div>
+                    <span class="command-label">Ran:</span>
+                    <span class="command-text">mkdir -p mockups</span>
+                    <svg class="command-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+            </div>
+
+            <!-- File Update -->
+            <div class="file-update">
+                <span class="file-update-label">Updated</span>
+                <span class="file-pill">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                    REQUIREMENTS.md
+                </span>
+            </div>
+
+            <!-- File Update with overflow -->
+            <div class="file-update">
+                <span class="file-update-label">Updated</span>
+                <span class="file-pill">app.js</span>
+                <span class="file-pill">styles.css</span>
+                <span class="file-more">+3 more</span>
+            </div>
+
+            <!-- Plan Card with Collapsible Steps -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <div class="plan-header-left">
+                        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                        <span class="plan-header-title">Plan</span>
+                        <span class="plan-header-count">(6 steps)</span>
+                    </div>
+                    <span class="plan-toggle">Hide</span>
+                </div>
+                <div class="plan-steps">
+                    <div class="plan-step expanded">
+                        <svg class="plan-step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                        <span class="plan-step-number">1</span>
+                        <div class="plan-step-content">
+                            <div class="plan-step-title">Draft requirements document</div>
+                            <div class="plan-step-detail">
+                                Create REQUIREMENTS.md with product vision, features, and technical stack for PasteFlow clipboard manager.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="plan-step">
+                        <svg class="plan-step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                        <span class="plan-step-number">2</span>
+                        <div class="plan-step-content">
+                            <div class="plan-step-title">Create interactive HTML mock</div>
+                        </div>
+                    </div>
+                    <div class="plan-step">
+                        <svg class="plan-step-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                        <span class="plan-step-number">3</span>
+                        <div class="plan-step-content">
+                            <div class="plan-step-title">Create flow mocks</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="plan-more">3 more steps...</div>
+                <div class="plan-actions">
+                    <button class="plan-action revise">Revise</button>
+                    <button class="plan-action approve">
+                        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Approve
+                    </button>
+                </div>
+            </div>
+
+            <!-- Plan Approved Badge -->
+            <div class="plan-approved">
+                <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                <span>Plan approved - Jules is implementing...</span>
+            </div>
+
+            <!-- Completion Card -->
+            <div class="completion-card">
+                <div class="completion-header">
+                    <div class="completion-title">Ready for review</div>
+                    <div class="diff-stats">
+                        <span class="diff-add">+1,492</span>
+                        <span class="diff-remove">-0</span>
+                    </div>
+                </div>
+                <div class="completion-body">
+                    <div class="commit-message commit-message-truncated">
+                        feat: add PasteFlow requirements and mocks<br><br>
+                        - Added REQUIREMENTS.md detailing the product vision, features, and technical stack.<br>
+                        - Created interactive HTML mocks in mockups/
+                    </div>
+                    <div class="see-full">See full commit message</div>
+                </div>
+                <div class="completion-footer">
+                    <div class="feedback-buttons">
+                        <div class="feedback-btn">
+                            <svg viewBox="0 0 24 24"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+                        </div>
+                        <div class="feedback-btn">
+                            <svg viewBox="0 0 24 24"><path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z"/></svg>
+                        </div>
+                    </div>
+                    <div class="completion-meta">
+                        <span class="completion-time">22 mins</span>
+                        <div class="share-btn">
+                            <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                            Share
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="input-bar">
+            <div class="usage-indicator">Daily session limit (2/15)</div>
+            <div class="input-container">
+                <div class="input-attach">
+                    <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+                </div>
+                <input type="text" class="input-field" placeholder="Talk to Jules...">
+                <div class="input-send">
+                    <svg viewBox="0 0 24 24"><path d="M3.4 20.4l17.45-7.48c.81-.35.81-1.49 0-1.84L3.4 3.6c-.66-.29-1.39.2-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/></svg>
+                </div>
+            </div>
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+</body>
+</html>

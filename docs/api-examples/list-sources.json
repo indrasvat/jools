@@ -1,0 +1,262 @@
+{
+  "sources": [
+    {
+      "name": "sources/github/indrasvat/context-lens",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "context-lens",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "claude/implement-documentation-0122jCysLdVwPmX1vRHyi1gd"
+          },
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/context-lens"
+    },
+    {
+      "name": "sources/github/indrasvat/decodone",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "decodone",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/decodone"
+    },
+    {
+      "name": "sources/github/indrasvat/git-time-machine",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "git-time-machine",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "claude/build-full-app-016SgoS3nmFtcMEdJbmzyC7S"
+          },
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/git-time-machine"
+    },
+    {
+      "name": "sources/github/indrasvat/hews",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "hews",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "main"
+          },
+          {
+            "displayName": "copilot/fix-9c9113d8-edc8-4452-b6c3-42bec1cb7311"
+          }
+        ]
+      },
+      "id": "github/indrasvat/hews"
+    },
+    {
+      "name": "sources/github/indrasvat/jools",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "jools",
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "main"
+          },
+          {
+            "displayName": "create-jools"
+          }
+        ]
+      },
+      "id": "github/indrasvat/jools"
+    },
+    {
+      "name": "sources/github/indrasvat/laghu",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "laghu",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/laghu"
+    },
+    {
+      "name": "sources/github/indrasvat/m5-code-pusher",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "m5-code-pusher",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "claude/m5stack-code-pusher-01VZcXCTySSMYVEvaHQiokox"
+          },
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/m5-code-pusher"
+    },
+    {
+      "name": "sources/github/indrasvat/namefix",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "namefix",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "chore/release-tag-build"
+          },
+          {
+            "displayName": "create-namefix"
+          },
+          {
+            "displayName": "main"
+          },
+          {
+            "displayName": "fix/node-detection-and-xattr-docs"
+          }
+        ]
+      },
+      "id": "github/indrasvat/namefix"
+    },
+    {
+      "name": "sources/github/indrasvat/nimisha",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "nimisha",
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/nimisha"
+    },
+    {
+      "name": "sources/github/indrasvat/peek-it",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "peek-it",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "claude/git-pktline-tui-011CUqMdzyG1PNmxjdY58LRV"
+          },
+          {
+            "displayName": "codex/implement-complete-peek-it-design"
+          },
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/peek-it"
+    },
+    {
+      "name": "sources/github/indrasvat/prahari",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "prahari",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "claude/build-app-plan-doc-01Hochgwibpm1AyBWyNt2x46"
+          },
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/prahari"
+    },
+    {
+      "name": "sources/github/indrasvat/querylastic",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "querylastic",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "claude/build-app-documentation-01FUEHjRfveAJt7EVNj4eFni"
+          },
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/querylastic"
+    },
+    {
+      "name": "sources/github/indrasvat/tbgs",
+      "githubRepo": {
+        "owner": "indrasvat",
+        "repo": "tbgs",
+        "isPrivate": true,
+        "defaultBranch": {
+          "displayName": "main"
+        },
+        "branches": [
+          {
+            "displayName": "codex/fully-implement-tbgs-app-according-to-design-docs"
+          },
+          {
+            "displayName": "main"
+          }
+        ]
+      },
+      "id": "github/indrasvat/tbgs"
+    }
+  ]
+}

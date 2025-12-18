@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
+    <title>Jools - Files List Sheet</title>
+    <style>
+        :root {
+            --accent: #8B5CF6;
+            --accent-light: rgba(139, 92, 246, 0.15);
+            --success: #22C55E;
+            --success-light: rgba(34, 197, 94, 0.1);
+            --error: #EF4444;
+            --warning: #F59E0B;
+            --background: #FFFFFF;
+            --surface: #F5F5F7;
+            --surface-elevated: #FFFFFF;
+            --separator: rgba(0, 0, 0, 0.06);
+            --text-primary: #1C1C1E;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --accent: #A78BFA;
+                --accent-light: rgba(167, 139, 250, 0.2);
+                --success: #34D399;
+                --success-light: rgba(52, 211, 153, 0.15);
+                --error: #F87171;
+                --warning: #FBBF24;
+                --background: #000000;
+                --surface: #1C1C1E;
+                --surface-elevated: #2C2C2E;
+                --separator: rgba(255, 255, 255, 0.08);
+                --text-primary: #FFFFFF;
+                --text-secondary: #A1A1AA;
+                --text-tertiary: #71717A;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #1C1C1E;
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            width: 390px;
+            height: 844px;
+            margin: 20px auto;
+            background: var(--background);
+            border-radius: 47px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .dynamic-island {
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 24px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+        }
+
+        .sheet-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70%;
+            background: var(--background);
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sheet-handle {
+            width: 36px;
+            height: 5px;
+            background: var(--text-tertiary);
+            border-radius: 3px;
+            margin: 8px auto;
+            opacity: 0.5;
+        }
+
+        .sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .sheet-close {
+            width: 30px;
+            height: 30px;
+            background: var(--surface);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .sheet-close svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-secondary);
+        }
+
+        .sheet-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .sheet-action {
+            font-size: 17px;
+            color: var(--accent);
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        /* Summary Stats */
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 16px;
+            background: var(--surface);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-value.add { color: var(--success); }
+        .stat-value.remove { color: var(--error); }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* File List */
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .file-group {
+            padding: 8px 16px 4px;
+        }
+
+        .file-group-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--separator);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: var(--surface);
+        }
+
+        .file-item:active {
+            background: var(--accent-light);
+        }
+
+        .file-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .file-status.added { background: var(--success); }
+        .file-status.modified { background: var(--warning); }
+        .file-status.deleted { background: var(--error); }
+        .file-status.renamed { background: var(--accent); }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 15px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-path {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-diff {
+            display: flex;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+
+        .file-diff .add { color: var(--success); }
+        .file-diff .remove { color: var(--error); }
+
+        .file-chevron {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-tertiary);
+            margin-left: 8px;
+        }
+
+        /* Status Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            padding: 12px 16px;
+            padding-bottom: 34px;
+            background: var(--background);
+            border-top: 1px solid var(--separator);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.added { background: var(--success); }
+        .legend-dot.modified { background: var(--warning); }
+        .legend-dot.deleted { background: var(--error); }
+
+        .home-indicator {
+            width: 134px;
+            height: 5px;
+            background: var(--text-primary);
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="dynamic-island"></div>
+
+        <div class="sheet-backdrop"></div>
+
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+
+            <div class="sheet-header">
+                <div class="sheet-close">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </div>
+                <div class="sheet-title">Changed Files</div>
+                <div class="sheet-action">Done</div>
+            </div>
+
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Files Changed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value add">+1,492</div>
+                    <div class="stat-label">Additions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value remove">-234</div>
+                    <div class="stat-label">Deletions</div>
+                </div>
+            </div>
+
+            <div class="file-list">
+                <div class="file-group">
+                    <div class="file-group-title">Added (3)</div>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status added"></div>
+                    <div class="file-info">
+                        <div class="file-name">PlanCardView.swift</div>
+                        <div class="file-path">Jools/Features/Chat/Views/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="add">+156</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status added"></div>
+                    <div class="file-info">
+                        <div class="file-name">CompletionCardView.swift</div>
+                        <div class="file-path">Jools/Features/Chat/Views/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="add">+203</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status added"></div>
+                    <div class="file-info">
+                        <div class="file-name">FilePillView.swift</div>
+                        <div class="file-path">Jools/Features/Chat/Views/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="add">+89</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+
+                <div class="file-group">
+                    <div class="file-group-title">Modified (4)</div>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status modified"></div>
+                    <div class="file-info">
+                        <div class="file-name">ChatViewModel.swift</div>
+                        <div class="file-path">Jools/Features/Chat/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="add">+45</span>
+                        <span class="remove">-12</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status modified"></div>
+                    <div class="file-info">
+                        <div class="file-name">ChatView.swift</div>
+                        <div class="file-path">Jools/Features/Chat/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="add">+89</span>
+                        <span class="remove">-23</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status modified"></div>
+                    <div class="file-info">
+                        <div class="file-name">Entities.swift</div>
+                        <div class="file-path">Jools/Core/Persistence/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="add">+34</span>
+                        <span class="remove">-8</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status modified"></div>
+                    <div class="file-info">
+                        <div class="file-name">DesignSystem.swift</div>
+                        <div class="file-path">Jools/Core/UI/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="add">+67</span>
+                        <span class="remove">-15</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+
+                <div class="file-group">
+                    <div class="file-group-title">Deleted (1)</div>
+                </div>
+
+                <div class="file-item">
+                    <div class="file-status deleted"></div>
+                    <div class="file-info">
+                        <div class="file-name">LegacyPlanView.swift</div>
+                        <div class="file-path">Jools/Features/Chat/Views/</div>
+                    </div>
+                    <div class="file-diff">
+                        <span class="remove">-176</span>
+                    </div>
+                    <svg class="file-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot added"></div>
+                    Added
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot modified"></div>
+                    Modified
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot deleted"></div>
+                    Deleted
+                </div>
+            </div>
+        </div>
+
+        <div class="home-indicator"></div>
+    </div>
+</body>
+</html>
