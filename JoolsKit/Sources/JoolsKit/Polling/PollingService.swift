@@ -124,6 +124,9 @@ public final class PollingService: ObservableObject {
 
                 self.updateStateIfNeeded()
 
+                // Break out of loop if stopped (avoid Duration.seconds(.infinity) crash)
+                guard self.state != .stopped else { break }
+
                 let interval = self.currentInterval
                 try? await Task.sleep(for: .seconds(interval))
             }
