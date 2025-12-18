@@ -201,26 +201,35 @@ final class ChatViewModel: ObservableObject, PollingServiceDelegate {
         )
         guard let session = try? modelContext.fetch(sessionDescriptor).first else { return }
 
-        // Get existing activity IDs (excluding optimistic ones)
-        let existingIds = Set(session.activities.filter { !$0.isOptimistic }.map(\.id))
+        // Get existing activities as a dictionary for quick lookup
+        let existingActivities = Dictionary(
+            uniqueKeysWithValues: session.activities.filter { !$0.isOptimistic }.map { ($0.id, $0) }
+        )
 
         // Get optimistic user messages for deduplication
         let optimisticMessages = session.activities.filter { $0.isOptimistic && $0.type == .userMessaged }
 
-        // Insert new activities
-        for dto in dtos where !existingIds.contains(dto.id) {
-            // Check if this is a user message that matches an optimistic one
-            if dto.activityType == .userMessaged,
-               let serverMessage = dto.userMessaged?.userMessage {
-                // Find and remove matching optimistic message
-                if let optimistic = optimisticMessages.first(where: { $0.messageContent == serverMessage }) {
-                    modelContext.delete(optimistic)
+        for dto in dtos {
+            if let existing = existingActivities[dto.id] {
+                // Update existing activity with fresh content (includes artifacts)
+                if let contentData = try? JSONEncoder().encode(dto.content) {
+                    existing.contentJSON = contentData
                 }
-            }
+            } else {
+                // Check if this is a user message that matches an optimistic one
+                if dto.activityType == .userMessaged,
+                   let serverMessage = dto.userMessaged?.userMessage {
+                    // Find and remove matching optimistic message
+                    if let optimistic = optimisticMessages.first(where: { $0.messageContent == serverMessage }) {
+                        modelContext.delete(optimistic)
+                    }
+                }
 
-            let activity = ActivityEntity(from: dto)
-            activity.session = session
-            modelContext.insert(activity)
+                // Insert new activity
+                let activity = ActivityEntity(from: dto)
+                activity.session = session
+                modelContext.insert(activity)
+            }
         }
 
         try? modelContext.save()

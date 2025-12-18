@@ -47,12 +47,16 @@ final class DashboardViewModel: ObservableObject {
     }
 
     private func countSessionsCreatedToday(_ sessions: [SessionDTO]) -> Int {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        return sessions.filter { session in
+        // Use UTC calendar since API returns UTC timestamps
+        var utcCalendar = Calendar(identifier: .gregorian)
+        utcCalendar.timeZone = TimeZone(identifier: "UTC")!
+        let todayUTC = utcCalendar.startOfDay(for: Date())
+
+        let todaySessions = sessions.filter { session in
             guard let createTime = session.createTime else { return false }
-            return createTime >= today
-        }.count
+            return createTime >= todayUTC
+        }
+        return todaySessions.count
     }
 
     // MARK: - Private Sync Methods
