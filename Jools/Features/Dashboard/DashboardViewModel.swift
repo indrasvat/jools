@@ -29,12 +29,13 @@ final class DashboardViewModel: ObservableObject {
             let sourcesResponse = try await dependencies.apiClient.listSources()
             syncSources(sourcesResponse.allItems, to: modelContext)
 
-            // Fetch and sync sessions
-            let sessionsResponse = try await dependencies.apiClient.listSessions()
+            // Fetch and sync sessions (use larger pageSize to capture all today's sessions)
+            let sessionsResponse = try await dependencies.apiClient.listSessions(pageSize: 100)
             syncSessions(sessionsResponse.allItems, to: modelContext)
 
             // Count sessions created today
             tasksUsedToday = countSessionsCreatedToday(sessionsResponse.allItems)
+            print("DEBUG: Total sessions fetched: \(sessionsResponse.allItems.count), Today's count: \(tasksUsedToday)")
 
             // Save changes
             try modelContext.save()
