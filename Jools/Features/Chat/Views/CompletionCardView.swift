@@ -18,9 +18,11 @@ struct CompletionCardView: View {
     let session: SessionEntity
     let activity: ActivityEntity
     let diffStats: DiffStats
+    let changedFiles: [String]
     let duration: TimeInterval
 
     @State private var showShareSheet = false
+    @State private var showCopiedToast = false
 
     private var commitMessage: String {
         activity.messageContent ?? session.title
@@ -79,20 +81,23 @@ struct CompletionCardView: View {
     }
 
     private var commitSection: some View {
-        VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
+        VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
             Text(commitMessage)
                 .font(.joolsBody)
                 .foregroundStyle(.primary)
                 .lineLimit(6)
 
-            if diffStats.filesChanged > 0 {
-                HStack(spacing: JoolsSpacing.xxs) {
-                    Image(systemName: "doc.on.doc")
-                        .font(.caption)
-                    Text("\(diffStats.filesChanged) files changed")
-                        .font(.joolsCaption)
+            // File pills for changed files
+            if !changedFiles.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: JoolsSpacing.xs) {
+                        ForEach(changedFiles, id: \.self) { file in
+                            FilePill(filename: file, status: .modified) {
+                                // No action needed for now
+                            }
+                        }
+                    }
                 }
-                .foregroundStyle(.secondary)
             }
         }
         .padding(JoolsSpacing.md)
@@ -125,15 +130,39 @@ struct CompletionCardView: View {
                     .lineLimit(3)
             }
 
-            // Open in browser button
-            if let prURL = URL(string: url) {
-                Link(destination: prURL) {
-                    HStack {
-                        Text("View Pull Request")
-                        Image(systemName: "arrow.up.right.square")
+            // Action buttons
+            HStack(spacing: JoolsSpacing.md) {
+                // Open in browser button
+                if let prURL = URL(string: url) {
+                    Link(destination: prURL) {
+                        HStack(spacing: JoolsSpacing.xxs) {
+                            Image(systemName: "arrow.up.right.square")
+                            Text("View PR")
+                        }
+                        .font(.joolsCaption)
+                        .foregroundStyle(Color.joolsAccent)
+                    }
+                }
+
+                // Copy URL button
+                Button {
+                    UIPasteboard.general.string = url
+                    HapticManager.shared.lightImpact()
+                    withAnimation {
+                        showCopiedToast = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        withAnimation {
+                            showCopiedToast = false
+                        }
+                    }
+                } label: {
+                    HStack(spacing: JoolsSpacing.xxs) {
+                        Image(systemName: showCopiedToast ? "checkmark" : "doc.on.doc")
+                        Text(showCopiedToast ? "Copied!" : "Copy URL")
                     }
                     .font(.joolsCaption)
-                    .foregroundStyle(Color.joolsAccent)
+                    .foregroundStyle(showCopiedToast ? Color.joolsSuccess : .secondary)
                 }
             }
         }
@@ -322,6 +351,7 @@ struct ShareSheet: UIViewControllerRepresentable {
             contentJSON: Data()
         ),
         diffStats: DiffStats(additions: 1492, deletions: 47, filesChanged: 12),
+        changedFiles: ["src/auth/login.ts", "src/auth/session.ts", "src/components/LoginForm.tsx"],
         duration: 1320 // 22 minutes
     )
     .padding()

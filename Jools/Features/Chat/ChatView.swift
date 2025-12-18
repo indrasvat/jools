@@ -190,7 +190,12 @@ struct ActivityView: View {
             CompletionCardView(
                 session: session,
                 activity: activity,
-                diffStats: .empty, // TODO: Parse from API response when available
+                diffStats: DiffStats(
+                    additions: activity.diffAdditions,
+                    deletions: activity.diffDeletions,
+                    filesChanged: activity.changedFiles.count
+                ),
+                changedFiles: activity.changedFiles,
                 duration: session.updatedAt.timeIntervalSince(session.createdAt)
             )
 
