@@ -185,6 +185,13 @@ struct ManualKeyEntrySheet: View {
     @EnvironmentObject private var dependencies: AppDependency
     @Environment(\.dismiss) private var dismiss
     @FocusState private var isFocused: Bool
+    @State private var isKeyRevealed = false
+
+    private var trimmedKey: String {
+        viewModel.manualKey.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canConnect: Bool { !trimmedKey.isEmpty }
 
     var body: some View {
         NavigationStack {
@@ -195,38 +202,11 @@ struct ManualKeyEntrySheet: View {
                     .multilineTextAlignment(.center)
                     .padding(.top, JoolsSpacing.lg)
 
-                SecureField("API Key", text: $viewModel.manualKey)
-                    .textFieldStyle(.plain)
-                    .padding()
-                    .background(Color.joolsSurface)
-                    .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: JoolsRadius.md)
-                            .stroke(Color.joolsAccent.opacity(0.3), lineWidth: 1)
-                    )
-                    .focused($isFocused)
+                keyInputField
 
-                Button(action: {
-                    viewModel.useManualKey()
-                    dismiss()
-                    Task {
-                        await viewModel.validateAndSaveKey(using: dependencies)
-                    }
-                }) {
-                    Text("Connect")
-                        .font(.joolsBody)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            viewModel.manualKey.isEmpty
-                                ? Color.gray
-                                : Color.joolsAccent
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
-                }
-                .disabled(viewModel.manualKey.isEmpty)
+                pasteFromClipboardButton
+
+                connectButton
 
                 Spacer()
             }
@@ -238,7 +218,122 @@ struct ManualKeyEntrySheet: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .onAppear { isFocused = true }
+            .onAppear {
+                // Give the sheet a moment to settle before bringing up the
+                // keyboard — doing it too early can swallow the first tap.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    isFocused = true
+                }
+            }
+        }
+    }
+
+    // MARK: - Field
+
+    @ViewBuilder
+    private var keyInputField: some View {
+        HStack(spacing: JoolsSpacing.sm) {
+            Group {
+                if isKeyRevealed {
+                    TextField("AQ.…", text: $viewModel.manualKey)
+                } else {
+                    SecureField("AQ.…", text: $viewModel.manualKey)
+                }
+            }
+            .textFieldStyle(.plain)
+            .font(.system(.body, design: .monospaced))
+            .textContentType(.password)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .submitLabel(.go)
+            .onSubmit(attemptConnect)
+            .focused($isFocused)
+            .accessibilityIdentifier("manual-api-key-field")
+
+            Button {
+                isKeyRevealed.toggle()
+                HapticManager.shared.selection()
+            } label: {
+                Image(systemName: isKeyRevealed ? "eye.slash" : "eye")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+            }
+            .accessibilityLabel(isKeyRevealed ? "Hide key" : "Show key")
+        }
+        .padding(.horizontal, JoolsSpacing.md)
+        .padding(.vertical, JoolsSpacing.sm)
+        .background(Color.joolsSurface)
+        .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+        .overlay(
+            RoundedRectangle(cornerRadius: JoolsRadius.md)
+                .stroke(Color.joolsAccent.opacity(0.3), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Paste button
+
+    @ViewBuilder
+    private var pasteFromClipboardButton: some View {
+        Button(action: pasteFromClipboard) {
+            HStack(spacing: JoolsSpacing.xs) {
+                Image(systemName: "doc.on.clipboard")
+                Text("Paste from Clipboard")
+            }
+            .font(.joolsBody.weight(.medium))
+            .foregroundStyle(Color.joolsAccent)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, JoolsSpacing.sm + 2)
+            .background(Color.joolsAccent.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+            .overlay(
+                RoundedRectangle(cornerRadius: JoolsRadius.md)
+                    .stroke(Color.joolsAccent.opacity(0.35), lineWidth: 1)
+            )
+        }
+        .accessibilityIdentifier("paste-api-key-button")
+    }
+
+    // MARK: - Connect button
+
+    @ViewBuilder
+    private var connectButton: some View {
+        Button(action: attemptConnect) {
+            Text("Connect")
+                .font(.joolsBody)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(canConnect ? Color.joolsAccent : Color.gray)
+                .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+        }
+        .disabled(!canConnect)
+        .accessibilityIdentifier("connect-api-key-button")
+    }
+
+    // MARK: - Actions
+
+    private func pasteFromClipboard() {
+        let pasteboard = UIPasteboard.general
+        guard let clipboard = pasteboard.string?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+              !clipboard.isEmpty
+        else {
+            HapticManager.shared.error()
+            return
+        }
+        viewModel.manualKey = clipboard
+        HapticManager.shared.success()
+    }
+
+    private func attemptConnect() {
+        guard canConnect else { return }
+        viewModel.manualKey = trimmedKey
+        viewModel.useManualKey()
+        dismiss()
+        Task {
+            await viewModel.validateAndSaveKey(using: dependencies)
         }
     }
 }
@@ -302,7 +397,7 @@ struct AppIconView: View {
     var body: some View {
         PixelJoolsBadge(cornerRadius: 24) {
             PixelJoolsMark()
-                .padding(20)
+                .padding(14)
         }
         .frame(width: 100, height: 100)
         .shadow(color: .joolsAccent.opacity(0.5), radius: isPulsing ? 30 : 20)
