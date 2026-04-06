@@ -59,9 +59,16 @@ struct OnboardingView: View {
                         .tracking(-1.5)
                         .foregroundStyle(titleGradient)
 
-                    Text("Your Pocket CTO")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(secondaryTextColor)
+                    VStack(spacing: 4) {
+                        Text("Jules, in your pocket.")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundStyle(secondaryTextColor)
+
+                        Text("An unofficial iOS client for Google's\nautonomous coding agent.")
+                            .font(.joolsCaption)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(tertiaryTextColor)
+                    }
 
                     // Feature pills
                     FeaturePillsView()
@@ -412,10 +419,12 @@ struct AppIconView: View {
 struct FeaturePillsView: View {
     @Environment(\.colorScheme) private var colorScheme
 
+    // Anchored to what the public Jules REST API actually exposes —
+    // each pill maps to a flow that genuinely works on this client.
     let features = [
-        ("checkmark.circle.fill", "Plan Review"),
-        ("clock.fill", "Real-time Updates"),
-        ("wifi.slash", "Offline Ready"),
+        ("checkmark.seal.fill", "Approve plans"),
+        ("waveform.path.ecg", "Live progress"),
+        ("arrow.triangle.pull", "Review PRs"),
     ]
 
     var body: some View {
