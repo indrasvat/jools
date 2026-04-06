@@ -24,10 +24,11 @@ struct ChatView: View {
 
     var body: some View {
         let effectiveState = session.effectiveState
+        let resolvedState = session.resolvedState
 
         VStack(spacing: 0) {
             // Chat header
-            ChatHeader(session: session, displayState: effectiveState)
+            ChatHeader(session: session, resolvedState: resolvedState)
 
             // Status banner
             SessionStatusBanner(
@@ -282,7 +283,7 @@ struct EmptyActivitiesView: View {
 
 struct ChatHeader: View {
     let session: SessionEntity
-    let displayState: SessionState
+    let resolvedState: ResolvedSessionState
 
     var body: some View {
         HStack {
@@ -292,12 +293,21 @@ struct ChatHeader: View {
                     .lineLimit(1)
 
                 HStack(spacing: JoolsSpacing.xs) {
-                    SessionStateBadge(state: displayState)
-                    Text("•")
-                        .foregroundStyle(.secondary)
-                    Text(session.sourceBranch)
-                        .font(.joolsCaption)
-                        .foregroundStyle(.secondary)
+                    SessionStateBadge(resolved: resolvedState)
+                    if !session.isRepoless {
+                        Text("•")
+                            .foregroundStyle(.secondary)
+                        Text(session.sourceBranch)
+                            .font(.joolsCaption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("•")
+                            .foregroundStyle(.secondary)
+                        Label("No repo", systemImage: "sparkles")
+                            .labelStyle(.titleAndIcon)
+                            .font(.joolsCaption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
@@ -568,20 +578,43 @@ struct SessionFailedView: View {
 // MARK: - Session State Badge
 
 struct SessionStateBadge: View {
-    let state: JoolsKit.SessionState
+    let state: ResolvedSessionState
+
+    /// Convenience for callers that already have a known SessionState.
+    init(state: JoolsKit.SessionState) {
+        self.state = .known(state)
+    }
+
+    init(resolved: ResolvedSessionState) {
+        self.state = resolved
+    }
 
     var body: some View {
         HStack(spacing: JoolsSpacing.xxs) {
             Circle()
                 .fill(stateColor)
                 .frame(width: 8, height: 8)
-            Text(state.displayName)
+            Text(state.displayLabel)
                 .font(.joolsCaption)
                 .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("State: \(state.displayLabel)")
     }
 
     private var stateColor: Color {
+        switch state {
+        case .known(let known):
+            return Self.color(for: known)
+        case .unknown:
+            // Neutral pill for forward-compat states the client doesn't
+            // know how to theme. Better than dropping the info or
+            // pretending it's "Starting".
+            return .secondary
+        }
+    }
+
+    private static func color(for state: JoolsKit.SessionState) -> Color {
         switch state {
         case .running, .inProgress:
             return .joolsRunning

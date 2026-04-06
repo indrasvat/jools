@@ -401,4 +401,55 @@ extension SessionEntity {
     var effectiveState: SessionState {
         effectiveDisplayState.sessionState
     }
+
+    /// Forward-compatible view of the API state. When Jules ships a new
+    /// state we don't yet know about, we render it literally instead of
+    /// silently collapsing to `.unspecified` (which used to display as
+    /// "Starting" — misleading for sessions in any new lifecycle phase).
+    var resolvedState: ResolvedSessionState {
+        if SessionState(rawValue: stateRaw) != nil {
+            return .known(effectiveState)
+        }
+        return .unknown(rawValue: stateRaw)
+    }
+
+    /// Whether this session has an attached repo. Repoless sessions are
+    /// supported by the Jules API today and Jools persists them with an
+    /// empty `sourceId` — UI must branch on this rather than show an
+    /// empty folder pill.
+    var isRepoless: Bool {
+        sourceId.isEmpty
+    }
+}
+
+/// Either a known `SessionState` (with the full state-machine resolution
+/// already applied) or a literal raw string returned by the API that we
+/// don't recognize yet. The badge knows how to render both — known states
+/// pick up their themed colour, unknown ones get a neutral pill with the
+/// raw value lightly normalised.
+enum ResolvedSessionState: Equatable {
+    case known(SessionState)
+    case unknown(rawValue: String)
+
+    var displayLabel: String {
+        switch self {
+        case .known(let state):
+            return state.displayName
+        case .unknown(let raw):
+            return Self.humanize(raw)
+        }
+    }
+
+    /// Turn an UPPER_SNAKE_CASE API value into a Title Case label.
+    private static func humanize(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return "Unknown" }
+        return trimmed
+            .split(separator: "_")
+            .map { word in
+                let lowered = word.lowercased()
+                return lowered.prefix(1).uppercased() + lowered.dropFirst()
+            }
+            .joined(separator: " ")
+    }
 }

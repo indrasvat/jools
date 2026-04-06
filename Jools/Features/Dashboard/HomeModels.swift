@@ -250,6 +250,10 @@ enum HomeContentBuilder {
     }
 
     static func sourceName(for session: SessionEntity, sourcesByID: [String: SourceEntity]) -> String {
+        if session.isRepoless {
+            return "This task"
+        }
+
         if let source = sourcesByID[session.sourceId] {
             return source.repo
         }

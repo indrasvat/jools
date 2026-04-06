@@ -52,11 +52,8 @@ struct DashboardView: View {
                     HomeBrandHeader()
                         .accessibilityIdentifier("home.brand")
 
-                    UsageStatsCard(
-                        tasksUsed: viewModel.tasksUsedToday,
-                        tasksLimit: viewModel.dailyTaskLimit
-                    )
-                    .accessibilityIdentifier("home.usage")
+                    UsageStatsCard(tasksUsed: viewModel.tasksUsedToday)
+                        .accessibilityIdentifier("home.usage")
 
                     if let errorMessage = viewModel.errorMessage {
                         HomeBanner(
@@ -230,38 +227,53 @@ private struct HomeBrandHeader: View {
 
 struct UsageStatsCard: View {
     let tasksUsed: Int
-    let tasksLimit: Int
 
-    private var progress: Double {
-        guard tasksLimit > 0 else { return 0 }
-        return Double(tasksUsed) / Double(tasksLimit)
+    private var taskWord: String {
+        tasksUsed == 1 ? "task" : "tasks"
     }
 
-    private var isNearLimit: Bool {
-        progress > 0.8
+    private var subtitle: String {
+        if tasksUsed == 0 {
+            return "Ready for another focused session."
+        }
+        return "Jules has worked on \(tasksUsed) \(taskWord) for you so far today."
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
-            HStack {
-                Text("Today's Usage")
-                    .font(.joolsHeadline)
-                Spacer()
-                Text("\(tasksUsed)/\(tasksLimit)")
-                    .font(.joolsBody)
+        // The Jules REST API doesn't expose plan-tier limits, so we don't
+        // claim a denominator we can't verify. Just show the honest count.
+        HStack(alignment: .center, spacing: JoolsSpacing.md) {
+            ZStack {
+                Circle()
+                    .fill(Color.joolsAccent.opacity(0.14))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "sparkles")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(Color.joolsAccent)
+            }
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: JoolsSpacing.xxs) {
+                HStack(alignment: .firstTextBaseline, spacing: JoolsSpacing.xs) {
+                    Text("Today")
+                        .font(.joolsHeadline)
+                    Text("\(tasksUsed) \(taskWord)")
+                        .font(.joolsCaption.weight(.medium))
+                        .foregroundStyle(Color.joolsAccent)
+                }
+                Text(subtitle)
+                    .font(.joolsCaption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            ProgressView(value: progress)
-                .tint(isNearLimit ? .joolsWarning : .joolsAccent)
-
-            Text(isNearLimit ? "You're approaching your daily limit" : "Ready for another focused session.")
-                .font(.joolsCaption)
-                .foregroundStyle(isNearLimit ? Color.joolsWarning : .secondary)
+            Spacer(minLength: 0)
         }
         .padding()
         .background(Color.joolsSurface)
         .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Today, \(tasksUsed) \(taskWord)")
     }
 }
 
@@ -642,7 +654,7 @@ struct SessionRow: View {
     let session: SessionEntity
 
     var body: some View {
-        let displayState = session.effectiveState
+        let resolved = session.resolvedState
 
         NavigationLink {
             ChatView(session: session)
@@ -662,7 +674,7 @@ struct SessionRow: View {
 
                 Spacer()
 
-                SessionStateBadge(state: displayState)
+                SessionStateBadge(resolved: resolved)
             }
             .padding()
             .background(Color.joolsSurface)

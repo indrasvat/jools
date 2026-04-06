@@ -147,45 +147,77 @@ struct PlanStepRow: View {
         }
     }
 
+    /// Whether this row has content beyond its title to disclose.
+    /// We hide the chevron entirely when there's nothing to expand so
+    /// the affordance never lies — earlier the chevron rotated on tap
+    /// even when the description was nil, which felt broken.
+    private var hasExpandableDescription: Bool {
+        guard let description = step.description, !description.isEmpty else {
+            return false
+        }
+        // If the only "description" is the same string we use as the
+        // title, expansion would be a no-op duplicate.
+        if let title = step.title, title == description {
+            return false
+        }
+        return true
+    }
+
+    private var displayTitle: String {
+        step.title ?? step.description ?? "Step \(number)"
+    }
+
     var body: some View {
-        Button(action: onToggle) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .center, spacing: JoolsSpacing.sm) {
-                    // Step number with status indicator
-                    StepNumberBadge(number: number, status: stepStatus)
+        Group {
+            if hasExpandableDescription {
+                Button(action: onToggle) {
+                    rowContent
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("plan.step.\(number)")
+                .accessibilityHint(isExpanded ? "Hides step details" : "Shows step details")
+            } else {
+                rowContent
+                    .accessibilityIdentifier("plan.step.\(number)")
+            }
+        }
+    }
 
-                    // Step title
-                    Text(step.title ?? step.description ?? "Step \(number)")
-                        .font(.joolsBody)
-                        .foregroundStyle(.primary)
-                        .lineLimit(isExpanded ? nil : 2)
-                        .multilineTextAlignment(.leading)
+    @ViewBuilder
+    private var rowContent: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: JoolsSpacing.sm) {
+                StepNumberBadge(number: number, status: stepStatus)
 
-                    Spacer()
+                Text(displayTitle)
+                    .font(.joolsBody)
+                    .foregroundStyle(.primary)
+                    .lineLimit(isExpanded ? nil : 2)
+                    .multilineTextAlignment(.leading)
 
-                    // Expand/collapse chevron
+                Spacer()
+
+                if hasExpandableDescription {
                     Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
-                .padding(.horizontal, JoolsSpacing.md)
-                .padding(.vertical, JoolsSpacing.sm)
+            }
+            .padding(.horizontal, JoolsSpacing.md)
+            .padding(.vertical, JoolsSpacing.sm)
 
-                // Expanded content - show description if title is present (avoid duplication)
-                if isExpanded, step.title != nil, let description = step.description {
-                    VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
-                        Text(description)
-                            .font(.joolsCaption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.leading, JoolsSpacing.xl + JoolsSpacing.md)
-                    .padding(.trailing, JoolsSpacing.md)
-                    .padding(.bottom, JoolsSpacing.sm)
+            if isExpanded, hasExpandableDescription, let description = step.description {
+                VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
+                    Text(description)
+                        .font(.joolsCaption)
+                        .foregroundStyle(.secondary)
                 }
+                .padding(.leading, JoolsSpacing.xl + JoolsSpacing.md)
+                .padding(.trailing, JoolsSpacing.md)
+                .padding(.bottom, JoolsSpacing.sm)
             }
         }
-        .buttonStyle(.plain)
     }
 }
 

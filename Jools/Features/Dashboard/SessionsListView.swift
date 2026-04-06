@@ -118,7 +118,7 @@ struct SessionListRow: View {
     let session: SessionEntity
 
     var body: some View {
-        let displayState = session.effectiveState
+        let resolved = session.resolvedState
 
         VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
             HStack {
@@ -128,7 +128,7 @@ struct SessionListRow: View {
 
                 Spacer()
 
-                SessionStateBadge(state: displayState)
+                SessionStateBadge(resolved: resolved)
             }
 
             Text(session.prompt)
@@ -136,11 +136,19 @@ struct SessionListRow: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
 
-            HStack {
-                Image(systemName: "folder")
-                    .font(.caption2)
-                Text(session.sourceId.replacingOccurrences(of: "sources/", with: ""))
-                    .font(.joolsCaption)
+            HStack(spacing: JoolsSpacing.xs) {
+                if session.isRepoless {
+                    Image(systemName: "sparkles")
+                        .font(.caption2)
+                    Text("No repo")
+                        .font(.joolsCaption)
+                } else {
+                    Image(systemName: "folder")
+                        .font(.caption2)
+                    Text(displaySourceLabel(for: session))
+                        .font(.joolsCaption)
+                        .lineLimit(1)
+                }
 
                 Spacer()
 
@@ -152,6 +160,18 @@ struct SessionListRow: View {
         .padding(.vertical, JoolsSpacing.xs)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("session.row.content.\(session.id)")
+    }
+
+    private func displaySourceLabel(for session: SessionEntity) -> String {
+        // Source IDs come back from the API in two known shapes:
+        //   "sources/<opaque>" — full resource name
+        //   "<opaque>"          — bare id (usually `github/owner/repo`)
+        // Strip the "sources/" prefix for display, then prefer the
+        // owner/repo tail if it parses cleanly.
+        let stripped = session.sourceId.hasPrefix("sources/")
+            ? String(session.sourceId.dropFirst("sources/".count))
+            : session.sourceId
+        return stripped
     }
 }
 

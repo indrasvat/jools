@@ -9,10 +9,6 @@ final class DashboardViewModel: ObservableObject {
     @Published var tasksUsedToday: Int = 0
     @Published var errorMessage: String?
 
-    /// Daily task limit (Jules Pro = 100, Free = 15)
-    /// Note: The Jules API doesn't expose this, so we default to Pro tier
-    let dailyTaskLimit: Int = 100
-
     func refresh(using dependencies: AppDependency, modelContext: ModelContext) {
         Task {
             await refreshAsync(using: dependencies, modelContext: modelContext)
