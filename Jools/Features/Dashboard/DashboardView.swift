@@ -218,10 +218,8 @@ private struct HomeBrandHeader: View {
     var body: some View {
         HStack(alignment: .center) {
             PixelJoolsWordmark(
-                iconSize: 26,
-                titleFont: .system(size: 22, weight: .bold, design: .rounded),
-                subtitle: "Your pocket control plane",
-                titleTracking: -0.6
+                titleSize: 26,
+                subtitle: "Your pocket control plane"
             )
 
             Spacer()

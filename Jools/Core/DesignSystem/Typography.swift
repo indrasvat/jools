@@ -52,6 +52,13 @@ extension View {
     }
 }
 
+/// Footer tagline shown in scrollable lists.
+///
+/// Worded so it actually makes sense for a third-party client: Jools is
+/// built by a human for Jules users, so the credit goes to the author.
+/// The `indrasvat` handle is painted with the brand accent gradient so
+/// it reads as a signature in the app's theme colours, not a product
+/// name.
 struct MadeWithJoolsFooter: View {
     enum Style {
         case scroll
@@ -61,135 +68,321 @@ struct MadeWithJoolsFooter: View {
     var style: Style = .scroll
 
     var body: some View {
-        VStack(spacing: JoolsSpacing.sm) {
-            PixelJoolsMark()
-                .frame(width: 18, height: 18)
-                .accessibilityHidden(true)
+        HStack(spacing: JoolsSpacing.xs) {
+            Text("Made with")
+                .font(.joolsCaption)
+                .foregroundStyle(.secondary)
 
-            HStack(spacing: 6) {
-                Text("Made with")
-                    .font(.joolsCaption)
-                    .foregroundStyle(.secondary)
+            Image(systemName: "heart.fill")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(LinearGradient.joolsAccentGradient)
+                .accessibilityLabel("love")
 
-                Image(systemName: "heart.fill")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(Color.joolsAccent)
-                    .accessibilityLabel("love")
+            Text("by")
+                .font(.joolsCaption)
+                .foregroundStyle(.secondary)
 
-                Text("by Jools")
-                    .font(.joolsCaption.weight(.medium))
-                    .foregroundStyle(.secondary)
-            }
+            Text("indrasvat")
+                .font(.joolsCaption.weight(.semibold))
+                .foregroundStyle(LinearGradient.joolsAccentGradient)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, style == .scroll ? JoolsSpacing.xl : JoolsSpacing.md)
         .padding(.bottom, style == .scroll ? JoolsSpacing.xxl : JoolsSpacing.lg)
         .accessibilityIdentifier("made-with-jools-footer")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Made with love by indrasvat")
     }
 }
 
-struct PixelJoolsWordmark: View {
-    var iconSize: CGFloat = 22
-    var titleFont: Font = .system(size: 32, weight: .bold, design: .rounded)
-    var subtitle: String? = nil
-    var titleTracking: CGFloat = -0.8
+/// Inline logotype that replaces the capital **J** in "Jools" with the
+/// pixel-art glyph. Use this anywhere the product name is shown alongside
+/// other type — the pixel letter stays crisp while "ools" flows in the
+/// native rounded system font.
+struct PixelJoolsLogotype: View {
+    var fontSize: CGFloat = 32
+    var weight: Font.Weight = .bold
+    var design: Font.Design = .rounded
+    var color: Color = .primary
+    var tracking: CGFloat?
+
+    private var resolvedTracking: CGFloat {
+        tracking ?? -fontSize * 0.03
+    }
+
+    // Sized so the J's stem (rows 0–10, i.e. the cap-to-baseline portion)
+    // roughly matches system rounded bold cap-height (≈0.72 × fontSize),
+    // with the descender hook (rows 11–13) poking just below the baseline
+    // like a real "J". Tuned empirically in the simulator.
+    private var glyphHeight: CGFloat { fontSize * 0.92 }
+
+    private var glyphWidth: CGFloat {
+        glyphHeight
+            * CGFloat(PixelJoolsPath.gridWidth)
+            / CGFloat(PixelJoolsPath.gridHeight)
+    }
 
     var body: some View {
-        HStack(spacing: JoolsSpacing.sm) {
-            PixelJoolsBadge(cornerRadius: iconSize * 0.34) {
-                PixelJoolsMark()
-                    .padding(iconSize * 0.22)
-            }
-            .frame(width: iconSize, height: iconSize)
+        HStack(alignment: .firstTextBaseline, spacing: fontSize * 0.04) {
+            PixelJoolsGlyph(color: color)
+                .frame(width: glyphWidth, height: glyphHeight)
+                .accessibilityHidden(true)
 
+            Text("ools")
+                .font(.system(size: fontSize, weight: weight, design: design))
+                .tracking(resolvedTracking)
+                .foregroundStyle(color)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Jools")
+    }
+}
+
+/// Header wordmark — pixel-J logotype with an optional subtitle below.
+struct PixelJoolsWordmark: View {
+    let titleSize: CGFloat
+    let subtitle: String?
+    let titleColor: Color
+
+    init(titleSize: CGFloat = 32, subtitle: String? = nil, titleColor: Color = .primary) {
+        self.titleSize = titleSize
+        self.subtitle = subtitle
+        self.titleColor = titleColor
+    }
+
+    var body: some View {
+        if let subtitle {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Jools")
-                    .font(titleFont)
-                    .tracking(titleTracking)
-                    .foregroundStyle(.primary)
-
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.joolsCaption)
-                        .foregroundStyle(.secondary)
-                }
+                PixelJoolsLogotype(fontSize: titleSize, color: titleColor)
+                Text(subtitle)
+                    .font(.joolsCaption)
+                    .foregroundStyle(.secondary)
             }
+        } else {
+            PixelJoolsLogotype(fontSize: titleSize, color: titleColor)
         }
     }
 }
 
 struct PixelJoolsBadge<Content: View>: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var cornerRadius: CGFloat = 18
     @ViewBuilder var content: Content
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.joolsAccentDark,
-                            Color.joolsAccent,
-                            Color.joolsAccentLight,
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(backgroundFill)
 
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+                .strokeBorder(borderColor, lineWidth: 1)
 
             content
         }
-        .shadow(color: Color.joolsAccent.opacity(0.24), radius: 12, x: 0, y: 6)
+        .shadow(color: shadowColor, radius: 16, x: 0, y: 8)
+    }
+
+    private var backgroundFill: some ShapeStyle {
+        LinearGradient(
+            colors: colorScheme == .dark
+                ? [Color(red: 0.16, green: 0.16, blue: 0.21), Color(red: 0.10, green: 0.10, blue: 0.14)]
+                : [Color(red: 0.95, green: 0.93, blue: 0.97), Color(red: 0.90, green: 0.87, blue: 0.94)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var borderColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
+    }
+
+    private var shadowColor: Color {
+        colorScheme == .dark ? Color.black.opacity(0.28) : Color.joolsAccent.opacity(0.18)
     }
 }
 
-struct PixelJoolsMark: View {
-    private let activeCells: [(x: Int, y: Int)] = [
-        (2, 0), (3, 0), (4, 0),
-        (1, 1), (2, 1), (3, 1), (4, 1), (5, 1),
-        (1, 2), (2, 2), (4, 2), (5, 2),
-        (2, 3), (3, 3), (4, 3),
-        (1, 4), (2, 4), (4, 4), (5, 4),
-        (1, 5), (2, 5), (3, 5), (4, 5), (5, 5),
-        (2, 6), (3, 6), (4, 6),
+// MARK: - Shared pixel path data
+//
+// `PixelJoolsPath` is the single source of truth for the brand glyph —
+// both the centred `PixelJoolsMark` (used in badges/icons) and the
+// baseline-aligned `PixelJoolsGlyph` (used inline with text) read from
+// here. The Python icon generator keeps its own copy in
+// `scripts/generate_icon.py`; any edit to the pixel map must update both.
+enum PixelJoolsPath {
+    enum Tone { case shadow, body }
+
+    struct Cell {
+        let x: Int
+        let y: Int
+        let tone: Tone
+    }
+
+    static let gridWidth = 11
+    static let gridHeight = 14
+    static let pixelMap: [String] = [
+        ".......BBS.",
+        ".......BBSS",
+        ".......BBSS",
+        ".......BBSS",
+        ".......BBSS",
+        ".......BBSS",
+        ".......BBSS",
+        ".......BBSS",
+        ".......BBSS",
+        ".S.....BBSS",
+        "SBB....BBSS",
+        "SBBBBBBBBSS",
+        ".SBBBBBBSS.",
+        "..SSSSSSS..",
     ]
+
+    static let cells: [Cell] = {
+        var result: [Cell] = []
+        for (y, row) in pixelMap.enumerated() {
+            for (x, char) in row.enumerated() {
+                switch char {
+                case "B": result.append(Cell(x: x, y: y, tone: .body))
+                case "S": result.append(Cell(x: x, y: y, tone: .shadow))
+                default: break
+                }
+            }
+        }
+        return result
+    }()
+
+    // Visual centroid (+0.5 to hit cell centres). The J's stem is denser
+    // than the hook, so centring on the bounding box pulls the letter
+    // off to the right; centroid centring corrects for that.
+    static let centroid: (x: CGFloat, y: CGFloat) = {
+        let xs = cells.map { CGFloat($0.x) }
+        let ys = cells.map { CGFloat($0.y) }
+        let mx = xs.reduce(0, +) / CGFloat(xs.count) + 0.5
+        let my = ys.reduce(0, +) / CGFloat(ys.count) + 0.5
+        return (mx, my)
+    }()
+
+    // Effective footprint after centroid centring — the far side needs
+    // extra clearance, so cell sizing must use this enlarged footprint.
+    static let footprint: (width: CGFloat, height: CGFloat) = {
+        let w = 2 * max(centroid.x, CGFloat(gridWidth) - centroid.x)
+        let h = 2 * max(centroid.y, CGFloat(gridHeight) - centroid.y)
+        return (w, h)
+    }()
+
+    // Typographic baseline position, expressed as a fraction of the
+    // grid's bounding-box height. Row 11 is the bottom of the hook's
+    // horizontal stroke — that's where "ools" should sit. Rows 12-13
+    // are the descender curl.
+    static let baselineFraction: CGFloat = 11.0 / CGFloat(gridHeight)
+
+    static func bodyColor(for scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 0.71, green: 0.58, blue: 0.96)
+            : Color(red: 0.55, green: 0.36, blue: 0.96)
+    }
+
+    static func shadowColor(for scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 0.06, green: 0.05, blue: 0.10)
+            : Color(red: 0.08, green: 0.06, blue: 0.13)
+    }
+}
+
+/// Pixel J centred on its visual centroid inside the supplied frame.
+/// Use inside badges or icons where the J should sit visually level in
+/// a square container.
+struct PixelJoolsMark: View {
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         GeometryReader { geometry in
-            let gridSize = 7
-            let cellSize = min(geometry.size.width, geometry.size.height) / CGFloat(gridSize)
-            let pixelSize = cellSize * 0.88
+            let cellSize = min(
+                geometry.size.width / PixelJoolsPath.footprint.width,
+                geometry.size.height / PixelJoolsPath.footprint.height
+            )
+            let originX = geometry.size.width / 2 - PixelJoolsPath.centroid.x * cellSize
+            let originY = geometry.size.height / 2 - PixelJoolsPath.centroid.y * cellSize
 
             ZStack(alignment: .topLeading) {
-                ForEach(Array(activeCells.enumerated()), id: \.offset) { _, cell in
-                    RoundedRectangle(cornerRadius: cellSize * 0.24, style: .continuous)
-                        .fill(pixelGradient(for: cell.y))
-                        .frame(width: pixelSize, height: pixelSize)
-                        .overlay {
-                            RoundedRectangle(cornerRadius: cellSize * 0.24, style: .continuous)
-                                .stroke(Color.white.opacity(0.18), lineWidth: cellSize * 0.06)
-                        }
+                ForEach(Array(PixelJoolsPath.cells.enumerated()), id: \.offset) { _, cell in
+                    Rectangle()
+                        .fill(color(for: cell.tone))
+                        .frame(width: cellSize, height: cellSize)
                         .offset(
-                            x: CGFloat(cell.x) * cellSize + (cellSize - pixelSize) / 2,
-                            y: CGFloat(cell.y) * cellSize + (cellSize - pixelSize) / 2
+                            x: originX + CGFloat(cell.x) * cellSize,
+                            y: originY + CGFloat(cell.y) * cellSize
                         )
                 }
             }
-            .frame(width: CGFloat(gridSize) * cellSize, height: CGFloat(gridSize) * cellSize)
-            .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
         }
     }
 
-    private func pixelGradient(for rowIndex: Int) -> LinearGradient {
-        LinearGradient(
-            colors: rowIndex < 3
-                ? [Color.joolsAccentLight, Color.joolsAccent]
-                : [Color.joolsAccentSecondary, Color.joolsAccentDark],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+    private func color(for tone: PixelJoolsPath.Tone) -> Color {
+        switch tone {
+        case .body: return PixelJoolsPath.bodyColor(for: colorScheme)
+        case .shadow: return PixelJoolsPath.shadowColor(for: colorScheme)
+        }
+    }
+}
+
+/// Pixel J sized to fill its frame via the grid bounding box (no
+/// centroid offset) and published with a `firstTextBaseline` alignment
+/// guide so it can sit inline with regular text. Use inside
+/// `PixelJoolsLogotype`, not directly.
+struct PixelJoolsGlyph: View {
+    @Environment(\.colorScheme) private var colorScheme
+    var color: Color = .primary
+    var useBrandPalette: Bool = true
+
+    var body: some View {
+        GeometryReader { geometry in
+            let cellSize = min(
+                geometry.size.width / CGFloat(PixelJoolsPath.gridWidth),
+                geometry.size.height / CGFloat(PixelJoolsPath.gridHeight)
+            )
+            let gridW = cellSize * CGFloat(PixelJoolsPath.gridWidth)
+            let gridH = cellSize * CGFloat(PixelJoolsPath.gridHeight)
+            let originX = (geometry.size.width - gridW) / 2
+            let originY = (geometry.size.height - gridH) / 2
+
+            ZStack(alignment: .topLeading) {
+                ForEach(Array(PixelJoolsPath.cells.enumerated()), id: \.offset) { _, cell in
+                    Rectangle()
+                        .fill(pixelColor(for: cell.tone))
+                        .frame(width: cellSize, height: cellSize)
+                        .offset(
+                            x: originX + CGFloat(cell.x) * cellSize,
+                            y: originY + CGFloat(cell.y) * cellSize
+                        )
+                }
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+        }
+        // Expose the J's visual baseline so HStack(.firstTextBaseline)
+        // lines the hook's horizontal stroke up with the text baseline.
+        .alignmentGuide(.firstTextBaseline) { dim in
+            dim.height * PixelJoolsPath.baselineFraction
+        }
+        .alignmentGuide(.lastTextBaseline) { dim in
+            dim.height * PixelJoolsPath.baselineFraction
+        }
+    }
+
+    private func pixelColor(for tone: PixelJoolsPath.Tone) -> Color {
+        if useBrandPalette {
+            switch tone {
+            case .body: return PixelJoolsPath.bodyColor(for: colorScheme)
+            case .shadow: return PixelJoolsPath.shadowColor(for: colorScheme)
+            }
+        }
+        // Monochrome fallback that honours the supplied tint for callers
+        // that want the J to match surrounding text colour (e.g. an
+        // all-white logotype on a coloured splash).
+        switch tone {
+        case .body: return color
+        case .shadow: return color.opacity(0.25)
+        }
     }
 }
