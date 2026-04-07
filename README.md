@@ -13,11 +13,11 @@ This is **not** affiliated with Google. It's a side project that talks to the sa
 
 ## Screens
 
-|                          |                          |                          |                          |
-|:------------------------:|:------------------------:|:------------------------:|:------------------------:|
-| <img src="docs/screenshots/01-onboarding-light.png" width="220"/> | <img src="docs/screenshots/02-home-light.png" width="220"/> | <img src="docs/screenshots/03-sessions-light.png" width="220"/> | <img src="docs/screenshots/04-plan-light.png" width="220"/> |
-| <img src="docs/screenshots/01-onboarding-dark.png" width="220"/> | <img src="docs/screenshots/02-home-dark.png" width="220"/> | <img src="docs/screenshots/03-sessions-dark.png" width="220"/> | <img src="docs/screenshots/04-plan-dark.png" width="220"/> |
-| **Onboarding**            | **Home**                  | **Sessions inbox**        | **Plan approval**         |
+|                          |                          |                          |                          |                          |
+|:------------------------:|:------------------------:|:------------------------:|:------------------------:|:------------------------:|
+| <img src="docs/screenshots/01-onboarding-light.png" width="180"/> | <img src="docs/screenshots/02-home-light.png" width="180"/> | <img src="docs/screenshots/03-sessions-light.png" width="180"/> | <img src="docs/screenshots/05-plan-light.png" width="180"/> | <img src="docs/screenshots/04-diff-light.png" width="180"/> |
+| <img src="docs/screenshots/01-onboarding-dark.png" width="180"/> | <img src="docs/screenshots/02-home-dark.png" width="180"/> | <img src="docs/screenshots/03-sessions-dark.png" width="180"/> | <img src="docs/screenshots/05-plan-dark.png" width="180"/> | <img src="docs/screenshots/04-diff-dark.png" width="180"/> |
+| **Onboarding**            | **Home**                  | **Sessions inbox**        | **Plan approval**         | **Per-file diff**         |
 
 Each screen reacts to your active system appearance and respects your in-app theme override (System / Light / Dark).
 

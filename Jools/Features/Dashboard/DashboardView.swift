@@ -228,7 +228,7 @@ private struct HomeBrandHeader: View {
         HStack(alignment: .center) {
             PixelJoolsWordmark(
                 titleSize: 26,
-                subtitle: "Your pocket control plane"
+                subtitle: "An unofficial Jules client"
             )
 
             Spacer()
