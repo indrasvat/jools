@@ -3,7 +3,14 @@ import JoolsKit
 
 // MARK: - Jules Avatar
 
-/// Jules avatar (static to avoid layout thrashing)
+/// Compact pixel-mascot avatar used in chat bubbles. Replaces the
+/// earlier "purple gradient circle with an SF sparkles glyph"
+/// placeholder so the chat surface uses ONE consistent visual for
+/// Jules — the same pixel mascot that appears in the status banner
+/// and (smaller) inline with agent messages. Users were getting
+/// three different "Jules" representations (banner mascot, gradient
+/// sparkles avatar in bubbles, rotating ring in working indicator),
+/// which made the surface feel inconsistent. (UI review.)
 struct JulesAvatarView: View {
     let size: CGFloat
     let isAnimated: Bool
@@ -15,18 +22,23 @@ struct JulesAvatarView: View {
 
     var body: some View {
         ZStack {
-            // Background circle
             Circle()
-                .fill(LinearGradient.joolsAccentGradient)
+                .fill(LinearGradient.joolsAccentGradient.opacity(0.18))
+            Circle()
+                .strokeBorder(Color.joolsAccent.opacity(0.35), lineWidth: 1)
 
-            // Jules icon (using SF Symbol as placeholder)
-            // In production, use custom Jules octopus asset
-            Image(systemName: "sparkles")
-                .font(.system(size: size * 0.5))
-                .foregroundStyle(.white)
+            // The mascot is normally framed at 32+; at small avatar
+            // sizes (~28pt) we shrink the inner pixel art so it
+            // doesn't crowd the circle border. The ±1pt breathing
+            // animation is left enabled here — at this size it's a
+            // very subtle hint of life next to the messages, exactly
+            // the way the Jules web UI animates its own logo.
+            // (User feedback.)
+            PixelJulesMascot(mood: .working)
+                .frame(width: size * 0.78, height: size * 0.78)
         }
         .frame(width: size, height: size)
-        .accessibilityLabel("Jules avatar")
+        .accessibilityLabel("Jules")
     }
 }
 

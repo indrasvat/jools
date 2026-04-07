@@ -16,53 +16,64 @@ struct SessionStatusBanner: View {
 
     var body: some View {
         if let config = bannerConfig {
-            VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
-                HStack(spacing: JoolsSpacing.sm) {
+            VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
+                HStack(alignment: .center, spacing: JoolsSpacing.md) {
                     if config.showsMascot {
                         PixelJulesMascot(mood: config.mascotMood)
-                            .frame(width: 28, height: 28)
+                            .frame(width: 36, height: 36)
+                            .padding(.trailing, JoolsSpacing.xxs)
                             .accessibilityHidden(true)
                     } else if config.showSpinner {
                         ProgressView()
-                            .scaleEffect(0.8)
+                            .scaleEffect(0.9)
                             .tint(config.foregroundColor)
+                            .frame(width: 36, height: 36)
                     } else {
                         Image(systemName: config.icon)
-                            .font(.subheadline.weight(.semibold))
+                            .font(.title3.weight(.semibold))
                             .foregroundStyle(config.foregroundColor)
+                            .frame(width: 36, height: 36)
                     }
 
-                    HStack(spacing: 0) {
-                        Text(config.message)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(config.foregroundColor)
+                    // Title + ellipsis composed as a single Text run so
+                    // the dots flow naturally after the message instead
+                    // of sitting in a fixed-width column with a left gap
+                    // when only one dot is showing.
+                    Text(messageWithEllipsis(config: config))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(config.foregroundColor)
+                        .lineLimit(1)
 
-                        if config.animateDots {
-                            Text(String(repeating: ".", count: dotCount))
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(config.foregroundColor)
-                                .frame(width: 20, alignment: .leading)
-                        }
-                    }
-
-                    Spacer()
+                    Spacer(minLength: JoolsSpacing.xs)
 
                     if isPolling && config.showPollingIndicator {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 5) {
                             Circle()
                                 .fill(Color.green)
-                                .frame(width: 6, height: 6)
+                                .frame(width: 7, height: 7)
+                                .shadow(color: .green.opacity(0.55), radius: 3)
                             Text("Live")
-                                .font(.caption2)
-                                .foregroundStyle(config.foregroundColor.opacity(0.8))
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(config.foregroundColor)
                         }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule().fill(config.foregroundColor.opacity(0.12))
+                        )
                     }
                 }
 
-                if let currentStepTitle {
+                // Suppress redundant currentStepTitle when it would just
+                // repeat what the banner header already says (common in
+                // terminal states like .completed / .failed where the
+                // step title is literally "Session completed").
+                if let currentStepTitle, !currentStepTitle.isEmpty,
+                   currentStepTitle.caseInsensitiveCompare(config.message) != .orderedSame {
                     Text(currentStepTitle)
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                         .accessibilityIdentifier("chat.current-step-title")
                 }
 
@@ -75,8 +86,8 @@ struct SessionStatusBanner: View {
 
                 HStack(spacing: JoolsSpacing.sm) {
                     Text(syncFooterText)
-                        .font(.caption2)
-                        .foregroundStyle(config.foregroundColor.opacity(0.85))
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.secondary)
 
                     Spacer()
 
@@ -90,8 +101,20 @@ struct SessionStatusBanner: View {
                 }
             }
             .padding(.horizontal, JoolsSpacing.md)
-            .padding(.vertical, JoolsSpacing.sm)
+            .padding(.vertical, JoolsSpacing.sm + 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(config.backgroundColor)
+            // Hairline bottom border so the banner reads as a distinct
+            // section from the chat scroll content underneath instead
+            // of bleeding straight into the bubbles. The Divider that
+            // ChatView places below `SessionStatusBanner` doesn't quite
+            // do this on its own — colour-tinted backgrounds need an
+            // explicit edge to feel "contained".
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(config.foregroundColor.opacity(0.18))
+                    .frame(height: 0.5)
+            }
             .accessibilityIdentifier("chat.status-banner")
             .onReceive(timer) { _ in
                 if config.animateDots {
@@ -99,6 +122,17 @@ struct SessionStatusBanner: View {
                 }
             }
         }
+    }
+
+    /// Compose the banner title with optional animated trailing
+    /// ellipsis. Keeping the dots inside the same `Text` value lets
+    /// SwiftUI lay them out naturally — no fixed-width column, no
+    /// left gap when the dot count animates from 3 back to 1.
+    private func messageWithEllipsis(config: BannerConfig) -> String {
+        if config.animateDots {
+            return config.message + String(repeating: ".", count: dotCount)
+        }
+        return config.message
     }
 
     private var syncFooterText: String {
@@ -230,7 +264,24 @@ private struct BannerConfig {
     var mascotMood: PixelJulesMascot.Mood = .working
 }
 
-private struct PixelJulesMascot: View {
+/// Pixel-art Jules mascot, used by both the chat status banner and
+/// the in-bubble agent avatar so the chat surface presents a single
+/// consistent visual for Jules.
+///
+/// Three subtle changes from the original:
+///
+/// 1. The sparkle/icon overlay above the head was removed. The
+///    banner already conveys session state via its title text + the
+///    "Live" pill, so the overlay was a redundant visual indicator
+///    that just looked like noise. (User feedback.)
+/// 2. The float animation amplitude is now ±1pt over 1.8s — a quiet
+///    "breathing" instead of the previous ±2pt over 1.15s bounce.
+///    This matches the way the Jules web UI subtly animates its
+///    logo. (User feedback.)
+/// 3. Animation can be disabled per-call via `isAnimated: false` so
+///    the small in-bubble avatar can be totally still while the
+///    larger banner mascot still gently breathes.
+struct PixelJulesMascot: View {
     enum Mood {
         case starting
         case queued
@@ -238,6 +289,12 @@ private struct PixelJulesMascot: View {
     }
 
     let mood: Mood
+    let isAnimated: Bool
+
+    init(mood: Mood, isAnimated: Bool = true) {
+        self.mood = mood
+        self.isAnimated = isAnimated
+    }
 
     @State private var isFloating = false
 
@@ -272,37 +329,21 @@ private struct PixelJulesMascot: View {
                             y: CGFloat(cell.y) * cellSize + (cellSize - pixelSize) / 2
                         )
                 }
-
-                sparkle
             }
             .frame(width: CGFloat(gridSize) * cellSize, height: CGFloat(gridSize) * cellSize)
-            .offset(y: isFloating ? -2 : 2)
-            .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 6)
-            .animation(.easeInOut(duration: 1.15).repeatForever(autoreverses: true), value: isFloating)
+            .offset(y: isAnimated && isFloating ? -1 : (isAnimated ? 1 : 0))
+            .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 4)
+            .animation(
+                isAnimated
+                    ? .easeInOut(duration: 1.8).repeatForever(autoreverses: true)
+                    : .default,
+                value: isFloating
+            )
             .onAppear {
-                isFloating = true
+                if isAnimated {
+                    isFloating = true
+                }
             }
-        }
-    }
-
-    @ViewBuilder
-    private var sparkle: some View {
-        switch mood {
-        case .starting:
-            Image(systemName: "sparkle")
-                .font(.system(size: 6, weight: .bold))
-                .foregroundStyle(Color.white.opacity(0.9))
-                .offset(x: 11, y: -8)
-        case .queued:
-            Image(systemName: "clock.fill")
-                .font(.system(size: 6, weight: .bold))
-                .foregroundStyle(Color.white.opacity(0.9))
-                .offset(x: 11, y: -8)
-        case .working:
-            Image(systemName: "ellipsis")
-                .font(.system(size: 8, weight: .black))
-                .foregroundStyle(Color.white.opacity(0.9))
-                .offset(x: 12, y: -8)
         }
     }
 
