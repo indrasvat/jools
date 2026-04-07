@@ -27,8 +27,8 @@ This is **not** affiliated with Google. It's a side project that talks to the sa
 
 |                          |                          |                          |                          |                          |
 |:------------------------:|:------------------------:|:------------------------:|:------------------------:|:------------------------:|
-| <img src="docs/screenshots/01-onboarding-light.png" alt="Onboarding screen in light mode with Connect to Jules button and key-capture options" width="180"/> | <img src="docs/screenshots/02-home-light.png" alt="Home dashboard in light mode showing Needs Attention summary and task suggestions" width="180"/> | <img src="docs/screenshots/03-sessions-light.png" alt="Sessions inbox in light mode listing active and completed Jules sessions" width="180"/> | <img src="docs/screenshots/05-plan-light.png" alt="Plan approval screen in light mode with expandable steps and Approve / Revise buttons" width="180"/> | <img src="docs/screenshots/04-diff-light.png" alt="Per-file diff viewer in light mode with side-by-side additions and deletions" width="180"/> |
-| <img src="docs/screenshots/01-onboarding-dark.png" alt="Onboarding screen in dark mode with Connect to Jules button and key-capture options" width="180"/> | <img src="docs/screenshots/02-home-dark.png" alt="Home dashboard in dark mode showing Needs Attention summary and task suggestions" width="180"/> | <img src="docs/screenshots/03-sessions-dark.png" alt="Sessions inbox in dark mode listing active and completed Jules sessions" width="180"/> | <img src="docs/screenshots/05-plan-dark.png" alt="Plan approval screen in dark mode with expandable steps and Approve / Revise buttons" width="180"/> | <img src="docs/screenshots/04-diff-dark.png" alt="Per-file diff viewer in dark mode with side-by-side additions and deletions" width="180"/> |
+| <img src="docs/screenshots/01-onboarding-light.png" alt="Onboarding screen in light mode with Connect to Jules button and key-capture options" width="180"/> | <img src="docs/screenshots/02-home-light.png" alt="Home dashboard in light mode showing Needs Attention summary and task suggestions" width="180"/> | <img src="docs/screenshots/03-sessions-light.png" alt="Sessions inbox in light mode listing active and completed Jules sessions" width="180"/> | <img src="docs/screenshots/05-plan-light.png" alt="Plan approval screen in light mode with expandable steps and Approve / Revise buttons" width="180"/> | <img src="docs/screenshots/04-diff-light.png" alt="Per-file diff viewer in light mode showing unified-diff hunks with additions and deletions" width="180"/> |
+| <img src="docs/screenshots/01-onboarding-dark.png" alt="Onboarding screen in dark mode with Connect to Jules button and key-capture options" width="180"/> | <img src="docs/screenshots/02-home-dark.png" alt="Home dashboard in dark mode showing Needs Attention summary and task suggestions" width="180"/> | <img src="docs/screenshots/03-sessions-dark.png" alt="Sessions inbox in dark mode listing active and completed Jules sessions" width="180"/> | <img src="docs/screenshots/05-plan-dark.png" alt="Plan approval screen in dark mode with expandable steps and Approve / Revise buttons" width="180"/> | <img src="docs/screenshots/04-diff-dark.png" alt="Per-file diff viewer in dark mode showing unified-diff hunks with additions and deletions" width="180"/> |
 | **Onboarding**            | **Home**                  | **Sessions inbox**        | **Plan approval**         | **Per-file diff**         |
 
 Each screen reacts to your active system appearance and respects your in-app theme override (System / Light / Dark).
@@ -73,7 +73,7 @@ For more, see [`docs/Remaining_Work_Plan_2026-04.md`](docs/Remaining_Work_Plan_2
 ### Requirements
 
 - macOS Sequoia or later
-- Xcode 26.0+
+- Xcode 26.1+ (matches `xcodeVersion` in `project.yml`)
 - iOS 26.0+ deployment target
 - [Homebrew](https://brew.sh)
 

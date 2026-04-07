@@ -132,7 +132,14 @@ struct CompletionCardView: View {
                 .foregroundStyle(.primary)
                 .lineLimit(6)
 
-            // File pills for changed files
+            // File pills for changed files. The status is hardcoded
+            // to `.modified` because Jules's `GitPatchDTO.changedFiles`
+            // only extracts paths from the unified-diff headers — the
+            // per-file change type (added / deleted / renamed) isn't
+            // propagated out of `DiffParser` today. When we enrich
+            // `changedFiles` with per-file status (e.g. by reading
+            // `/dev/null` markers from the `diff --git` preambles),
+            // switch this to `file.changeStatus`. (CodeRabbit review.)
             if !changedFiles.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: JoolsSpacing.xs) {
