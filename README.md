@@ -1,9 +1,21 @@
-# Jools
+<p align="center">
+  <img src="docs/jools-icon.png" alt="Jools" width="160" />
+</p>
 
-[![CI](https://github.com/indrasvat/jools/actions/workflows/ci.yml/badge.svg)](https://github.com/indrasvat/jools/actions/workflows/ci.yml)
+<h1 align="center">Jools</h1>
 
-> **Jules, in your pocket.**
-> An unofficial iOS client for [Google's Jules](https://jules.google/) — the autonomous coding agent.
+<p align="center">
+  <a href="https://github.com/indrasvat/jools/actions/workflows/ci.yml">
+    <img src="https://github.com/indrasvat/jools/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Jules, in your pocket.</strong><br/>
+  An unofficial iOS client for <a href="https://jules.google/">Google's Jules</a> — the autonomous coding agent.
+</p>
+
+---
 
 Jools is a SwiftUI app that turns the public [Jules REST API](https://jules.google/docs/api/reference/) into a calm, mobile-first control plane. Triage what needs you, approve plans, watch progress, follow up in chat, and check the PR — all from your phone, while the actual coding work happens on Jules's Cloud VMs in the background.
 
