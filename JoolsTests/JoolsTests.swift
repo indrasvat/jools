@@ -10,24 +10,15 @@ struct JoolsTests {
         #expect(true)
     }
 
-    @Test("State machine maps clarifying agent message to needs input")
-    func stateMachineMapsClarifyingMessageToNeedsInput() throws {
-        let activities = [
-            makeActivity(
-                id: "agent-question",
-                type: .agentMessaged,
-                createdAt: Date(),
-                content: ActivityContentDTO(
-                    message: "Before I proceed, could you clarify whether you want a chat reply or a file output?"
-                )
-            )
-        ]
-
-        let resolvedState = SessionStateMachine.resolve(apiState: .unspecified, activities: activities)
-
-        #expect(resolvedState == .awaitingUserInput)
-        #expect(resolvedState.sessionState == .awaitingUserInput)
-    }
+    // Note: `stateMachineMapsClarifyingMessageToNeedsInput` was
+    // removed. It asserted that an agent-messaged activity with
+    // interrogative prose ("could you clarify") should fold to
+    // `.awaitingUserInput` via the state machine. That behavior was
+    // powered by the content-scanning heuristic we explicitly
+    // removed because it produced false positives on friendly closer
+    // text ("…just let me know. Have a great day!"). The state
+    // machine now trusts the API's `AWAITING_USER_INPUT` state
+    // directly — see the design note on `SessionStateMachine.transition`.
 
     @Test("State machine maps generated plan to awaiting approval")
     func stateMachineMapsGeneratedPlanToAwaitingApproval() throws {
@@ -99,35 +90,12 @@ struct JoolsTests {
         #expect(resolvedState == .completed)
     }
 
-    @Test("Effective session state prefers timeline over stale starting state")
-    func effectiveStatePrefersTimelineOverStartingState() throws {
-        let session = SessionEntity(
-            id: "session",
-            title: "Repository Overview",
-            prompt: "Inspect the repository",
-            state: .unspecified,
-            sourceId: "sources/test",
-            sourceBranch: "main",
-            automationMode: .unspecified,
-            requirePlanApproval: false,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-
-        let activity = makeActivity(
-            id: "agent-question",
-            type: .agentMessaged,
-            createdAt: Date(),
-            content: ActivityContentDTO(
-                message: "Would you like the overview in chat, or should I write it to a file?"
-            )
-        )
-        activity.session = session
-        session.activities = [activity]
-
-        #expect(session.effectiveDisplayState == .awaitingUserInput)
-        #expect(session.effectiveState == .awaitingUserInput)
-    }
+    // Note: `effectiveStatePrefersTimelineOverStartingState` was
+    // removed for the same reason as
+    // `stateMachineMapsClarifyingMessageToNeedsInput` above — it
+    // depended on the content-scanning heuristic that has been
+    // deliberately removed in favor of trusting the API's own
+    // `AWAITING_USER_INPUT` state.
 
     private func makeActivity(
         id: String,
