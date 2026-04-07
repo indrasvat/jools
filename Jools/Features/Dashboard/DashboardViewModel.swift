@@ -22,20 +22,31 @@ final class DashboardViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            // Fetch and sync sources
-            let sourcesResponse = try await dependencies.apiClient.listSources()
-            syncSources(sourcesResponse.allItems, to: modelContext)
+            // Walk every page of sources and sessions so users with
+            // more than `pageSize` of either don't silently lose
+            // visibility of older entries on refresh.
+            let allSources = try await dependencies.apiClient.listAllSources()
+            try Task.checkCancellation()
+            syncSources(allSources, to: modelContext)
 
-            // Fetch and sync sessions (use larger pageSize to capture all today's sessions)
-            let sessionsResponse = try await dependencies.apiClient.listSessions(pageSize: 100)
-            syncSessions(sessionsResponse.allItems, to: modelContext)
+            let allSessions = try await dependencies.apiClient.listAllSessions(pageSize: 100)
+            try Task.checkCancellation()
+            syncSessions(allSessions, to: modelContext)
 
             // Count sessions created today
-            tasksUsedToday = countSessionsCreatedToday(sessionsResponse.allItems)
+            tasksUsedToday = countSessionsCreatedToday(allSessions)
 
             // Save changes
             try modelContext.save()
 
+        } catch is CancellationError {
+            // Pull-to-refresh interrupted by another pull, navigation
+            // away, or scene phase change. Not a failure — leave the
+            // last successful snapshot on screen and stay quiet.
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            // URLSession's own cancellation path — same story as above.
+            return
         } catch {
             errorMessage = error.localizedDescription
         }

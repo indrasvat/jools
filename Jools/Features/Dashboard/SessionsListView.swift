@@ -140,10 +140,19 @@ struct SessionsListView: View {
         defer { isLoading = false }
 
         do {
-            let response = try await dependencies.apiClient.listSessions()
-            syncSessions(response.allItems)
+            // Walk every page so users with more than the default
+            // page size don't see older sessions vanish from the list
+            // (and from search) after each refresh.
+            let allSessions = try await dependencies.apiClient.listAllSessions(pageSize: 100)
+            syncSessions(allSessions)
             try modelContext.save()
             lastRefreshAt = Date()
+        } catch is CancellationError {
+            // Pull-to-refresh interrupted by another pull or scene
+            // change. Not a failure — silently keep the cached data.
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            return
         } catch {
             print("Failed to refresh sessions (\(reason)): \(error)")
         }

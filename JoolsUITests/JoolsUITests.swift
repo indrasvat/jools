@@ -192,6 +192,10 @@ final class JoolsUITests: XCTestCase {
         app.launchEnvironment["JOOLS_UI_TEST_MODE"] = "1"
         app.launchEnvironment["JOOLS_UI_TEST_SCENARIO"] = scenario
         app.launchEnvironment["JOOLS_UI_TEST_AUTHENTICATED"] = authenticated ? "1" : "0"
+        // Disable SwiftUI animations during UI tests so element waits
+        // resolve as soon as the view is in place rather than after
+        // the next animation frame. Halves end-to-end test runtime.
+        app.launchEnvironment["JOOLS_UI_TEST_DISABLE_ANIMATIONS"] = "1"
         if let syncState {
             app.launchEnvironment["JOOLS_UI_TEST_SYNC_STATE"] = syncState
         }

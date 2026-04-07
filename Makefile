@@ -228,18 +228,26 @@ run: sim-run ## Build and run on simulator (alias for sim-run)
 test: kit-test test-app ## Run all tests
 	@echo "$(GREEN)$(CHECK) All tests passed$(RESET)"
 
-test-app: ## Run iOS app tests
+test-app: ## Run iOS app tests (parallel)
 	@echo "$(BOLD)$(TEST_ICON) Testing $(PRODUCT_NAME) app...$(RESET)"
+	@# Parallel testing across multiple simulator clones cuts the
+	@# JoolsUITests suite from ~260s sequentially to roughly N-th of
+	@# that, where N is the worker count. 4 workers is a good fit for
+	@# both CI runners and local M-series hardware.
 	@set -o pipefail && xcodebuild \
 		-project $(PROJECT) \
 		-scheme $(SCHEME) \
 		-destination "$(DESTINATION)" \
 		-configuration Debug \
+		-parallel-testing-enabled YES \
+		-parallel-testing-worker-count 4 \
 		test 2>&1 | xcpretty || xcodebuild \
 		-project $(PROJECT) \
 		-scheme $(SCHEME) \
 		-destination "$(DESTINATION)" \
 		-configuration Debug \
+		-parallel-testing-enabled YES \
+		-parallel-testing-worker-count 4 \
 		test
 	@echo "$(GREEN)$(CHECK) App tests passed$(RESET)"
 

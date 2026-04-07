@@ -135,9 +135,21 @@ public actor APIClient {
 
     // MARK: - Sources
 
-    /// List all connected sources (repositories)
+    /// List a single page of connected sources (repositories).
     public func listSources(pageToken: String? = nil) async throws -> PaginatedResponse<SourceDTO> {
         try await request(.sources(pageToken: pageToken))
+    }
+
+    /// Walk every page of sources and return them as a flat array.
+    public func listAllSources() async throws -> [SourceDTO] {
+        var pageToken: String?
+        var aggregated: [SourceDTO] = []
+        repeat {
+            let response = try await listSources(pageToken: pageToken)
+            aggregated.append(contentsOf: response.allItems)
+            pageToken = response.nextPageToken
+        } while pageToken != nil
+        return aggregated
     }
 
     /// Get a specific source by ID
@@ -147,9 +159,25 @@ public actor APIClient {
 
     // MARK: - Sessions
 
-    /// List all sessions
+    /// List a single page of sessions.
     public func listSessions(pageSize: Int = 20, pageToken: String? = nil) async throws -> PaginatedResponse<SessionDTO> {
         try await request(.sessions(pageSize: pageSize, pageToken: pageToken))
+    }
+
+    /// Walk every page of sessions and return them as a flat array.
+    /// Required for the Sessions list and the Home dashboard sync —
+    /// without this, callers silently truncate at the first page and
+    /// users with more than `pageSize` sessions lose visibility of
+    /// the older ones after refresh.
+    public func listAllSessions(pageSize: Int = 100) async throws -> [SessionDTO] {
+        var pageToken: String?
+        var aggregated: [SessionDTO] = []
+        repeat {
+            let response = try await listSessions(pageSize: pageSize, pageToken: pageToken)
+            aggregated.append(contentsOf: response.allItems)
+            pageToken = response.nextPageToken
+        } while pageToken != nil
+        return aggregated
     }
 
     /// Get a specific session by ID
