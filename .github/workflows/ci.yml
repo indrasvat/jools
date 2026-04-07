@@ -28,7 +28,11 @@ jobs:
         run: brew install swiftlint
 
       - name: Run SwiftLint
-        run: swiftlint lint --reporter github-actions-logging --strict
+        # Match the local dev workflow (lefthook + `make lint`) which
+        # treats existing style warnings as warnings, not errors.
+        # Bumping these to errors should be a deliberate cleanup pass,
+        # not a side effect of adding CI.
+        run: swiftlint lint --reporter github-actions-logging
 
   # ────────────────────────────────────────────────────────────────────
   # JoolsKit — pure Swift package, no Xcode dependency.
