@@ -140,9 +140,6 @@ final class AppDependency: ObservableObject {
         case "stale-session":
             primaryTitle = "UI Test Stale Session"
             primaryState = .inProgress
-        case "starting-needs-input":
-            primaryTitle = "UI Test Starting Session"
-            primaryState = .unspecified
         default:
             primaryTitle = "UI Test Running Session"
             primaryState = .awaitingPlanApproval
@@ -186,21 +183,6 @@ final class AppDependency: ObservableObject {
     }
 
     private func uiTestActivities(for scenario: String) -> [ActivityEntity] {
-        if scenario == "starting-needs-input" {
-            return [
-                ActivityEntity(
-                    id: "ui-agent-question-\(scenario)",
-                    type: .agentMessaged,
-                    createdAt: Date().addingTimeInterval(-30),
-                    contentJSON: (try? JSONEncoder().encode(
-                        ActivityContentDTO(
-                            message: "Before I proceed, could you clarify whether you want the summary directly in chat or written to a file?"
-                        )
-                    )) ?? Data()
-                )
-            ]
-        }
-
         let planContent = ActivityContentDTO(
             plan: PlanDTO(
                 id: "plan-ui",

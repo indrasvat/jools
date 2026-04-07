@@ -80,18 +80,19 @@ final class JoolsUITests: XCTestCase {
         )
     }
 
-    @MainActor
-    func testStartingSessionUsesTimelineDerivedNeedsInputState() throws {
-        let app = makeApp(scenario: "starting-needs-input")
-        app.launch()
-
-        openSessionsTab(in: app)
-        openSession(named: "UI Test Starting Session", in: app)
-
-        XCTAssertTrue(app.staticTexts["Jules needs your input"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Open the latest Jules message below and reply to continue."].exists)
-        XCTAssertFalse(app.staticTexts["Jules is starting up"].exists)
-    }
+    // Note: `testStartingSessionUsesTimelineDerivedNeedsInputState`
+    // was removed. It asserted that a session with API state
+    // `.unspecified` plus an agent question in the timeline should
+    // render the "Jules needs your input" banner — behavior powered by
+    // the content-scanning heuristic that guessed needs-input from
+    // message text ("let me know", "could you clarify", etc.). That
+    // heuristic was explicitly removed ("use the proper API statuses")
+    // because it produced false positives on unrelated closer text
+    // like "have a great day, let me know if anything breaks". The
+    // forward-compatible `.unspecified` → "Starting" rendering is
+    // covered by JoolsKit unit tests and by the ResolvedSessionState
+    // humanize path, so there's nothing left for a UI test to cover
+    // in that scenario without reintroducing the heuristic.
 
     @MainActor
     func testStaleSessionShowsRetryAction() throws {
