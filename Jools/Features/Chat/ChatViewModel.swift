@@ -288,31 +288,43 @@ final class ChatViewModel: ObservableObject, PollingServiceDelegate {
 
     // MARK: - PollingServiceDelegate
 
-    nonisolated func pollingService(_ service: PollingService, didUpdateSession session: SessionDTO, reason: PollingRefreshReason) {
-        Task { @MainActor in
-            guard let modelContext, let sessionId = self.sessionId else { return }
-            let outcome = updateSession(session, sessionId: sessionId, modelContext: modelContext)
-            if outcome.stateChanged && shouldTriggerStaleRecovery(for: session) {
-                await triggerStaleRecoveryIfNeeded()
-            }
-        }
+    // MARK: - PollingServiceDelegate
+    //
+    // These methods are intentionally NOT `nonisolated`. Both the
+    // delegate protocol (`PollingServiceDelegate`) and the calling
+    // type (`PollingService`) are `@MainActor`, and `ChatViewModel`
+    // itself is `@MainActor`, so the natural isolation is to inherit
+    // main-actor isolation throughout. The previous implementation
+    // wrapped each method body in `Task { @MainActor in ... }`, which
+    // spawned an unstructured task per delegate call and removed
+    // ordering / backpressure between deliveries. Under burst-mode
+    // polling that fan-out was a major contributor to the @MainActor
+    // saturation freeze. (Codex review.)
+
+    func pollingService(_ service: PollingService, didUpdateSession session: SessionDTO, reason: PollingRefreshReason) {
+        guard let modelContext, let sessionId = self.sessionId else { return }
+        // Persist the new session state. We DO NOT trigger
+        // triggerStaleRecoveryIfNeeded here even on a state change —
+        // the polling cycle that just delivered this session is the
+        // SAME cycle that's about to deliver fresh activities via
+        // didUpdateActivities below. Re-running refreshSession
+        // (which performs another full getSession + listAllActivities
+        // round trip) doubled all the API + SwiftData + SwiftUI work
+        // per poll tick.
+        _ = updateSession(session, sessionId: sessionId, modelContext: modelContext)
     }
 
-    nonisolated func pollingService(_ service: PollingService, didUpdateActivities activities: [ActivityDTO], reason: PollingRefreshReason) {
-        Task { @MainActor in
-            guard let modelContext, let sessionId = self.sessionId else { return }
-            syncActivities(activities, sessionId: sessionId, modelContext: modelContext)
-            if let latestCreateTime = activities.compactMap(\.createTime).max() {
-                service.updateActivityCursor(latestCreateTime)
-            }
-            handleSuccessfulSync(reason: reason, receivedActivities: activities, stateChanged: false)
+    func pollingService(_ service: PollingService, didUpdateActivities activities: [ActivityDTO], reason: PollingRefreshReason) {
+        guard let modelContext, let sessionId = self.sessionId else { return }
+        syncActivities(activities, sessionId: sessionId, modelContext: modelContext)
+        if let latestCreateTime = activities.compactMap(\.createTime).max() {
+            service.updateActivityCursor(latestCreateTime)
         }
+        handleSuccessfulSync(reason: reason, receivedActivities: activities, stateChanged: false)
     }
 
-    nonisolated func pollingService(_ service: PollingService, didEncounterError error: Error, reason: PollingRefreshReason) {
-        Task { @MainActor in
-            self.handleSyncFailure(error, reason: reason)
-        }
+    func pollingService(_ service: PollingService, didEncounterError error: Error, reason: PollingRefreshReason) {
+        handleSyncFailure(error, reason: reason)
     }
 
     // MARK: - SwiftData Sync

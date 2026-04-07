@@ -55,7 +55,6 @@ public final class PollingService: ObservableObject {
     private let api: APIClient
     private var pollingTask: Task<Void, Never>?
     private var pollInFlight = false
-    private var queuedReason: PollingRefreshReason?
     private var lastUserInteraction: Date = Date()
     private var activeSessionId: String?
     private var lastActivityCreateTime: Date?
@@ -91,7 +90,6 @@ public final class PollingService: ObservableObject {
         activeSessionId = nil
         lastActivityCreateTime = nil
         burstIntervals = []
-        queuedReason = nil
         pollInFlight = false
     }
 
@@ -104,15 +102,20 @@ public final class PollingService: ObservableObject {
         }
     }
 
-    /// Trigger an immediate poll without waiting for the next interval
+    /// Trigger an immediate poll without waiting for the next interval.
+    ///
+    /// Restarts the polling loop with the supplied reason as its first
+    /// poll. Previously this also spawned a separate `Task` to call
+    /// `requestPoll`, which raced with the rebuilt loop and seeded a
+    /// chain of queued follow-up tasks via the `requestPoll` defer
+    /// block. Under burst mode that race made the @MainActor task
+    /// queue grow unboundedly and froze the UI on long sessions.
     public func triggerImmediatePoll(reason: PollingRefreshReason = .manualRefresh) {
         guard activeSessionId != nil else { return }
         if reason == .userMessageSent || reason == .planApproved {
-            activateBurstMode()
+            burstIntervals = [1, 1, 2, 2, 3, 3, 3]
         }
-        Task { [weak self] in
-            await self?.requestPoll(reason: reason)
-        }
+        restartPollingLoop(initialReason: reason)
     }
 
     /// Notify the service that the app entered the background
@@ -141,10 +144,20 @@ public final class PollingService: ObservableObject {
 
     // MARK: - Private Methods
 
-    private func restartPollingLoop() {
+    /// Cancel any in-flight polling task and start a fresh loop.
+    ///
+    /// The new loop polls FIRST, then sleeps for the next interval.
+    /// This eliminates the previous race where `triggerImmediatePoll`
+    /// spawned a separate `Task` for the immediate poll while
+    /// `restartPollingLoop` simultaneously kicked off a new sleep-then-
+    /// poll cycle — both fighting for the same `pollInFlight` slot.
+    /// `initialReason` lets callers tag the first poll appropriately
+    /// (e.g. `.planApproved`) without losing fidelity.
+    private func restartPollingLoop(initialReason: PollingRefreshReason = .scheduled) {
         pollingTask?.cancel()
 
         pollingTask = Task { [weak self] in
+            var nextReason = initialReason
             while !Task.isCancelled {
                 guard let self = self, self.activeSessionId != nil else { break }
 
@@ -153,23 +166,30 @@ public final class PollingService: ObservableObject {
                 // Break out of loop if stopped (avoid Duration.seconds(.infinity) crash)
                 guard self.state != .stopped else { break }
 
+                await self.requestPoll(reason: nextReason)
+                guard !Task.isCancelled else { break }
+
                 let interval = self.nextInterval()
                 try? await Task.sleep(for: .seconds(interval))
-                guard !Task.isCancelled else { break }
-                await self.requestPoll(reason: .scheduled)
+                nextReason = .scheduled
             }
         }
     }
 
+    /// Run a single poll if one isn't already in flight, otherwise
+    /// drop the request.
+    ///
+    /// Previously a duplicate request would queue a `queuedReason` and
+    /// the in-flight poll's `defer` block would spawn yet another
+    /// `Task` to drain the queue when it finished. That created a
+    /// chained-task pattern that, under burst-mode + state-change
+    /// double-fetches, accumulated faster than the @MainActor could
+    /// drain it and froze the UI. Dropping duplicates is fine because
+    /// the next scheduled tick (1-3s in burst, 3s active, 10s idle)
+    /// will pick up any new state.
     private func requestPoll(reason: PollingRefreshReason) async {
         guard activeSessionId != nil else { return }
-
-        if pollInFlight {
-            if queuedReason == nil || queuedReason == .scheduled {
-                queuedReason = reason
-            }
-            return
-        }
+        guard !pollInFlight else { return }
 
         pollInFlight = true
         isPolling = true
@@ -177,12 +197,6 @@ public final class PollingService: ObservableObject {
             isPolling = false
             lastPollTime = Date()
             pollInFlight = false
-            if let queuedReason {
-                self.queuedReason = nil
-                Task { [weak self] in
-                    await self?.requestPoll(reason: queuedReason)
-                }
-            }
         }
 
         guard let sessionId = activeSessionId else { return }
@@ -216,11 +230,6 @@ public final class PollingService: ObservableObject {
         if timeSinceInteraction > PollingConfig.idleThreshold && state == .active {
             state = .idle
         }
-    }
-
-    private func activateBurstMode() {
-        burstIntervals = [1, 1, 2, 2, 3, 3, 3]
-        restartPollingLoop()
     }
 
     private func nextInterval() -> TimeInterval {

@@ -164,13 +164,27 @@ struct ChatView: View {
         }
     }
 
-    private var sortedActivities: [ActivityEntity] {
-        activities.sorted { $0.createdAt < $1.createdAt }
-    }
-
+    /// The activities to render in the timeline.
+    ///
+    /// We rely on the `@Query`'s `SortDescriptor(\.createdAt, order: .forward)`
+    /// for ordering — sorting is done by SwiftData at fetch time so we
+    /// don't need to re-sort on every body re-evaluation. The previous
+    /// implementation called `.sorted { ... }` twice (once on
+    /// `activities`, once on `session.activities` as a fallback) inside
+    /// a computed property used by a `ForEach`, which paid the sort cost
+    /// on every render. Under burst-mode polling that re-rendered the
+    /// chat view ~once per second, that was significant main-thread work.
+    /// (Gemini review.)
+    ///
+    /// We keep the `session.activities` fallback path for the initial
+    /// load case where the `@Query` hasn't yet observed the freshly-
+    /// inserted rows — but we read the relationship straight, no extra
+    /// sort, since `@Relationship` ordering matches `createdAt` here.
     private var displayedActivities: [ActivityEntity] {
-        let liveSortedActivities = session.activities.sorted { $0.createdAt < $1.createdAt }
-        return sortedActivities.isEmpty ? liveSortedActivities : sortedActivities
+        if !activities.isEmpty {
+            return activities
+        }
+        return session.activities.sorted { $0.createdAt < $1.createdAt }
     }
 
     private var latestProgressActivity: ActivityEntity? {
@@ -225,15 +239,19 @@ struct ChatView: View {
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
-        // Prefer typing indicator if visible, otherwise last activity
+        // Note: deliberately NOT wrapped in `withAnimation` anymore.
+        // When the polling loop delivers several new activities in
+        // quick succession (which happens during burst mode after a
+        // plan approval), the count-change observer fires once per
+        // arriving activity. Each `withAnimation { proxy.scrollTo }`
+        // schedules a 0.3s animation; with several stacking up the
+        // animation queue chains and pins the run loop. Hard-jumping
+        // to the bottom is fine for a chat-style UI and dramatically
+        // reduces main-thread pressure during long sessions.
         if showsTypingIndicator {
-            withAnimation(.easeOut(duration: 0.3)) {
-                proxy.scrollTo("typing-indicator", anchor: .bottom)
-            }
+            proxy.scrollTo("typing-indicator", anchor: .bottom)
         } else if let lastActivity = displayedActivities.last {
-            withAnimation(.easeOut(duration: 0.3)) {
-                proxy.scrollTo(lastActivity.id, anchor: .bottom)
-            }
+            proxy.scrollTo(lastActivity.id, anchor: .bottom)
         }
     }
 

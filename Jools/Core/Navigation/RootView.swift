@@ -3,7 +3,6 @@ import SwiftUI
 /// Root view that handles authentication state and main navigation
 struct RootView: View {
     @EnvironmentObject private var dependencies: AppDependency
-    @Environment(\.scenePhase) private var scenePhase
     @State private var coordinator = AppCoordinator()
 
     var body: some View {
@@ -16,18 +15,14 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: dependencies.isAuthenticated)
-        .onChange(of: scenePhase) { _, newPhase in
-            switch newPhase {
-            case .active:
-                dependencies.pollingService.enterForeground()
-            case .background:
-                dependencies.pollingService.enterBackground()
-            case .inactive:
-                break
-            @unknown default:
-                break
-            }
-        }
+        // Note: scenePhase listener removed. ChatView already handles
+        // foreground/background transitions for the polling service —
+        // having BOTH RootView and ChatView call enterForeground()
+        // restarted the polling loop twice on a single app activation,
+        // and on background the redundant enterBackground() didn't
+        // cause harm but added confusion. Centralizing in ChatView
+        // (which is the only screen that actually needs the polling
+        // service to react to scene phase) is cleaner. (Codex review.)
     }
 }
 
