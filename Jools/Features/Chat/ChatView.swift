@@ -491,13 +491,9 @@ struct ChatInputBar: View {
                 .background(Color.joolsSurface)
                 .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.lg))
                 .accessibilityIdentifier("chat.input")
-                .onSubmit {
-                    if viewModel.canSend {
-                        viewModel.sendMessage(sessionId: sessionId)
-                    }
-                }
+                .onSubmit(send)
 
-            Button(action: { viewModel.sendMessage(sessionId: sessionId) }) {
+            Button(action: send) {
                 if viewModel.isSending {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -514,6 +510,21 @@ struct ChatInputBar: View {
         .padding(.horizontal)
         .padding(.vertical, JoolsSpacing.sm)
         .background(.bar)
+    }
+
+    /// Centralized send action so the button tap and the keyboard's
+    /// return-key submit follow the exact same code path. After
+    /// dispatching the message we drop focus on the text field, which
+    /// dismisses the on-screen keyboard. This matters specifically
+    /// for the Jules use case: unlike a peer chat where the user
+    /// fires off several messages in a row, here the user sends one
+    /// prompt and then needs to READ a long markdown response. Leaving
+    /// the keyboard up after send eats roughly half the screen real
+    /// estate and forces an extra tap to start reading. (User feedback.)
+    private func send() {
+        guard viewModel.canSend else { return }
+        viewModel.sendMessage(sessionId: sessionId)
+        isFocused = false
     }
 }
 
