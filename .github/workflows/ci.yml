@@ -96,7 +96,11 @@ jobs:
         run: xcodebuild -version
 
       - name: Install build tools
-        run: brew install xcodegen xcpretty
+        # xcpretty is a Ruby gem (no longer in homebrew), xcodegen is
+        # the formula. The local Makefile installs them the same way.
+        run: |
+          brew install xcodegen
+          gem install xcpretty
 
       - name: make generate
         run: make generate
