@@ -92,6 +92,23 @@ final class AppDependency: ObservableObject {
         pollingService.stopPolling()
     }
 
+    /// Wipe every locally cached `SessionEntity`, `SourceEntity`, and
+    /// `ActivityEntity` from SwiftData and then sign out. Used by the
+    /// "Delete All Data" destructive action in Settings — without this,
+    /// signing out and reauthenticating with a different API key would
+    /// leave the previous account's sessions visible (a real privacy
+    /// hazard on shared devices, flagged in PR #1 review).
+    func deleteAllLocalData() throws {
+        let context = modelContainer.mainContext
+
+        try context.delete(model: ActivityEntity.self)
+        try context.delete(model: SessionEntity.self)
+        try context.delete(model: SourceEntity.self)
+        try context.save()
+
+        try signOut()
+    }
+
     // MARK: - UI Testing
 
     private func seedUITestData(scenario: String) {

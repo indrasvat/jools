@@ -464,6 +464,16 @@ struct FeaturePillsView: View {
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
+    /// Result of arranging the FeaturePill subviews into rows. Pulled
+    /// out of `arrange(...)` so it can return a single named value
+    /// instead of a 4-tuple (which trips the SwiftLint large_tuple rule).
+    private struct ArrangedLayout {
+        let size: CGSize
+        let positions: [CGPoint]
+        let rowWidths: [CGFloat]
+        let rowIndices: [Int]
+    }
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
         let result = arrange(maxWidth: maxWidth, subviews: subviews)
@@ -486,9 +496,7 @@ struct FlowLayout: Layout {
         }
     }
 
-    private func arrange(maxWidth: CGFloat, subviews: Subviews) -> (
-        size: CGSize, positions: [CGPoint], rowWidths: [CGFloat], rowIndices: [Int]
-    ) {
+    private func arrange(maxWidth: CGFloat, subviews: Subviews) -> ArrangedLayout {
         var positions: [CGPoint] = []
         var rowWidths: [CGFloat] = []
         var rowIndices: [Int] = []
@@ -517,7 +525,12 @@ struct FlowLayout: Layout {
         rowWidths.append(currentRowWidth - spacing)
 
         let totalWidth = rowWidths.max() ?? 0
-        return (CGSize(width: totalWidth, height: currentY + lineHeight), positions, rowWidths, rowIndices)
+        return ArrangedLayout(
+            size: CGSize(width: totalWidth, height: currentY + lineHeight),
+            positions: positions,
+            rowWidths: rowWidths,
+            rowIndices: rowIndices
+        )
     }
 }
 

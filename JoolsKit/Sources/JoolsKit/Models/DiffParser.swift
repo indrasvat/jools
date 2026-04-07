@@ -309,8 +309,16 @@ public enum UnifiedDiffParser {
         return (hunk, i)
     }
 
+    /// Parsed `@@ -<oldStart>,<oldCount> +<newStart>,<newCount> @@` header.
+    private struct ParsedHunkHeader {
+        let oldStart: Int
+        let oldCount: Int
+        let newStart: Int
+        let newCount: Int
+    }
+
     /// Parses a hunk header like `@@ -10,7 +10,8 @@ optional context`.
-    private static func parseHunkHeader(_ header: String) -> (oldStart: Int, oldCount: Int, newStart: Int, newCount: Int)? {
+    private static func parseHunkHeader(_ header: String) -> ParsedHunkHeader? {
         // Strip the leading `@@ ` and trailing ` @@ ...` so we're left
         // with `-10,7 +10,8`.
         guard let firstAt = header.range(of: "@@") else { return nil }
@@ -327,7 +335,12 @@ public enum UnifiedDiffParser {
         else {
             return nil
         }
-        return (old.start, old.count, new.start, new.count)
+        return ParsedHunkHeader(
+            oldStart: old.start,
+            oldCount: old.count,
+            newStart: new.start,
+            newCount: new.count
+        )
     }
 
     private static func parseRange(_ raw: String) -> (start: Int, count: Int)? {

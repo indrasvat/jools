@@ -15,6 +15,8 @@ concurrency:
 jobs:
   # ────────────────────────────────────────────────────────────────────
   # Lint — fast feedback before the build/test jobs spin up.
+  # Uses `make lint` so the local dev workflow and CI run the exact
+  # same SwiftLint invocation.
   # ────────────────────────────────────────────────────────────────────
   lint:
     name: SwiftLint
@@ -27,16 +29,13 @@ jobs:
       - name: Install SwiftLint
         run: brew install swiftlint
 
-      - name: Run SwiftLint
-        # Match the local dev workflow (lefthook + `make lint`) which
-        # treats existing style warnings as warnings, not errors.
-        # Bumping these to errors should be a deliberate cleanup pass,
-        # not a side effect of adding CI.
-        run: swiftlint lint --reporter github-actions-logging
+      - name: make lint
+        run: make lint
 
   # ────────────────────────────────────────────────────────────────────
-  # JoolsKit — pure Swift package, no Xcode dependency.
-  # Runs even if the iOS app job is gated on a specific Xcode version.
+  # JoolsKit — pure Swift package, no Xcode app dependency.
+  # Runs in parallel with lint. Uses `make kit-build` + `make kit-test`
+  # so the package commands stay in lockstep with local dev.
   # ────────────────────────────────────────────────────────────────────
   joolskit:
     name: JoolsKit (build + test)
@@ -66,20 +65,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: Build JoolsKit
-        run: |
-          cd JoolsKit
-          swift build --configuration debug
+      - name: make kit-build
+        run: make kit-build
 
-      - name: Test JoolsKit
-        run: |
-          cd JoolsKit
-          swift test --configuration debug
+      - name: make kit-test
+        run: make kit-test
 
   # ────────────────────────────────────────────────────────────────────
   # iOS app — full build + xcodebuild test on a simulator.
   # Picks the first available iPhone simulator at runtime so the job
   # isn't pinned to a model name that might not ship with the runner.
+  # Drives the actual build/test through `make build` and
+  # `make test-app` (overriding SIMULATOR) so behaviour matches local.
   # ────────────────────────────────────────────────────────────────────
   ios:
     name: iOS app (build + test)
@@ -101,8 +98,8 @@ jobs:
       - name: Install build tools
         run: brew install xcodegen xcpretty
 
-      - name: Generate Xcode project
-        run: xcodegen generate
+      - name: make generate
+        run: make generate
 
       - name: Pick a simulator
         id: sim
@@ -112,45 +109,21 @@ jobs:
           # hard-code "iPhone 17 Pro" because the model lineup churns.
           DEST=$(xcrun simctl list devices available | \
             awk '/^-- iOS/{capture=1} /^--/{if (capture && !/^-- iOS/) capture=0} capture && /iPhone/{print; exit}')
-          UDID=$(echo "$DEST" | grep -oE '[A-F0-9-]{36}')
-          if [ -z "$UDID" ]; then
+          NAME=$(echo "$DEST" | sed -E 's/^[[:space:]]*//; s/ \([A-F0-9-]{36}\).*$//')
+          if [ -z "$NAME" ]; then
             echo "::error::No iPhone simulator available on the runner."
             xcrun simctl list devices available
             exit 1
           fi
-          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
-          echo "Picked simulator: $DEST"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Picked simulator: $NAME"
 
-      - name: Build iOS app
+      - name: make build
         env:
-          SIM_UDID: ${{ steps.sim.outputs.udid }}
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -project Jools.xcodeproj \
-            -scheme Jools \
-            -destination "platform=iOS Simulator,id=${SIM_UDID}" \
-            -configuration Debug \
-            -derivedDataPath .build/derived \
-            build | xcpretty --color || exit 1
+          SIM_NAME: ${{ steps.sim.outputs.name }}
+        run: make build SIMULATOR="$SIM_NAME"
 
-      - name: Run iOS app tests
+      - name: make test-app
         env:
-          SIM_UDID: ${{ steps.sim.outputs.udid }}
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -project Jools.xcodeproj \
-            -scheme Jools \
-            -destination "platform=iOS Simulator,id=${SIM_UDID}" \
-            -configuration Debug \
-            -derivedDataPath .build/derived \
-            test | xcpretty --color --report junit --output .build/test-report.xml || exit 1
-
-      - name: Upload test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-test-report
-          path: .build/test-report.xml
-          if-no-files-found: ignore
+          SIM_NAME: ${{ steps.sim.outputs.name }}
+        run: make test-app SIMULATOR="$SIM_NAME"

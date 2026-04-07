@@ -158,8 +158,17 @@ struct SettingsView: View {
 
     private func deleteAllData() {
         HapticManager.shared.heavyImpact()
-        // TODO: Clear SwiftData
-        try? dependencies.signOut()
+        // Wipe every locally cached session/source/activity AND drop
+        // the API key in one shot. Without this, signing back in with
+        // a different account would leave the previous account's
+        // sessions visible. (PR #1 Codex review.)
+        do {
+            try dependencies.deleteAllLocalData()
+        } catch {
+            // Best-effort fallback: at minimum drop the API key so the
+            // user lands back on Onboarding.
+            try? dependencies.signOut()
+        }
     }
 }
 

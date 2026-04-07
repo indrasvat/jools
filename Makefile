@@ -278,14 +278,16 @@ coverage: ## Run tests with coverage report
 
 lint: ## Run SwiftLint on all Swift files
 	@echo "$(BOLD)$(LINT_ICON) Linting code...$(RESET)"
-	@if command -v swiftlint >/dev/null 2>&1; then \
-		swiftlint lint --quiet || (echo "$(RED)$(CROSS) Lint errors found$(RESET)" && exit 1); \
-		echo "$(GREEN)$(CHECK) No lint errors$(RESET)"; \
-	elif [ -x /opt/homebrew/bin/swiftlint ]; then \
-		/opt/homebrew/bin/swiftlint lint --quiet || (echo "$(RED)$(CROSS) Lint errors found$(RESET)" && exit 1); \
+	@SL=$$(command -v swiftlint || echo /opt/homebrew/bin/swiftlint); \
+	if [ ! -x "$$SL" ]; then \
+		echo "$(YELLOW)$(ARROW) swiftlint not found, skipping lint$(RESET)"; \
+		exit 0; \
+	fi; \
+	if "$$SL" lint --quiet; then \
 		echo "$(GREEN)$(CHECK) No lint errors$(RESET)"; \
 	else \
-		echo "$(YELLOW)$(ARROW) swiftlint not found, skipping lint$(RESET)"; \
+		echo "$(RED)$(CROSS) Lint errors found$(RESET)"; \
+		exit 1; \
 	fi
 
 lint-fix: ## Auto-fix lint issues
