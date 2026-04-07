@@ -160,7 +160,12 @@ struct CompletionCardView: View {
 
                 Spacer()
 
-                // Status badge
+                // TODO: Jules's Session.outputs.pullRequest DTO doesn't
+                // carry a merged/closed state yet — only the URL, title
+                // and description. Until the API surfaces live PR
+                // state, we show "Open" as a placeholder. Once the API
+                // catches up, switch this to `session.prState` and drop
+                // the hardcoded `.open`. (CodeRabbit review.)
                 PRStatusBadge(status: .open)
             }
 

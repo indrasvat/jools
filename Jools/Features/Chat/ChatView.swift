@@ -369,8 +369,8 @@ struct ActivityView: View {
                 // Historical plan cards from sessions that have moved
                 // past awaiting-approval stay visible but inert.
                 canRespond: session.effectiveState == .awaitingPlanApproval,
-                onApprove: { viewModel.approvePlan(activityId: activity.id) },
-                onRevise: { viewModel.rejectPlan(activityId: activity.id) }
+                onApprove: { viewModel.approvePlan() },
+                onRevise: { viewModel.rejectPlan() }
             )
 
         case .progressUpdated:

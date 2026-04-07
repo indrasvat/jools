@@ -27,8 +27,8 @@ This is **not** affiliated with Google. It's a side project that talks to the sa
 
 |                          |                          |                          |                          |                          |
 |:------------------------:|:------------------------:|:------------------------:|:------------------------:|:------------------------:|
-| <img src="docs/screenshots/01-onboarding-light.png" width="180"/> | <img src="docs/screenshots/02-home-light.png" width="180"/> | <img src="docs/screenshots/03-sessions-light.png" width="180"/> | <img src="docs/screenshots/05-plan-light.png" width="180"/> | <img src="docs/screenshots/04-diff-light.png" width="180"/> |
-| <img src="docs/screenshots/01-onboarding-dark.png" width="180"/> | <img src="docs/screenshots/02-home-dark.png" width="180"/> | <img src="docs/screenshots/03-sessions-dark.png" width="180"/> | <img src="docs/screenshots/05-plan-dark.png" width="180"/> | <img src="docs/screenshots/04-diff-dark.png" width="180"/> |
+| <img src="docs/screenshots/01-onboarding-light.png" alt="Onboarding screen in light mode with Connect to Jules button and key-capture options" width="180"/> | <img src="docs/screenshots/02-home-light.png" alt="Home dashboard in light mode showing Needs Attention summary and task suggestions" width="180"/> | <img src="docs/screenshots/03-sessions-light.png" alt="Sessions inbox in light mode listing active and completed Jules sessions" width="180"/> | <img src="docs/screenshots/05-plan-light.png" alt="Plan approval screen in light mode with expandable steps and Approve / Revise buttons" width="180"/> | <img src="docs/screenshots/04-diff-light.png" alt="Per-file diff viewer in light mode with side-by-side additions and deletions" width="180"/> |
+| <img src="docs/screenshots/01-onboarding-dark.png" alt="Onboarding screen in dark mode with Connect to Jules button and key-capture options" width="180"/> | <img src="docs/screenshots/02-home-dark.png" alt="Home dashboard in dark mode showing Needs Attention summary and task suggestions" width="180"/> | <img src="docs/screenshots/03-sessions-dark.png" alt="Sessions inbox in dark mode listing active and completed Jules sessions" width="180"/> | <img src="docs/screenshots/05-plan-dark.png" alt="Plan approval screen in dark mode with expandable steps and Approve / Revise buttons" width="180"/> | <img src="docs/screenshots/04-diff-dark.png" alt="Per-file diff viewer in dark mode with side-by-side additions and deletions" width="180"/> |
 | **Onboarding**            | **Home**                  | **Sessions inbox**        | **Plan approval**         | **Per-file diff**         |
 
 Each screen reacts to your active system appearance and respects your in-app theme override (System / Light / Dark).
@@ -132,8 +132,8 @@ JoolsKit/                     Swift package — pure networking + models
 
 ## Disclaimer
 
-Jools is an independent open-source project. It is not built, sponsored, or endorsed by Google. *Jules* is a Google product and trademark; Jools talks to Jules's public REST API the same way any third-party client would. If you're looking for the official experience, that lives at [jules.google.com](https://jules.google.com).
+Jools is an independent third-party client. It is not built, sponsored, or endorsed by Google. *Jules* is a Google product and trademark; Jools talks to Jules's public REST API the same way any third-party client would. If you're looking for the official experience, that lives at [jules.google.com](https://jules.google.com).
 
 ## License
 
-Private repository. All rights reserved.
+All rights reserved. The source is published for reference; no license to copy, modify, or redistribute is granted unless one is added in a subsequent commit.

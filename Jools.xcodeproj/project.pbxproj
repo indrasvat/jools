@@ -433,7 +433,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "INFO_PLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nGIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo \"unknown\")\nGIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo \"unknown\")\nBUILD_DATE=$(date -u +\"%Y-%m-%d %H:%M UTC\")\n\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_SHA\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_BRANCH\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_BUILD_DATE\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_SHA string $GIT_SHA\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_BRANCH string $GIT_BRANCH\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_BUILD_DATE string $BUILD_DATE\" \"$INFO_PLIST\"\n";
+			shellScript = "INFO_PLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nGIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo \"unknown\")\n# Detached-HEAD-safe branch lookup. CI builds check out a\n# specific commit (detached HEAD) where `git rev-parse\n# --abbrev-ref HEAD` returns literal \"HEAD\", which ends up\n# baked into the Info.plist as the branch name. Prefer\n# $GITHUB_REF_NAME when it's set (GitHub Actions supplies it\n# with the real branch/tag), otherwise fall back to the git\n# query, and finally to \"unknown\". (CodeRabbit review.)\nif [ -n \"${GITHUB_REF_NAME:-}\" ]; then\n  GIT_BRANCH=\"${GITHUB_REF_NAME}\"\nelse\n  BRANCH_RAW=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo \"unknown\")\n  if [ \"${BRANCH_RAW}\" = \"HEAD\" ]; then\n    GIT_BRANCH=\"detached\"\n  else\n    GIT_BRANCH=\"${BRANCH_RAW}\"\n  fi\nfi\nBUILD_DATE=$(date -u +\"%Y-%m-%d %H:%M UTC\")\n\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_SHA\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_BRANCH\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_BUILD_DATE\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_SHA string $GIT_SHA\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_BRANCH string $GIT_BRANCH\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_BUILD_DATE string $BUILD_DATE\" \"$INFO_PLIST\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -546,7 +546,6 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -606,7 +605,6 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -694,6 +692,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R65679C4F3;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -736,6 +735,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R65679C4F3;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

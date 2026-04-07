@@ -11,7 +11,11 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
-    ENABLE_USER_SCRIPT_SANDBOXING: false
+    # ENABLE_USER_SCRIPT_SANDBOXING intentionally moved to the Jools
+    # target (see `targets.Jools.settings.base` below). Only the app
+    # target runs the Inject Build Metadata postBuildScript that needs
+    # `git rev-parse`; JoolsKit and the test targets should keep the
+    # Xcode 26 default of sandboxed scripts. (CodeRabbit review.)
     # Xcode 26's "Validate Project Settings" recommendations — both
     # generate type-safe Swift accessors at compile time:
     #
@@ -45,7 +49,23 @@ targets:
         script: |
           INFO_PLIST="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
           GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+          # Detached-HEAD-safe branch lookup. CI builds check out a
+          # specific commit (detached HEAD) where `git rev-parse
+          # --abbrev-ref HEAD` returns literal "HEAD", which ends up
+          # baked into the Info.plist as the branch name. Prefer
+          # $GITHUB_REF_NAME when it's set (GitHub Actions supplies it
+          # with the real branch/tag), otherwise fall back to the git
+          # query, and finally to "unknown". (CodeRabbit review.)
+          if [ -n "${GITHUB_REF_NAME:-}" ]; then
+            GIT_BRANCH="${GITHUB_REF_NAME}"
+          else
+            BRANCH_RAW=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+            if [ "${BRANCH_RAW}" = "HEAD" ]; then
+              GIT_BRANCH="detached"
+            else
+              GIT_BRANCH="${BRANCH_RAW}"
+            fi
+          fi
           BUILD_DATE=$(date -u +"%Y-%m-%d %H:%M UTC")
 
           /usr/libexec/PlistBuddy -c "Delete :JOOLS_GIT_SHA" "$INFO_PLIST" >/dev/null 2>&1 || true
@@ -58,6 +78,11 @@ targets:
         basedOnDependencyAnalysis: false
     settings:
       base:
+        # Scoped to the app target only because only `Inject Build
+        # Metadata` above needs access to `git rev-parse`. JoolsKit,
+        # JoolsTests and JoolsUITests keep the sandboxed-scripts
+        # default. (CodeRabbit review.)
+        ENABLE_USER_SCRIPT_SANDBOXING: false
         PRODUCT_BUNDLE_IDENTIFIER: com.indrasvat.jools
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"

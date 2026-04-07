@@ -245,7 +245,7 @@ final class ChatViewModel: ObservableObject, PollingServiceDelegate {
 
     // MARK: - Plan Actions
 
-    func approvePlan(activityId: String) {
+    func approvePlan() {
         guard let apiClient, let sessionId else { return }
 
         HapticManager.shared.success()
@@ -264,7 +264,7 @@ final class ChatViewModel: ObservableObject, PollingServiceDelegate {
         }
     }
 
-    func rejectPlan(activityId: String) {
+    func rejectPlan() {
         guard let apiClient, let sessionId else { return }
 
         HapticManager.shared.warning()

@@ -216,54 +216,99 @@ private struct BlockQuoteView: View {
 /// Walks an inline-bearing block and produces a SwiftUI-compatible
 /// `AttributedString` covering the spans we care about: bold, italic,
 /// inline code, links, soft and hard line breaks, plain runs.
+///
+/// Style is threaded through the recursion via `InlineStyle` so that
+/// nested spans compose correctly — e.g. `**bold _and italic_**`
+/// ends up bold+italic, not just bold. An earlier version set
+/// `inner.font = ...` on the whole inner string after recursing,
+/// which silently clobbered whatever children had already applied
+/// (the inner italic ran was re-fonted to the outer bold and lost
+/// its italic trait). (CodeRabbit review.)
 private enum InlineAttributedStringBuilder {
+    /// Which traits are currently active on the recursion path.
+    /// Kept as a value type so children get a copy they can layer
+    /// new traits onto without affecting siblings.
+    fileprivate struct InlineStyle {
+        var bold: Bool = false
+        var italic: Bool = false
+        var strikethrough: Bool = false
+        var link: URL?
+
+        /// Build the SwiftUI `Font` that represents this style stack.
+        /// The base is always `.body` (matching `.joolsBody`'s size);
+        /// bold and italic compose via the Font trait modifiers.
+        var font: Font {
+            var font: Font = .system(.body)
+            if italic {
+                font = font.italic()
+            }
+            if bold {
+                font = font.weight(.semibold)
+            }
+            return font
+        }
+    }
+
     static func build(from block: any BlockMarkup) -> AttributedString {
         var result = AttributedString()
         for child in block.children {
-            append(child, into: &result)
+            append(child, into: &result, style: InlineStyle())
         }
         return result
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
-    private static func append(_ markup: Markup, into output: inout AttributedString) {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    private static func append(
+        _ markup: Markup,
+        into output: inout AttributedString,
+        style: InlineStyle
+    ) {
         switch markup {
         case let text as Markdown.Text:
-            output.append(AttributedString(text.string))
+            var run = AttributedString(text.string)
+            applyStyle(style, to: &run)
+            output.append(run)
 
         case let strong as Strong:
-            var inner = AttributedString()
+            var nextStyle = style
+            nextStyle.bold = true
             for child in strong.children {
-                append(child, into: &inner)
+                append(child, into: &output, style: nextStyle)
             }
-            inner.font = .joolsBody.weight(.semibold)
-            output.append(inner)
 
         case let emphasis as Emphasis:
-            var inner = AttributedString()
+            var nextStyle = style
+            nextStyle.italic = true
             for child in emphasis.children {
-                append(child, into: &inner)
+                append(child, into: &output, style: nextStyle)
             }
-            inner.font = .system(.body).italic()
-            output.append(inner)
 
         case let inlineCode as InlineCode:
+            // Inline code is the one span where we DON'T inherit the
+            // surrounding font — `**`bold`**` should stay monospaced
+            // regardless, because that's what makes it look like code.
+            // We still carry link / strikethrough through.
             var run = AttributedString(inlineCode.code)
             run.font = .system(.body, design: .monospaced)
             run.backgroundColor = Color.joolsSurfaceElevated
+            if style.strikethrough {
+                run.strikethroughStyle = .single
+            }
+            if let url = style.link {
+                run.link = url
+                run.foregroundColor = Color.joolsAccent
+                run.underlineStyle = .single
+            }
             output.append(run)
 
         case let link as Markdown.Link:
-            var inner = AttributedString()
-            for child in link.children {
-                append(child, into: &inner)
-            }
+            var nextStyle = style
             if let destination = link.destination, let url = URL(string: destination) {
-                inner.link = url
-                inner.foregroundColor = Color.joolsAccent
-                inner.underlineStyle = .single
+                nextStyle.link = url
             }
-            output.append(inner)
+            for child in link.children {
+                append(child, into: &output, style: nextStyle)
+            }
 
         case is LineBreak:
             output.append(AttributedString("\n"))
@@ -272,12 +317,11 @@ private enum InlineAttributedStringBuilder {
             output.append(AttributedString(" "))
 
         case let strikethrough as Strikethrough:
-            var inner = AttributedString()
+            var nextStyle = style
+            nextStyle.strikethrough = true
             for child in strikethrough.children {
-                append(child, into: &inner)
+                append(child, into: &output, style: nextStyle)
             }
-            inner.strikethroughStyle = .single
-            output.append(inner)
 
         case let image as Markdown.Image:
             // We don't render images inline in the chat (would need
@@ -287,15 +331,32 @@ private enum InlineAttributedStringBuilder {
                 .compactMap { ($0 as? Markdown.Text)?.string }
                 .joined()
             if !alt.isEmpty {
-                var inner = AttributedString("[image: \(alt)]")
-                inner.foregroundColor = Color.secondary
-                output.append(inner)
+                var run = AttributedString("[image: \(alt)]")
+                run.foregroundColor = Color.secondary
+                output.append(run)
             }
 
         default:
             // Unknown inline node — fall back to its plain text format
             // so we don't drop authored content.
-            output.append(AttributedString(markup.format()))
+            var run = AttributedString(markup.format())
+            applyStyle(style, to: &run)
+            output.append(run)
+        }
+    }
+
+    /// Apply the current `InlineStyle` to a freshly-created run. Kept
+    /// as a helper so Strong/Emphasis/Strikethrough/Link all converge
+    /// on the same attribute-writing logic.
+    private static func applyStyle(_ style: InlineStyle, to run: inout AttributedString) {
+        run.font = style.font
+        if style.strikethrough {
+            run.strikethroughStyle = .single
+        }
+        if let url = style.link {
+            run.link = url
+            run.foregroundColor = Color.joolsAccent
+            run.underlineStyle = .single
         }
     }
 }

@@ -87,7 +87,14 @@ final class CreateSessionViewModel: ObservableObject {
     }
 
     var effectiveTitle: String {
-        title.isEmpty ? String(prompt.prefix(50)) : title
+        // Trim before deciding which field to use. Previously a
+        // whitespace-only `title` ("   ") would pass the isEmpty check
+        // and be sent verbatim as the session title. The same treatment
+        // applies to `prompt` so the 50-char prefix isn't a wall of
+        // leading spaces. (CodeRabbit review.)
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedTitle.isEmpty ? String(trimmedPrompt.prefix(50)) : trimmedTitle
     }
 
     var sourceDisplayName: String {
@@ -155,11 +162,17 @@ final class CreateSessionViewModel: ObservableObject {
     }
 
     private func makeRequest() -> CreateSessionRequest {
+        // Normalize the prompt once at the boundary so we never send a
+        // trailing-whitespace payload to Jules. `canCreate` already
+        // rejects an all-whitespace prompt, so this only strips stray
+        // leading/trailing whitespace on an otherwise-valid entry.
+        let normalizedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+
         guard let source else {
             // Repoless quick-capture: no sourceContext, no automation
             // mode (PR creation only makes sense with a repo).
             return CreateSessionRequest.repoless(
-                prompt: prompt,
+                prompt: normalizedPrompt,
                 title: effectiveTitle,
                 requirePlanApproval: sessionMode.requirePlanApproval
             )
@@ -171,7 +184,7 @@ final class CreateSessionViewModel: ObservableObject {
         // client-side is a portability hazard. We just forward
         // `source.name` as-is.
         return CreateSessionRequest(
-            prompt: prompt,
+            prompt: normalizedPrompt,
             sourceContext: SourceContextDTO(
                 source: source.name,
                 githubRepoContext: GitHubRepoContextDTO(startingBranch: selectedBranch)
