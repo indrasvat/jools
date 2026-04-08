@@ -426,6 +426,17 @@ struct FeaturePillsView: View {
     //
     // Wording is deliberately concrete about what the app does, not
     // what the phrase might *imply*:
+    //   - "Triage inbox"     — Home surfaces a "Needs Attention"
+    //                          section (DashboardView) that pulls
+    //                          sessions waiting on your input or
+    //                          plan approval to the top, so you
+    //                          open the app and see only what
+    //                          actually needs you.
+    //   - "Quick capture"    — create a repoless session in two
+    //                          taps. Great for "I had an idea"
+    //                          moments that shouldn't require
+    //                          scrolling a source picker. Wired
+    //                          through CreateSessionRequest.repoless.
     //   - "Approve plans"    — tap Approve/Revise on a plan card.
     //   - "Chat with Jules"  — two-way conversation. Send follow-
     //                          ups mid-run (with optimistic UI),
@@ -438,10 +449,17 @@ struct FeaturePillsView: View {
     //                          from here; that needs GitHub API
     //                          access outside the Jules REST
     //                          surface).
+    //
+    // Order is load-bearing: Triage + Quick capture read first
+    // because they describe what the Home screen does the moment
+    // you sign in. The rest read as what you do once you open a
+    // session.
     let features = [
-        ("checkmark.seal.fill",      "Approve plans"),
-        ("bubble.left.and.bubble.right.fill", "Chat with Jules"),
-        ("doc.text.magnifyingglass", "View diffs"),
+        ("tray.2.fill",                        "Triage inbox"),
+        ("sparkles",                           "Quick capture"),
+        ("checkmark.seal.fill",                "Approve plans"),
+        ("bubble.left.and.bubble.right.fill",  "Chat with Jules"),
+        ("doc.text.magnifyingglass",           "View diffs"),
     ]
 
     var body: some View {
