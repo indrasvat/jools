@@ -122,12 +122,23 @@ final class JoolsUITests: XCTestCase {
         openSessionsTab(in: app)
         openSession(named: "UI Test Running Session", in: app)
 
-        XCTAssertTrue(app.staticTexts["Provide the summary to the user"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Provide the summary to the user"].waitForExistence(timeout: 10))
         XCUIDevice.shared.press(.home)
         app.activate()
 
-        XCTAssertTrue(app.staticTexts["Provide the summary to the user"].exists)
-        XCTAssertTrue(app.buttons["chat.refresh"].exists)
+        // After `activate()` the accessibility snapshot isn't
+        // guaranteed to be fresh immediately — on slow CI runners
+        // the first `.exists` call can return false while the
+        // window server is still repainting. `.waitForExistence`
+        // polls with XCUITest's own retry loop, which is what we
+        // want here. The previous `.exists` form flaked on one
+        // macos-15 run and tore down the entire test suite via
+        // simulator state corruption when the test timed out.
+        XCTAssertTrue(
+            app.staticTexts["Provide the summary to the user"]
+                .waitForExistence(timeout: 10)
+        )
+        XCTAssertTrue(app.buttons["chat.refresh"].waitForExistence(timeout: 5))
     }
 
     @MainActor
