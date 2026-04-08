@@ -11,6 +11,103 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+### Added
+
+- **Animated in-bubble Jules avatar.** The mascot next to agent
+  message bubbles now gently bobs with a time-driven sine wave
+  (±2pt amplitude, 2.4s period) that matches the Jules web UI
+  reference frame-by-frame. Implemented via `TimelineView(.animation)`
+  so the motion is phase-locked to the system clock and never
+  stutters on parent re-renders.
+- **Onboarding feature pills — 5 total.** Added `Triage inbox` and
+  `Quick capture` alongside the existing `Approve plans`,
+  `Chat with Jules`, and `View diffs`. Reading order is
+  load-bearing: Triage + Quick capture describe what Home does the
+  moment you sign in; the other three describe what you do once
+  you open a session.
+- **Animated indeterminate progress strip** along the bottom edge
+  of the session status banner for active states (running, queued,
+  unspecified). Two sine-phase-offset gradient bands sweeping
+  left→right on a 2.0s linear cycle — industry-standard
+  indeterminate-progress pattern (GitHub, Linear, Xcode, Safari).
+
+### Changed
+
+- **Onboarding copy refresh** to match what the app actually ships:
+  `Review PRs` → `View diffs` (we render diffs, we don't gate PR
+  review), `Live progress` → `Chat with Jules` (sessions are
+  fully interactive, not just a status feed).
+- **Session status banner redesign** (active states only). The
+  bouncing mascot was overshooting the banner's top edge in real
+  running sessions; removed entirely. The leading spinner and the
+  trailing "Live" pill were also removed — both were redundant
+  with the title text, the animated ellipsis dots, and the new
+  progress strip. The title `"Jules is working…"` is now flush-left
+  with a larger font (`.subheadline` → `.title3`). Banner for
+  terminal / awaiting states (completed, failed, cancelled,
+  awaiting input, awaiting plan approval) is unchanged.
+- **In-bubble agent avatar** — the circular gradient backdrop + stroke
+  border around the pixel mascot was removed. The pixel mascot IS
+  the avatar now. Spacing between the avatar and the message bubble
+  was bumped from `JoolsSpacing.sm` (12pt) to `JoolsSpacing.md`
+  (16pt) so the avatar reads as "next to" the bubble, not "glued to".
+
+### Fixed
+
+- **Regression in the snapshot architecture: file-pill → DiffViewerView
+  navigation was silently dropped** during the Option B migration
+  (`FilePill` in `CompletionRow` had an empty closure). Restored by
+  parsing the unified-diff patch eagerly in
+  `ActivitySnapshotBuilder`, carrying the parsed `diffFiles` on
+  `CompletionSnapshot`, and presenting `DiffViewerView` as a sheet
+  when a file pill is tapped.
+- **UI test flakiness (`testRunningSessionScreenShowsRecoveryChrome`).**
+  The test was using `app.descendants(matching: .any)["chat.scroll"]`
+  — a whole-tree query that regularly blew the 30s snapshot
+  timeout on GitHub's macos-15 runners, wedging the simulator and
+  cascading into "Failed to terminate" / "Failed to launch" errors
+  on every subsequent test in the suite. Dropped the assertion
+  (the surrounding specific assertions cover the same ground).
+- **UI test flakiness (`testSessionScreenSurvivesBackgroundForeground`).**
+  Post-`app.activate()` accessibility queries sometimes return
+  before the snapshot is fresh, especially on slow CI runners.
+  Switched the checks from synchronous `.exists` to
+  `.waitForExistence(timeout:)`.
+- **Paste button behaviour.** Documented the iOS 16+ privacy
+  dialog's "Don't Allow Paste" default button trap; existing
+  button still works after the user explicitly allows paste, but
+  the pattern is noted in `docs/LEARNINGS.md` for a future switch
+  to SwiftUI `PasteButton`.
+
+### Internal
+
+- **`TimelineView`-based animation pattern** for continuous periodic
+  motion (replacing the `@State + .animation(.repeatForever)`
+  pattern in `JulesAvatarView` and the new
+  `IndeterminateProgressStrip`). Documented in `docs/LEARNINGS.md`.
+- **`docs/LEARNINGS.md`** captures the hard lessons from the chat
+  freeze saga, CI speedup false starts, mascot animation calibration,
+  simulator hygiene, and iOS platform quirks so future sessions
+  don't re-pay the same tuition.
+- **`CLAUDE.md` + `AGENTS.md`** — agent-oriented repo guide with
+  progressive-disclosure sections for chat / animation / CI /
+  release / simulator workflows, plus a session close-out
+  checklist that keeps `docs/LEARNINGS.md` up to date.
+- **Release pipeline refactor (`scripts/ci-release`)** — all shell
+  logic extracted from `.github/workflows/release.yml` into a
+  single shellchecked script with subcommand dispatch (`parse`,
+  `verify`, `notes`, `build`, `package`, `publish`). Smoke-tested
+  end-to-end via the `v1.0.0-alpha.1` tag.
+- **Pre-release tag support** added to the release workflow and
+  `ci-release` script: the tag's numeric portion is compared
+  against `MARKETING_VERSION`, CHANGELOG extraction falls back to
+  the numeric entry if no dedicated pre-release entry exists, and
+  the resulting GitHub Release is marked `--prerelease` when the
+  tag carries a suffix.
+- **README screenshots (all 10)** refreshed from the latest build
+  against a real authenticated Jules session, showing the new
+  onboarding pills, banner design, and avatar treatment.
+
 ## [1.0.0] — 2026-04-08
 
 The first public release of Jools — an unofficial iOS client for Google's
