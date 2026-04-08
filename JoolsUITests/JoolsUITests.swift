@@ -68,10 +68,20 @@ final class JoolsUITests: XCTestCase {
 
         openSession(named: "UI Test Running Session", in: app)
 
-        XCTAssertTrue(app.staticTexts["Jules is working"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Provide the summary to the user"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.descendants(matching: .any)["chat.scroll"].firstMatch.exists)
-        XCTAssertTrue(app.textFields["chat.input"].exists || app.textViews["chat.input"].exists)
+        XCTAssertTrue(app.staticTexts["Jules is working"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Provide the summary to the user"].waitForExistence(timeout: 10))
+        // Note: previous versions of this test asserted the presence
+        // of a `chat.scroll` container via `app.descendants(matching:
+        // .any)["chat.scroll"].firstMatch.exists`, which walks the
+        // entire accessibility tree. On GitHub's macos-15 runners
+        // that whole-tree query regularly blew the snapshot timeout
+        // (~30 s), wedging the simulator and cascading into
+        // "Failed to terminate" / "Failed to launch" errors in
+        // every subsequent test. The presence of the chat list is
+        // already implied by the specific `chat.input`, `chat.send`,
+        // and `chat.refresh` assertions below, so the broad query
+        // added no independent coverage.
+        XCTAssertTrue(app.textFields["chat.input"].waitForExistence(timeout: 5) || app.textViews["chat.input"].exists)
         XCTAssertTrue(app.buttons["chat.send"].exists)
         XCTAssertTrue(app.buttons["chat.refresh"].exists)
         XCTAssertTrue(
