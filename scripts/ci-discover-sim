@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""
+ci-discover-sim — pick a concrete iPhone simulator UDID for
+xcodebuild test-without-building to target.
+
+The CI iOS jobs compile once against `generic/platform=iOS Simulator`
+(no specific device) and then hand the resulting `.xctestrun` bundle
+off to the test jobs. Those test jobs need a concrete simulator UDID
+to run tests against, and this script is the one place that decides
+which one.
+
+Strategy: ask `xcrun simctl list devices available -j` for the full
+JSON of installed, available simulators, filter to iOS runtimes,
+sort by runtime version descending, and pick the first iPhone.
+Doing it this way (rather than text-parsing `simctl list`) is robust
+against newlines, locale, and simctl format churn.
+
+Why simctl and not `xcodebuild -showdestinations`: on a fresh CI
+runner before any build has happened, xcodebuild's -showdestinations
+can return only the "Any iOS Simulator Device" placeholder because
+the scheme's "supported platforms" metadata is populated by the
+first build cycle. simctl has no such prerequisite.
+
+Output: UDID on stdout. Exit 0 on success, 1 if no iPhone sim found.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+import sys
+
+
+def version_key(runtime_id: str) -> tuple[int, ...]:
+    """Sort key for 'com.apple.CoreSimulator.SimRuntime.iOS-26-2' style IDs."""
+    match = re.search(r"iOS-(\d+)(?:-(\d+))?(?:-(\d+))?", runtime_id)
+    if not match:
+        return (-1,)
+    return tuple(int(n) for n in match.groups() if n is not None)
+
+
+def main() -> int:
+    result = subprocess.run(
+        ["xcrun", "simctl", "list", "devices", "available", "-j"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    data = json.loads(result.stdout)
+
+    ios_runtimes = sorted(
+        (rt for rt in data["devices"] if "iOS" in rt),
+        key=version_key,
+        reverse=True,
+    )
+
+    for runtime in ios_runtimes:
+        for device in data["devices"][runtime]:
+            if not device.get("isAvailable"):
+                continue
+            name = device.get("name", "")
+            if not name.startswith("iPhone"):
+                continue
+            print(device["udid"])
+            return 0
+
+    print("ci-discover-sim: no available iPhone simulator found", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

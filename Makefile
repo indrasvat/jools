@@ -371,91 +371,59 @@ pre-push: ci ## Pre-push hook target (runs full CI)
 # Locally these targets use the same .ci-build/ DerivedData dir so warm
 # rebuilds are ~instant.
 #
-# Destination discovery is dynamic: the build job asks xcodebuild for
-# the first iPhone simulator compatible with the scheme, writes the
-# name into a metadata file packaged with the build artifact, and the
-# test jobs read it back. Nothing about the runner's simulator lineup
-# is hardcoded — if Apple adds or removes iPhone models on the macos-15
-# runner image, the discovery step adapts automatically.
+# Simulator handling — no hardcoded device names:
+#
+# The build compiles against `generic/platform=iOS Simulator`, which
+# is a scheme-agnostic "any iOS sim" destination that xcodebuild
+# accepts without prior scheme build metadata. No specific device is
+# chosen at build time.
+#
+# Each test job discovers its own concrete iPhone simulator UDID at
+# runtime via `scripts/ci-discover-sim`, which parses `xcrun simctl
+# list devices available -j` and returns the first iPhone in the
+# latest iOS runtime installed on the runner. This adapts
+# automatically as GitHub's macos-15 image churns its simulator
+# lineup — nothing needs to be updated in this repo.
 # ─────────────────────────────────────────────────────────────────────────────────
 
 CI_DERIVED_DATA      := .ci-build
-CI_DEST_NAME_FILE    := $(CI_DERIVED_DATA)/Build/ci-destination-name.txt
 CI_ARTIFACT          := build-products.tar
+CI_SIM_DISCOVERY     := scripts/ci-discover-sim
 
-# Destination resolution:
-#   * SIM_NAME (preferred) — dynamically discovered via ci-discover-destination
-#     or read from the build-artifact metadata file on test jobs.
-#   * SIM_UDID             — optional, pins a specific simulator by UDID
-#     (useful for local dev when you want the exact booted device).
-#   * $(SIMULATOR)         — final fallback for the local dev default
-#     used by other targets like `make build` and `make test-app`.
-#
-# Make eats literal commas in $(if ...) args, so $(comma) is used
-# wherever the destination string embeds one.
-comma := ,
-CI_SIM_NAME ?= $(SIM_NAME)
-CI_SIM_UDID ?= $(SIM_UDID)
-CI_DESTINATION = $(strip \
-    $(if $(CI_SIM_UDID),platform=iOS Simulator$(comma)id=$(CI_SIM_UDID),\
-    $(if $(CI_SIM_NAME),platform=iOS Simulator$(comma)name=$(CI_SIM_NAME),\
-    platform=iOS Simulator$(comma)name=$(SIMULATOR))))
+# Destination resolution for test targets (precedence high → low):
+#   1. $(SIM_UDID)             explicit UDID override (local dev pinning)
+#   2. $(SIM_NAME)             explicit name override
+#   3. ci-discover-sim         auto-pick latest-iOS iPhone via simctl
+# The build target uses `generic/platform=iOS Simulator` unconditionally
+# because it doesn't need — and historically cannot reliably get — a
+# concrete device before any build has happened on a fresh runner.
 
-ci-discover-destination: ## CI: print an iPhone simulator name valid for the scheme (no hardcoding)
-	@# Ask xcodebuild (not simctl) for the authoritative destination
-	@# list — it filters to simulators compatible with the scheme's
-	@# deployment target, which is what we actually need.
-	@#
-	@# Pick an iPhone simulator on the RUNNER ARCH in the LATEST iOS
-	@# version on this machine. Latest-OS matters because xcodebuild's
-	@# `OS:latest` default resolver picks the newest iOS runtime
-	@# available — and if the iPhone model we chose doesn't exist in
-	@# that runtime (e.g. an older model present only in iOS 26.2 on
-	@# a runner whose latest is 26.4), the build fails with "Unable
-	@# to find a device". Constraining discovery to the latest OS
-	@# keeps `name=<model>` resolvable downstream with no OS pinning.
-	@ARCH=$$(uname -m); \
-	SHOW=$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -showdestinations 2>&1); \
-	LATEST_OS=$$(printf '%s\n' "$$SHOW" \
-	             | grep 'platform:iOS Simulator' \
-	             | grep "arch:$$ARCH" \
-	             | sed -E 's/.*OS:([0-9.]+).*/\1/' \
-	             | sort -V \
-	             | tail -1); \
-	if [ -z "$$LATEST_OS" ]; then \
-	    echo "$(RED)$(CROSS) No iOS Simulator destinations found for arch $$ARCH$(RESET)" >&2; \
-	    printf '%s\n' "$$SHOW" >&2; \
-	    exit 1; \
-	fi; \
-	LINE=$$(printf '%s\n' "$$SHOW" \
-	        | grep 'platform:iOS Simulator' \
-	        | grep "arch:$$ARCH" \
-	        | grep "OS:$$LATEST_OS" \
-	        | grep 'name:iPhone' \
-	        | head -1); \
-	if [ -z "$$LINE" ]; then \
-	    echo "$(RED)$(CROSS) No iPhone simulator on arch $$ARCH in iOS $$LATEST_OS$(RESET)" >&2; \
-	    printf '%s\n' "$$SHOW" >&2; \
-	    exit 1; \
-	fi; \
-	NAME=$$(printf '%s' "$$LINE" | sed -E 's/.*name:(.+) \}.*/\1/'); \
-	printf '%s' "$$NAME"
+CI_BUILD_DESTINATION := generic/platform=iOS Simulator
+# Runner architecture — constrains the build-for-testing output so we
+# don't ship a fat arm64+x86_64 tarball. `uname -m` is the right source
+# of truth: macos-15 GitHub runners return `arm64`, dev machines too.
+CI_BUILD_ARCHS       := $(shell uname -m)
 
 ci-build-for-testing: ## CI: build-for-testing into .ci-build/
 	@echo "$(BOLD)$(BUILD_ICON) [CI] build-for-testing → $(CI_DERIVED_DATA)$(RESET)"
-	@echo "$(CYAN)$(ARROW) destination: $(CI_DESTINATION)$(RESET)"
+	@echo "$(CYAN)$(ARROW) destination: $(CI_BUILD_DESTINATION) (ARCHS=$(CI_BUILD_ARCHS))$(RESET)"
+	@# ARCHS/EXCLUDED_ARCHS constrain the fat-binary build to the
+	@# runner arch only. Without this, `generic/platform=iOS
+	@# Simulator` compiles BOTH arm64 and x86_64, which roughly
+	@# doubles the build time and bloats the xctestrun tarball from
+	@# ~200 MB to ~375 MB. macos-15 GitHub runners (and all modern
+	@# Apple Silicon dev machines) are arm64-only, so x86_64 is
+	@# dead weight on both sides.
 	@set -o pipefail && xcodebuild build-for-testing \
 		-project $(PROJECT) \
 		-scheme $(SCHEME) \
-		-destination "$(CI_DESTINATION)" \
+		-destination "$(CI_BUILD_DESTINATION)" \
 		-configuration Debug \
 		-derivedDataPath $(CI_DERIVED_DATA) \
+		ARCHS=$(CI_BUILD_ARCHS) \
+		EXCLUDED_ARCHS= \
+		ONLY_ACTIVE_ARCH=NO \
 		-quiet
-	@# Persist the destination name (or UDID-as-name) alongside the
-	@# build products so downstream test jobs can re-use the exact
-	@# destination without re-running discovery.
-	@mkdir -p "$(dir $(CI_DEST_NAME_FILE))"
-	@printf '%s' "$(or $(CI_SIM_NAME),$(CI_SIM_UDID),$(SIMULATOR))" > $(CI_DEST_NAME_FILE)
 	@echo "$(GREEN)$(CHECK) [CI] build-for-testing complete$(RESET)"
 
 ci-package-build: ## CI: tar .ci-build/Build for the artifact handoff
@@ -472,28 +440,22 @@ ci-unpack-build: ## CI: untar build-products.tar into .ci-build/
 	@echo "$(GREEN)$(CHECK) [CI] build products unpacked$(RESET)"
 
 # Shared test-without-building recipe. Resolves the xctestrun produced
-# by ci-build-for-testing (no project/scheme needed), reads the
-# destination name from the metadata file, and runs the supplied
-# test target. Called by ci-test-unit and ci-test-ui below.
-#
-# TEST_TARGET is set by the callers. If CI_SIM_NAME / CI_SIM_UDID are
-# already set in the environment, they win over the metadata file.
+# by ci-build-for-testing, picks a concrete simulator (explicit env
+# override → auto-discovered iPhone), and runs the supplied target.
+# $(1) = `-only-testing` value (e.g. JoolsTests or JoolsUITests).
 define CI_RUN_TEST
 	@XCTESTRUN=$$(ls $(CI_DERIVED_DATA)/Build/Products/*.xctestrun 2>/dev/null | head -1); \
 	if [ -z "$$XCTESTRUN" ]; then \
 	    echo "$(RED)$(CROSS) No .xctestrun found in $(CI_DERIVED_DATA)/Build/Products — run ci-build-for-testing first$(RESET)" >&2; \
 	    exit 1; \
 	fi; \
-	DEST_NAME="$(CI_SIM_NAME)"; \
-	if [ -z "$$DEST_NAME" ] && [ -z "$(CI_SIM_UDID)" ] && [ -f "$(CI_DEST_NAME_FILE)" ]; then \
-	    DEST_NAME=$$(cat "$(CI_DEST_NAME_FILE)"); \
-	fi; \
-	if [ -n "$(CI_SIM_UDID)" ]; then \
-	    DEST="platform=iOS Simulator,id=$(CI_SIM_UDID)"; \
-	elif [ -n "$$DEST_NAME" ]; then \
-	    DEST="platform=iOS Simulator,name=$$DEST_NAME"; \
+	if [ -n "$(SIM_UDID)" ]; then \
+	    DEST="platform=iOS Simulator,id=$(SIM_UDID)"; \
+	elif [ -n "$(SIM_NAME)" ]; then \
+	    DEST="platform=iOS Simulator,name=$(SIM_NAME)"; \
 	else \
-	    DEST="platform=iOS Simulator,name=$(SIMULATOR)"; \
+	    UDID=$$($(CI_SIM_DISCOVERY)) || exit 1; \
+	    DEST="platform=iOS Simulator,id=$$UDID"; \
 	fi; \
 	echo "$(CYAN)$(ARROW) xctestrun: $$XCTESTRUN$(RESET)"; \
 	echo "$(CYAN)$(ARROW) destination: $$DEST$(RESET)"; \

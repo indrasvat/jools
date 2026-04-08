@@ -74,15 +74,14 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────
   # iOS build — compile app + tests ONCE, cache DerivedData across
-  # runs, upload the build products (including an `.xctestrun` and a
-  # `ci-destination-name.txt` metadata file) as an artifact that the
-  # two downstream test jobs consume.
+  # runs, upload the build products (including the `.xctestrun`) as
+  # an artifact that the two downstream test jobs consume.
   #
-  # The simulator destination is discovered dynamically via
-  # `make ci-discover-destination` (which reads `xcodebuild
-  # -showdestinations`), so this workflow never hardcodes an iPhone
-  # model name — it automatically adapts as GitHub's macos-15 image
-  # churns its simulator lineup.
+  # The build targets `generic/platform=iOS Simulator` so no specific
+  # device needs to exist or be picked here. Each test job picks its
+  # own concrete simulator via `scripts/ci-discover-sim` at runtime —
+  # nothing about the runner's simulator lineup is hardcoded in this
+  # workflow or in `Makefile`.
   # ────────────────────────────────────────────────────────────────────
   ios-build:
     name: iOS (build-for-testing)
@@ -113,17 +112,6 @@ jobs:
       - name: make generate
         run: make generate
 
-      - name: Discover simulator destination
-        id: sim
-        run: |
-          SIM_NAME=$(make -s ci-discover-destination)
-          if [ -z "$SIM_NAME" ]; then
-            echo "::error::ci-discover-destination returned empty name"
-            exit 1
-          fi
-          echo "name=$SIM_NAME" >> "$GITHUB_OUTPUT"
-          echo "Discovered simulator: $SIM_NAME"
-
       - name: Cache DerivedData (incremental Swift builds)
         uses: actions/cache@v4
         with:
@@ -136,9 +124,7 @@ jobs:
             ${{ runner.os }}-xcode${{ steps.xcode-version.outputs.build }}-dd-
 
       - name: make ci-build-for-testing
-        env:
-          SIM_NAME: ${{ steps.sim.outputs.name }}
-        run: make ci-build-for-testing SIM_NAME="$SIM_NAME"
+        run: make ci-build-for-testing
 
       - name: make ci-package-build
         run: make ci-package-build
@@ -153,8 +139,9 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────
   # iOS unit tests — downloads the shared build artifact and runs
-  # JoolsTests only via `make ci-test-unit`, which reads the
-  # simulator name from the metadata file packed by the build job.
+  # JoolsTests only. `make ci-test-unit` calls
+  # `scripts/ci-discover-sim` internally to pick a concrete iPhone
+  # simulator on this runner.
   # ────────────────────────────────────────────────────────────────────
   ios-test-unit:
     name: iOS unit tests (JoolsTests)
