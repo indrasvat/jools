@@ -28,7 +28,21 @@ struct JulesAvatarView: View {
 
     init(size: CGFloat = 28, isAnimated: Bool = true) {
         self.size = size
-        self.isAnimated = isAnimated
+        // UI tests set JOOLS_UI_TEST_DISABLE_ANIMATIONS=1 and expect
+        // all motion to stop. `UIView.setAnimationsEnabled(false)`
+        // (called in `JoolsApp.init`) handles UIKit-driven
+        // animations, but `TimelineView(.animation)` is a pure
+        // SwiftUI driver that bypasses that flag entirely. If we
+        // don't gate the bob here, the continuous 60fps updates
+        // starve the XCUITest accessibility-snapshot computation on
+        // CI runners, causing `Failed to get matching snapshots:
+        // Timed out while evaluating UI query` and a cascade of
+        // "Failed to terminate" / "Failed to launch" in every
+        // subsequent test. See docs/LEARNINGS.md §
+        // "UI testing on iOS".
+        let testModeDisablesAnimations = ProcessInfo.processInfo
+            .environment["JOOLS_UI_TEST_DISABLE_ANIMATIONS"] == "1"
+        self.isAnimated = isAnimated && !testModeDisablesAnimations
     }
 
     // Period in seconds for one full oscillation (peak → trough → peak).

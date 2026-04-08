@@ -155,6 +155,50 @@ GitHub macos-15 runner performance varies by 2-3× between runs. A
 slow run. Investigate the FAILURE MODE before restructuring the
 workflow.
 
+### `TimelineView(.animation)` starves XCUITest accessibility snapshots
+
+**Symptom:** tests that were green yesterday start flaking with
+`Failed to get matching snapshots: Timed out while evaluating UI
+query`, then cascade into "Failed to terminate" / "Failed to launch"
+in every subsequent test. `xcodebuild test` auto-retries, retries
+pass, total wall time pushes past the job timeout.
+
+**Root cause:** `TimelineView(.animation)` is a pure SwiftUI driver
+that polls the system clock at ~60fps. It bypasses
+`UIView.setAnimationsEnabled(false)` entirely, so UI tests that
+set `JOOLS_UI_TEST_DISABLE_ANIMATIONS=1` still get continuous
+per-frame view updates from any TimelineView in the view tree. On
+CI runners (slower simulators, shared hardware), the continuous
+updates prevent the accessibility snapshot from stabilising long
+enough for XCUITest's query engine to complete — requests time
+out, the simulator wedges, cascade.
+
+**Fix pattern:** every `TimelineView(.animation)` site must gate
+itself on the disable flag:
+
+```swift
+private static let animationsEnabled: Bool = {
+    ProcessInfo.processInfo.environment["JOOLS_UI_TEST_DISABLE_ANIMATIONS"] != "1"
+}()
+
+var body: some View {
+    if Self.animationsEnabled {
+        TimelineView(.animation) { ... }
+    } else {
+        // static fallback — no driver, no updates
+        staticContent
+    }
+}
+```
+
+Same applies to views that PASS `isAnimated: true` to a child that
+uses TimelineView — check the env var in the view's init and force
+`isAnimated = false` when the flag is set. See `JulesAvatarView`.
+
+**Test when you add a new TimelineView:** run `make ui-test` and
+watch for snapshot-timeout errors. If none, you're safe. If any,
+gate the animation on the flag.
+
 ---
 
 ## CI workflow design

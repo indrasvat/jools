@@ -302,26 +302,47 @@ private struct IndeterminateProgressStrip: View {
     private static let cyclePeriod: Double = 2.0
     private static let bandWidth: CGFloat = 0.55
 
+    /// Evaluated once at process start. UI tests set
+    /// `JOOLS_UI_TEST_DISABLE_ANIMATIONS=1` and
+    /// `UIView.setAnimationsEnabled(false)` is called in
+    /// `JoolsApp.init`, but `TimelineView(.animation)` is a pure
+    /// SwiftUI driver that ignores that flag. Without gating here,
+    /// the continuous 60fps band sweep prevents the XCUITest
+    /// accessibility snapshot from settling on CI runners — causing
+    /// a "Failed to get matching snapshots" cascade that wedges
+    /// the whole test suite. See docs/LEARNINGS.md §
+    /// "UI testing on iOS".
+    private static let animationsEnabled: Bool = {
+        ProcessInfo.processInfo.environment["JOOLS_UI_TEST_DISABLE_ANIMATIONS"] != "1"
+    }()
+
     var body: some View {
-        GeometryReader { proxy in
-            TimelineView(.animation) { context in
-                let t = context.date.timeIntervalSinceReferenceDate
-                let totalWidth = proxy.size.width
-                let bandSize = totalWidth * Self.bandWidth
+        if Self.animationsEnabled {
+            GeometryReader { proxy in
+                TimelineView(.animation) { context in
+                    let t = context.date.timeIntervalSinceReferenceDate
+                    let totalWidth = proxy.size.width
+                    let bandSize = totalWidth * Self.bandWidth
 
-                ZStack(alignment: .topLeading) {
-                    // Faint rail — always-visible base so the strip
-                    // never reads as "suddenly there, suddenly gone".
-                    Rectangle()
-                        .fill(tint.opacity(0.22))
+                    ZStack(alignment: .topLeading) {
+                        // Faint rail — always-visible base so the strip
+                        // never reads as "suddenly there, suddenly gone".
+                        Rectangle()
+                            .fill(tint.opacity(0.22))
 
-                    // Two phase-offset bands for continuous coverage.
-                    movingBand(at: 0, t: t, totalWidth: totalWidth, bandSize: bandSize)
-                    movingBand(at: 0.5, t: t, totalWidth: totalWidth, bandSize: bandSize)
+                        // Two phase-offset bands for continuous coverage.
+                        movingBand(at: 0, t: t, totalWidth: totalWidth, bandSize: bandSize)
+                        movingBand(at: 0.5, t: t, totalWidth: totalWidth, bandSize: bandSize)
+                    }
                 }
             }
+            .clipped()
+        } else {
+            // Static fallback for UI tests. Just the rail — no
+            // moving bands, no TimelineView.
+            Rectangle()
+                .fill(tint.opacity(0.22))
         }
-        .clipped()
     }
 
     /// A single gradient band with linear sawtooth motion, offset
