@@ -133,7 +133,7 @@ private struct AgentMessageRow: View {
     let timestamp: Date
 
     var body: some View {
-        HStack(alignment: .top, spacing: JoolsSpacing.sm) {
+        HStack(alignment: .top, spacing: JoolsSpacing.md) {
             JulesAvatarView()
 
             VStack(alignment: .leading, spacing: JoolsSpacing.xxs) {
@@ -424,7 +424,7 @@ private struct ProgressRow: View {
             }
 
             if !progress.messageSegments.isEmpty {
-                HStack(alignment: .top, spacing: JoolsSpacing.sm) {
+                HStack(alignment: .top, spacing: JoolsSpacing.md) {
                     JulesAvatarView(size: 28)
 
                     VStack(alignment: .leading, spacing: JoolsSpacing.xs) {
@@ -466,6 +466,8 @@ private struct PlanApprovedRow: View {
 private struct CompletionRow: View {
     let completion: CompletionSnapshot
 
+    @State private var showingDiffViewer = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
             HStack(spacing: JoolsSpacing.xs) {
@@ -497,7 +499,20 @@ private struct CompletionRow: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: JoolsSpacing.xs) {
                         ForEach(completion.changedFiles, id: \.self) { file in
-                            FilePill(filename: file, status: .modified) {}
+                            // Tapping any file pill opens the full
+                            // DiffViewerView as a sheet so users
+                            // can read the actual hunk-level changes,
+                            // not just the file name. This wiring was
+                            // lost when the chat surface migrated to
+                            // the snapshot architecture; restoring
+                            // it here uses `completion.diffFiles`
+                            // which is pre-parsed by
+                            // ActivitySnapshotBuilder.
+                            FilePill(filename: file, status: .modified) {
+                                if !completion.diffFiles.isEmpty {
+                                    showingDiffViewer = true
+                                }
+                            }
                         }
                     }
                 }
@@ -507,6 +522,19 @@ private struct CompletionRow: View {
         .background(Color.joolsSuccess.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: JoolsRadius.md))
         .padding(.horizontal, JoolsSpacing.md)
+        .sheet(isPresented: $showingDiffViewer) {
+            NavigationStack {
+                DiffViewerView(
+                    title: completion.commitMessage ?? "Changes",
+                    files: completion.diffFiles
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done") { showingDiffViewer = false }
+                    }
+                }
+            }
+        }
     }
 }
 

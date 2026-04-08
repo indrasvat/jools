@@ -5,13 +5,23 @@ import JoolsKit
 
 /// Compact pixel-mascot avatar used in chat bubbles. Shows the
 /// PixelJulesMascot directly, with no circular backdrop or border —
-/// the pixel art IS the avatar. The earlier design wrapped it in a
-/// round gradient-tinted circle with a stroke border, but the mascot
-/// grid (rows 0..7 of a 9-row grid, columns 1..8 of a 9-column grid)
-/// is visually offset from the geometric center of its frame, which
-/// made the pixel art look off-center INSIDE the circle. Dropping
-/// the circle sidesteps that entirely and keeps the chat surface
-/// using ONE consistent visual for Jules: the pixel mascot itself.
+/// the pixel art IS the avatar. A very gentle sinusoidal bob is
+/// applied here (not inside PixelJulesMascot) so the chat avatar
+/// feels alive without forcing an opinion on any other caller of
+/// the shared mascot primitive.
+///
+/// Motion parameters are calibrated against a frame-by-frame
+/// analysis of the official Jules web UI idle float:
+///   * Peak-to-peak amplitude ≈ 12% of the mascot height
+///   * Full cycle period ≈ 2.4 seconds
+///   * Pure sine wave, no easing discontinuities, no horizontal
+///     sway, no rotation, no scale
+///
+/// `TimelineView(.animation)` is the driver because a time-based
+/// sine is strictly smoother than a two-state `.animation(...)` +
+/// `@State` toggle (no risk of state reset on parent re-render, no
+/// easeInOut discontinuities at the endpoints, exactly one phase-
+/// locked source of truth).
 struct JulesAvatarView: View {
     let size: CGFloat
     let isAnimated: Bool
@@ -21,10 +31,29 @@ struct JulesAvatarView: View {
         self.isAnimated = isAnimated
     }
 
+    // Period in seconds for one full oscillation (peak → trough → peak).
+    // 2.4s matches the Jules web UI reference exactly.
+    private static let bobPeriod: Double = 2.4
+
+    // Peak amplitude in points. ±2pt on a 28pt avatar is 4pt
+    // peak-to-peak ≈ 14% of avatar height — within the measured
+    // 12% ratio of the web UI, slightly topped up so the motion
+    // reads on iOS's denser display.
+    private static let bobAmplitude: CGFloat = 2
+
     var body: some View {
-        PixelJulesMascot(mood: .working, isAnimated: isAnimated)
-            .frame(width: size, height: size)
-            .accessibilityLabel("Jules")
+        TimelineView(.animation(paused: !isAnimated)) { context in
+            let phase = context.date.timeIntervalSinceReferenceDate
+            let y = isAnimated
+                ? Self.bobAmplitude * CGFloat(sin((2 * .pi / Self.bobPeriod) * phase))
+                : 0
+
+            PixelJulesMascot(mood: .working, isAnimated: false)
+                .frame(width: size, height: size)
+                .offset(y: y)
+        }
+        .frame(width: size, height: size)
+        .accessibilityLabel("Jules")
     }
 }
 
@@ -87,7 +116,7 @@ struct AgentMessageBubble: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: JoolsSpacing.sm) {
+        HStack(alignment: .top, spacing: JoolsSpacing.md) {
             // Avatar
             if isThinking {
                 ThinkingAvatarView()
@@ -127,8 +156,16 @@ struct TypingIndicatorView: View {
     private let timer = Timer.publish(every: 0.3, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        HStack(alignment: .top, spacing: JoolsSpacing.sm) {
-            JulesAvatarView(isAnimated: false)
+        HStack(alignment: .top, spacing: JoolsSpacing.md) {
+            // `isAnimated: true` (default) so the avatar bobs in
+            // sync with the regular agent-message avatars. The
+            // earlier design pinned it static to avoid "competing"
+            // with the typing dots' bounce, but the dot animation
+            // is a scale/opacity pulse and the mascot bob is a
+            // vertical translation, so they don't collide — and
+            // a static mascot next to bouncing dots reads as
+            // "Jules is frozen". (User feedback.)
+            JulesAvatarView()
 
             HStack(spacing: 4) {
                 ForEach(0..<3, id: \.self) { index in

@@ -18,23 +18,16 @@ struct SessionStatusBanner: View {
         if let config = bannerConfig {
             VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
                 HStack(alignment: .center, spacing: JoolsSpacing.sm) {
-                    // The bouncing PixelJulesMascot that used to live
-                    // here was removed: it kept overshooting the
-                    // banner's top edge and visually overlapping the
-                    // session header row above the banner, regardless
-                    // of the ±1pt animation constraint. Rather than
-                    // fighting the layout, the banner now shows just
-                    // the title text (left-aligned, larger font), with
-                    // a tiny status glyph on the left for non-working
-                    // states. For working/queued/unspecified states
-                    // where the mascot used to live, we fall back to
-                    // a compact spinner so the "something is running"
-                    // affordance stays visible.
-                    if config.showSpinner {
-                        ProgressView()
-                            .scaleEffect(0.85)
-                            .tint(config.foregroundColor)
-                    } else {
+                    // For terminal / awaiting states (completed, failed,
+                    // cancelled, awaiting input, awaiting plan approval)
+                    // the banner shows a compact leading glyph so the
+                    // state reads at a glance. For active states
+                    // (running, queued, unspecified) the glyph is
+                    // suppressed entirely — the headline + the sweeping
+                    // gradient strip at the bottom of the banner carry
+                    // the "something is happening" signal. See the
+                    // overlay on the banner VStack below for the strip.
+                    if !config.showSpinner {
                         Image(systemName: config.icon)
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(config.foregroundColor)
@@ -58,24 +51,7 @@ struct SessionStatusBanner: View {
                         .lineLimit(1)
                         .accessibilityLabel(config.message)
 
-                    Spacer(minLength: JoolsSpacing.xs)
-
-                    if isPolling && config.showPollingIndicator {
-                        HStack(spacing: 5) {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 7, height: 7)
-                                .shadow(color: .green.opacity(0.55), radius: 3)
-                            Text("Live")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(config.foregroundColor)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(
-                            Capsule().fill(config.foregroundColor.opacity(0.12))
-                        )
-                    }
+                    Spacer(minLength: 0)
                 }
 
                 // Suppress redundant currentStepTitle when it would just
@@ -118,16 +94,35 @@ struct SessionStatusBanner: View {
             .padding(.vertical, JoolsSpacing.sm + 2)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(config.backgroundColor)
-            // Hairline bottom border so the banner reads as a distinct
-            // section from the chat scroll content underneath instead
-            // of bleeding straight into the bubbles. The Divider that
-            // ChatView places below `SessionStatusBanner` doesn't quite
-            // do this on its own — colour-tinted backgrounds need an
-            // explicit edge to feel "contained".
+            // Bottom edge treatment. For active states (running,
+            // queued, unspecified) we show a continuously sweeping
+            // 2pt gradient strip — the "something is loading"
+            // convention from Xcode / GitHub / Safari / Linear.
+            // For terminal and paused states we fall back to a
+            // plain hairline divider so the banner still reads as
+            // a contained section from the chat bubbles below.
+            //
+            // Important: the strip is gated on `config.showSpinner`
+            // (the session state is active), NOT on `isPolling`.
+            // `isPolling` is bridged from `PollingService`'s
+            // `@Published var isPolling`, which only flips true
+            // during the ~200-500ms window of each in-flight
+            // network request. Gating the strip on `isPolling`
+            // produced a "flash on for 300ms, hidden for 5s"
+            // pattern that read as "abruptly stopping", because
+            // we were showing network state instead of session
+            // state. The strip now reflects "Jules is working"
+            // (the session state) and plays continuously for the
+            // entire duration of that state.
             .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(config.foregroundColor.opacity(0.18))
-                    .frame(height: 0.5)
+                if config.showSpinner {
+                    IndeterminateProgressStrip(tint: config.foregroundColor)
+                        .frame(height: 2)
+                } else {
+                    Rectangle()
+                        .fill(config.foregroundColor.opacity(0.18))
+                        .frame(height: 0.5)
+                }
             }
             .accessibilityIdentifier("chat.status-banner")
             .onReceive(timer) { _ in
@@ -175,8 +170,7 @@ struct SessionStatusBanner: View {
                 backgroundColor: Color.joolsAccent.opacity(0.15),
                 foregroundColor: Color.joolsAccent,
                 showSpinner: true,
-                animateDots: true,
-                showPollingIndicator: true
+                animateDots: true
             )
 
         case .queued:
@@ -186,8 +180,7 @@ struct SessionStatusBanner: View {
                 backgroundColor: Color.orange.opacity(0.15),
                 foregroundColor: Color.orange,
                 showSpinner: true,
-                animateDots: true,
-                showPollingIndicator: true
+                animateDots: true
             )
 
         case .awaitingUserInput:
@@ -237,8 +230,7 @@ struct SessionStatusBanner: View {
                 backgroundColor: Color.joolsAccent.opacity(0.15),
                 foregroundColor: Color.joolsAccent,
                 showSpinner: true,
-                animateDots: true,
-                showPollingIndicator: true
+                animateDots: true
             )
         }
     }
@@ -265,9 +257,108 @@ private struct BannerConfig {
     let icon: String
     let backgroundColor: Color
     let foregroundColor: Color
+    /// When true, the banner is considered "active" — the leading
+    /// glyph is suppressed and the bottom edge renders an animated
+    /// indeterminate progress strip instead of a plain hairline.
+    /// The name is historical (it once gated a ProgressView spinner
+    /// that sat next to the title) but the flag itself still maps
+    /// 1:1 to "this state represents background work in progress".
     var showSpinner: Bool = false
     var animateDots: Bool = false
-    var showPollingIndicator: Bool = false
+}
+
+/// Thin sweeping gradient strip used along the bottom edge of the
+/// banner for "work in progress" states. Matches the silky linear-
+/// sweep feel of CSS `animation: slide Xs linear infinite` used by
+/// GitHub / Linear / Material Design indeterminate progress bars.
+///
+/// Why TWO bands, 50% phase offset apart:
+///   * A single band leaves the strip visually empty for half of
+///     each cycle (while the band is exiting one side and re-
+///     entering the other). That reads as a "flash on, flash off"
+///     pulse, not a continuous loader.
+///   * Running two bands at a 50% phase offset means one is always
+///     mid-sweep while the other is entering/exiting an edge —
+///     continuous coverage, no perceived gaps.
+///
+/// Why LINEAR motion (not sine):
+///   * A sine curve decelerates to zero velocity at each edge, so
+///     the band visually sits still for a fraction of a second at
+///     each reversal. That reads as "abrupt". Linear motion has
+///     constant velocity and no visible stutter at reset time —
+///     the reset moment is hidden because the band is fully
+///     off-screen when it wraps back to the start.
+///
+/// Parameters:
+///   * 1.4s cycle — brisk enough to feel active, slow enough to
+///     stay ambient in peripheral vision
+///   * Band width 55% of strip — overlaps half the strip at any
+///     time so with two bands there's always dense coverage
+///   * Rail opacity 0.22 — more visible than before so even the
+///     "between-bands" moments still show a strip
+private struct IndeterminateProgressStrip: View {
+    let tint: Color
+
+    private static let cyclePeriod: Double = 2.0
+    private static let bandWidth: CGFloat = 0.55
+
+    var body: some View {
+        GeometryReader { proxy in
+            TimelineView(.animation) { context in
+                let t = context.date.timeIntervalSinceReferenceDate
+                let totalWidth = proxy.size.width
+                let bandSize = totalWidth * Self.bandWidth
+
+                ZStack(alignment: .topLeading) {
+                    // Faint rail — always-visible base so the strip
+                    // never reads as "suddenly there, suddenly gone".
+                    Rectangle()
+                        .fill(tint.opacity(0.22))
+
+                    // Two phase-offset bands for continuous coverage.
+                    movingBand(at: 0, t: t, totalWidth: totalWidth, bandSize: bandSize)
+                    movingBand(at: 0.5, t: t, totalWidth: totalWidth, bandSize: bandSize)
+                }
+            }
+        }
+        .clipped()
+    }
+
+    /// A single gradient band with linear sawtooth motion, offset
+    /// by `phaseOffset` cycles from t=0. `phaseOffset ∈ [0, 1)`.
+    @ViewBuilder
+    private func movingBand(
+        at phaseOffset: Double,
+        t: Double,
+        totalWidth: CGFloat,
+        bandSize: CGFloat
+    ) -> some View {
+        // Sawtooth phase in [0, 1): how far through the current
+        // cycle the band is, accounting for the phase offset.
+        let rawPhase = (t / Self.cyclePeriod + phaseOffset)
+        let phase = rawPhase - floor(rawPhase)
+
+        // Band travels from -bandSize (fully off-screen left) to
+        // totalWidth (fully off-screen right). At phase 0 and
+        // phase 1 the band is off-screen, so the instantaneous
+        // reset from 1 → 0 is visually invisible.
+        let travel = totalWidth + bandSize
+        let xOffset = -bandSize + CGFloat(phase) * travel
+
+        LinearGradient(
+            colors: [
+                .clear,
+                tint.opacity(0.45),
+                tint.opacity(0.75),
+                tint.opacity(0.45),
+                .clear,
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+        .frame(width: bandSize)
+        .offset(x: xOffset)
+    }
 }
 
 /// Pixel-art Jules mascot, used by both the chat status banner and

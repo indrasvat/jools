@@ -100,11 +100,23 @@ extension ActivitySnapshot.Kind {
             self = .planApproved
 
         case .sessionCompleted:
+            // Parse the unified-diff patch once here so the view
+            // layer (CompletionRow / DiffViewerView) doesn't need
+            // to touch the SwiftData entity at presentation time.
+            // UnifiedDiffParser is pure-function and fast enough
+            // to run on the main actor during snapshot construction.
+            let parsedDiffFiles: [DiffFile]
+            if let patch = entity.gitPatch?.unidiffPatch, !patch.isEmpty {
+                parsedDiffFiles = UnifiedDiffParser.parse(patch)
+            } else {
+                parsedDiffFiles = []
+            }
             self = .sessionCompleted(snapshot: CompletionSnapshot(
                 commitMessage: entity.messageContent,
                 diffAdditions: entity.diffAdditions,
                 diffDeletions: entity.diffDeletions,
                 changedFiles: entity.changedFiles,
+                diffFiles: parsedDiffFiles,
                 duration: 0
             ))
 

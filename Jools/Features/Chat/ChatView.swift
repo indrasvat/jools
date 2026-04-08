@@ -841,7 +841,7 @@ struct WorkingCard: View {
     let message: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: JoolsSpacing.sm) {
+        HStack(alignment: .top, spacing: JoolsSpacing.md) {
             // Use the same pixel-mascot avatar that AgentMessageBubble
             // uses, so working/progress-update bubbles match agent
             // message bubbles visually instead of using a different

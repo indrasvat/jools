@@ -99,6 +99,11 @@ struct CompletionSnapshot: Equatable, Sendable {
     let diffAdditions: Int
     let diffDeletions: Int
     let changedFiles: [String]
+    /// Parsed per-file diff hunks for the `DiffViewerView`. Parsed
+    /// eagerly in `ActivitySnapshotBuilder` so the view layer doesn't
+    /// have to touch the SwiftData entity at presentation time.
+    /// Empty when the session produced no unified-diff patch.
+    let diffFiles: [DiffFile]
     let duration: TimeInterval
 }
 
