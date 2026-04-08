@@ -64,6 +64,7 @@ HOOK_ICON        := 🪝
         xcode generate run \
         kit-build kit-test kit-clean kit-update \
         ci pre-push hooks-install hooks-uninstall \
+        ci-build-for-testing ci-test-unit ci-test-ui ci-package-build ci-unpack-build \
         status diff log \
         sim-list sim-boot sim-build sim-run sim-install sim-launch sim-kill sim-logs sim-shutdown \
         sim-reload sim-screenshot ui-test sim-ui-smoke sim-screenshot-bundle verify-live-session
@@ -357,6 +358,78 @@ ci: lint kit-build kit-test build test-app ## Run full CI pipeline (lint → bui
 
 pre-push: ci ## Pre-push hook target (runs full CI)
 	@echo "$(GREEN)$(CHECK) Pre-push checks passed$(RESET)"
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# CI: build-for-testing + split test execution
+#
+# The GitHub Actions iOS pipeline is split into three jobs:
+#   1. ci-build-for-testing   — compiles app + tests once, packages output
+#   2. ci-test-unit           — downloads package, runs JoolsTests only
+#   3. ci-test-ui             — downloads package, runs JoolsUITests only
+#
+# Jobs 2 and 3 run in parallel so wall time is max(unit, ui), not unit+ui.
+# Locally these targets use the same .ci-build/ DerivedData dir so warm
+# rebuilds are ~instant. All of them accept SIM_UDID as an override —
+# CI supplies one via xcrun simctl, local dev falls back to the first
+# booted simulator.
+# ─────────────────────────────────────────────────────────────────────────────────
+
+# Resolve simulator destination: SIM_UDID wins if set; otherwise fall
+# back to the first booted simulator; final fallback is the $(SIMULATOR)
+# name for local dev.
+CI_DERIVED_DATA := .ci-build
+CI_SIM_UDID ?= $(SIM_UDID)
+CI_DESTINATION = $(if $(CI_SIM_UDID),platform=iOS Simulator$(comma)id=$(CI_SIM_UDID),platform=iOS Simulator$(comma)name=$(SIMULATOR))
+# Comma helper — Make eats literal commas in function arguments.
+comma := ,
+
+ci-build-for-testing: ## CI: build-for-testing into .ci-build/
+	@echo "$(BOLD)$(BUILD_ICON) [CI] build-for-testing → $(CI_DERIVED_DATA)$(RESET)"
+	@set -o pipefail && xcodebuild build-for-testing \
+		-project $(PROJECT) \
+		-scheme $(SCHEME) \
+		-destination "$(CI_DESTINATION)" \
+		-configuration Debug \
+		-derivedDataPath $(CI_DERIVED_DATA) \
+		-quiet
+	@echo "$(GREEN)$(CHECK) [CI] build-for-testing complete$(RESET)"
+
+ci-package-build: ## CI: tar .ci-build/Build for the artifact handoff
+	@echo "$(BOLD)$(PACKAGE) [CI] packaging build-products.tar$(RESET)"
+	@test -d $(CI_DERIVED_DATA)/Build || (echo "$(RED)$(CROSS) $(CI_DERIVED_DATA)/Build not found — run ci-build-for-testing first$(RESET)" && exit 1)
+	@tar -cf build-products.tar -C $(CI_DERIVED_DATA) Build
+	@ls -lh build-products.tar
+
+ci-unpack-build: ## CI: untar build-products.tar into .ci-build/
+	@echo "$(BOLD)$(PACKAGE) [CI] unpacking build-products.tar → $(CI_DERIVED_DATA)$(RESET)"
+	@test -f build-products.tar || (echo "$(RED)$(CROSS) build-products.tar not found$(RESET)" && exit 1)
+	@mkdir -p $(CI_DERIVED_DATA)
+	@tar -xf build-products.tar -C $(CI_DERIVED_DATA)
+	@echo "$(GREEN)$(CHECK) [CI] build products unpacked$(RESET)"
+
+ci-test-unit: ## CI: test-without-building for JoolsTests only
+	@echo "$(BOLD)$(TEST_ICON) [CI] test-without-building → JoolsTests$(RESET)"
+	@set -o pipefail && xcodebuild test-without-building \
+		-project $(PROJECT) \
+		-scheme $(SCHEME) \
+		-destination "$(CI_DESTINATION)" \
+		-configuration Debug \
+		-derivedDataPath $(CI_DERIVED_DATA) \
+		-only-testing:JoolsTests \
+		-quiet
+	@echo "$(GREEN)$(CHECK) [CI] JoolsTests passed$(RESET)"
+
+ci-test-ui: ## CI: test-without-building for JoolsUITests only
+	@echo "$(BOLD)$(TEST_ICON) [CI] test-without-building → JoolsUITests$(RESET)"
+	@set -o pipefail && xcodebuild test-without-building \
+		-project $(PROJECT) \
+		-scheme $(SCHEME) \
+		-destination "$(CI_DESTINATION)" \
+		-configuration Debug \
+		-derivedDataPath $(CI_DERIVED_DATA) \
+		-only-testing:JoolsUITests \
+		-quiet
+	@echo "$(GREEN)$(CHECK) [CI] JoolsUITests passed$(RESET)"
 
 # ─────────────────────────────────────────────────────────────────────────────────
 # Git Helpers

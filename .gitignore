@@ -4,6 +4,9 @@
 # Xcode
 build/
 DerivedData/
+.ci-build*/
+.ci-e2e*/
+build-products.tar
 *.xcuserstate
 *.xccheckout
 *.xcscmblueprint

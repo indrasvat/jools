@@ -12,11 +12,14 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Pin the Xcode channel so cache keys stay stable across runs. Bumps
+  # safely invalidate DerivedData via the xcode-build hash below.
+  XCODE_VERSION: latest-stable
+
 jobs:
   # ────────────────────────────────────────────────────────────────────
-  # Lint — fast feedback before the build/test jobs spin up.
-  # Uses `make lint` so the local dev workflow and CI run the exact
-  # same SwiftLint invocation.
+  # Lint — fast feedback, runs in parallel with everything else.
   # ────────────────────────────────────────────────────────────────────
   lint:
     name: SwiftLint
@@ -33,9 +36,7 @@ jobs:
         run: make lint
 
   # ────────────────────────────────────────────────────────────────────
-  # JoolsKit — pure Swift package, no Xcode app dependency.
-  # Runs in parallel with lint. Uses `make kit-build` + `make kit-test`
-  # so the package commands stay in lockstep with local dev.
+  # JoolsKit — pure Swift package. Runs in parallel with everything.
   # ────────────────────────────────────────────────────────────────────
   joolskit:
     name: JoolsKit (build + test)
@@ -48,7 +49,7 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: ${{ env.XCODE_VERSION }}
 
       - name: Show toolchain
         run: |
@@ -72,17 +73,16 @@ jobs:
         run: make kit-test
 
   # ────────────────────────────────────────────────────────────────────
-  # iOS app — full build + xcodebuild test on a simulator.
-  # Picks the first available iPhone simulator at runtime so the job
-  # isn't pinned to a model name that might not ship with the runner.
-  # Drives the actual build/test through `make build` and
-  # `make test-app` (overriding SIMULATOR) so behaviour matches local.
+  # iOS build — compile app + tests ONCE, cache DerivedData across
+  # runs, upload the build products as an artifact that the two test
+  # jobs share. Measured locally: cold ~25s (warm module cache),
+  # warm rebuild ~3s. On a fresh CI runner cold builds are longer
+  # (~3-5 min) but warm rebuilds should still be under a minute.
   # ────────────────────────────────────────────────────────────────────
-  ios:
-    name: iOS app (build + test)
+  ios-build:
+    name: iOS (build-for-testing)
     runs-on: macos-15
-    timeout-minutes: 30
-    needs: [lint, joolskit]
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -90,17 +90,20 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: Show toolchain
-        run: xcodebuild -version
+      - name: Resolve Xcode build version
+        id: xcode-version
+        run: |
+          xcodebuild -version
+          # Hash the Xcode build number into cache keys so an Xcode
+          # bump safely invalidates DerivedData. Otherwise stale module
+          # artifacts from the old compiler produce link errors.
+          XCODE_BUILD=$(xcodebuild -version | awk '/Build version/ {print $3}')
+          echo "build=$XCODE_BUILD" >> "$GITHUB_OUTPUT"
 
       - name: Install build tools
-        # xcpretty is a Ruby gem (no longer in homebrew), xcodegen is
-        # the formula. The local Makefile installs them the same way.
-        run: |
-          brew install xcodegen
-          gem install xcpretty
+        run: brew install xcodegen
 
       - name: make generate
         run: make generate
@@ -108,26 +111,145 @@ jobs:
       - name: Pick a simulator
         id: sim
         run: |
-          # Find the first available iPhone simulator. The runner image
-          # ships with whatever the bundled Xcode supports — we can't
-          # hard-code "iPhone 17 Pro" because the model lineup churns.
+          # Pick the first available iPhone simulator. Runner images
+          # churn simulator lineups so hardcoding a model name breaks.
           DEST=$(xcrun simctl list devices available | \
             awk '/^-- iOS/{capture=1} /^--/{if (capture && !/^-- iOS/) capture=0} capture && /iPhone/{print; exit}')
-          NAME=$(echo "$DEST" | sed -E 's/^[[:space:]]*//; s/ \([A-F0-9-]{36}\).*$//')
-          if [ -z "$NAME" ]; then
+          UDID=$(echo "$DEST" | grep -oE '[A-F0-9-]{36}' | head -1)
+          if [ -z "$UDID" ]; then
             echo "::error::No iPhone simulator available on the runner."
             xcrun simctl list devices available
             exit 1
           fi
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          echo "Picked simulator: $NAME"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "Picked simulator UDID: $UDID"
 
-      - name: make build
-        env:
-          SIM_NAME: ${{ steps.sim.outputs.name }}
-        run: make build SIMULATOR="$SIM_NAME"
+      - name: Cache DerivedData (incremental Swift builds)
+        uses: actions/cache@v4
+        with:
+          path: .ci-build
+          # Swap on any source / manifest change. The `restore-keys`
+          # fallback lets Swift do a fast incremental rebuild even on
+          # a partial hit (it diffs module hashes internally).
+          key: ${{ runner.os }}-xcode${{ steps.xcode-version.outputs.build }}-dd-${{ hashFiles('Jools/**/*.swift', 'JoolsKit/Sources/**/*.swift', 'JoolsTests/**/*.swift', 'JoolsUITests/**/*.swift', 'JoolsKit/Package.resolved', 'project.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-xcode${{ steps.xcode-version.outputs.build }}-dd-
 
-      - name: make test-app
+      - name: make ci-build-for-testing
         env:
-          SIM_NAME: ${{ steps.sim.outputs.name }}
-        run: make test-app SIMULATOR="$SIM_NAME"
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+        run: make ci-build-for-testing SIM_UDID="$SIM_UDID"
+
+      - name: make ci-package-build
+        run: make ci-package-build
+
+      - name: Upload build-products artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-products
+          path: build-products.tar
+          retention-days: 1
+          if-no-files-found: error
+
+  # ────────────────────────────────────────────────────────────────────
+  # iOS unit tests — downloads the shared build artifact and runs
+  # JoolsTests only. Measured locally: ~9s end-to-end.
+  # ────────────────────────────────────────────────────────────────────
+  ios-test-unit:
+    name: iOS unit tests (JoolsTests)
+    runs-on: macos-15
+    timeout-minutes: 10
+    needs: [ios-build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Download build-products artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-build-products
+
+      - name: make ci-unpack-build
+        run: make ci-unpack-build
+
+      - name: Pick a simulator
+        id: sim
+        run: |
+          DEST=$(xcrun simctl list devices available | \
+            awk '/^-- iOS/{capture=1} /^--/{if (capture && !/^-- iOS/) capture=0} capture && /iPhone/{print; exit}')
+          UDID=$(echo "$DEST" | grep -oE '[A-F0-9-]{36}' | head -1)
+          if [ -z "$UDID" ]; then
+            echo "::error::No iPhone simulator available on the runner."
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Pre-boot simulator
+        env:
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+        # Warm the simulator before xcodebuild so the first test
+        # doesn't eat 15-20s of cold boot time.
+        run: |
+          xcrun simctl boot "${SIM_UDID}" || true
+          xcrun simctl bootstatus "${SIM_UDID}" -b || true
+
+      - name: make ci-test-unit
+        env:
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+        run: make ci-test-unit SIM_UDID="$SIM_UDID"
+
+  # ────────────────────────────────────────────────────────────────────
+  # iOS UI tests — same shared artifact, targets JoolsUITests.
+  # Runs in parallel with ios-test-unit so wall time is
+  # max(unit, ui), not unit + ui. Measured locally: ~91s.
+  # ────────────────────────────────────────────────────────────────────
+  ios-test-ui:
+    name: iOS UI tests (JoolsUITests)
+    runs-on: macos-15
+    timeout-minutes: 15
+    needs: [ios-build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Download build-products artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-build-products
+
+      - name: make ci-unpack-build
+        run: make ci-unpack-build
+
+      - name: Pick a simulator
+        id: sim
+        run: |
+          DEST=$(xcrun simctl list devices available | \
+            awk '/^-- iOS/{capture=1} /^--/{if (capture && !/^-- iOS/) capture=0} capture && /iPhone/{print; exit}')
+          UDID=$(echo "$DEST" | grep -oE '[A-F0-9-]{36}' | head -1)
+          if [ -z "$UDID" ]; then
+            echo "::error::No iPhone simulator available on the runner."
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Pre-boot simulator
+        env:
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          xcrun simctl boot "${SIM_UDID}" || true
+          xcrun simctl bootstatus "${SIM_UDID}" -b || true
+
+      - name: make ci-test-ui
+        env:
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+        run: make ci-test-ui SIM_UDID="$SIM_UDID"
