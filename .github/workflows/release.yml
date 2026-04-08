@@ -1,0 +1,201 @@
+name: Release
+
+# Triggered by pushing an annotated tag matching `v*` (e.g. `v1.0.0`).
+# The job verifies the tag, derives the version, extracts the matching
+# CHANGELOG entry, builds a Release-configuration .app for the simulator
+# (no signing required), zips it for the download, and creates a GitHub
+# Release with the extracted notes attached. The .app archive is reference
+# material for anyone who wants to run an exact build of the tagged
+# version on a simulator without rebuilding from source.
+#
+# This workflow does NOT distribute a signed .ipa for device use. The
+# project pins to a personal Apple Developer team (R65679C4F3), and
+# device builds require that team's signing identity which only the
+# project owner has. Anyone else wanting to run on device should clone
+# the source and use their own signing identity via `make build-device`.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v1.0.0). Must already exist."
+        required: true
+        type: string
+
+# Only one release run at a time per tag — protects against accidental
+# double-publishes if the tag is force-pushed.
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # required to create the GitHub Release
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so the changelog parser can resolve previous tags
+          # and the build-info script can read git metadata.
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Resolve version from tag
+        id: version
+        # `INPUT_TAG` and `GH_REF` are pulled into env vars first so the
+        # `run` body never interpolates user-controllable strings into
+        # bash directly. See:
+        # https://github.blog/security/vulnerability-research/how-to-catch-github-actions-workflow-injections-before-attackers-do/
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          GH_REF: ${{ github.ref }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="${GH_REF#refs/tags/}"
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]; then
+            echo "::error::Tag '$TAG' is not a valid semver tag (expected vMAJOR.MINOR.PATCH[-prerelease])."
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG"        >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing $TAG (version $VERSION)"
+
+      - name: Verify project version matches tag
+        env:
+          EXPECTED: ${{ steps.version.outputs.version }}
+        run: |
+          # Cross-check the tag against MARKETING_VERSION in project.yml
+          # so a mistyped tag (e.g. v1.0.1 against a 1.0.0 project) fails
+          # loudly here instead of silently shipping the wrong build
+          # number.
+          PROJECT_VERSION=$(awk '/MARKETING_VERSION:/ {gsub(/"/, "", $2); print $2; exit}' project.yml)
+          if [ "$PROJECT_VERSION" != "$EXPECTED" ]; then
+            echo "::error::project.yml MARKETING_VERSION ($PROJECT_VERSION) does not match tag version ($EXPECTED). Run 'make release VERSION=$EXPECTED' before tagging."
+            exit 1
+          fi
+          echo "project.yml MARKETING_VERSION: $PROJECT_VERSION"
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Pull the section between "## [VERSION]" and the next "## ["
+          # heading. Falls back to a generic message if no matching
+          # section exists, so the release still publishes (but with a
+          # warning prompting the maintainer to backfill the entry).
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+          awk -v ver="$VERSION" '
+            BEGIN { capture = 0 }
+            /^## \[/ {
+              if (capture) { exit }
+              if ($0 ~ "^## \\[" ver "\\]") { capture = 1; next }
+            }
+            capture { print }
+          ' CHANGELOG.md > "$NOTES_FILE"
+          if [ ! -s "$NOTES_FILE" ]; then
+            echo "::warning::No CHANGELOG entry found for version $VERSION. Publishing with a placeholder body."
+            printf 'Release %s.\n\nNo CHANGELOG entry was present at tag time — see commit history for details.\n' "$VERSION" > "$NOTES_FILE"
+          fi
+          echo "notes-file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+          echo "----- release notes preview -----"
+          head -40 "$NOTES_FILE"
+          echo "---------------------------------"
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      - name: Install build tools
+        run: |
+          brew install xcodegen
+          gem install xcpretty
+
+      - name: make generate
+        run: make generate
+
+      - name: Pick a simulator
+        id: sim
+        run: |
+          DEST=$(xcrun simctl list devices available | \
+            awk '/^-- iOS/{capture=1} /^--/{if (capture && !/^-- iOS/) capture=0} capture && /iPhone/{print; exit}')
+          NAME=$(echo "$DEST" | sed -E 's/^[[:space:]]*//; s/ \([A-F0-9-]{36}\).*$//')
+          if [ -z "$NAME" ]; then
+            echo "::error::No iPhone simulator available on the runner."
+            exit 1
+          fi
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Picked simulator: $NAME"
+
+      - name: Build Release configuration for simulator
+        env:
+          SIM_NAME: ${{ steps.sim.outputs.name }}
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Jools.xcodeproj \
+            -scheme Jools \
+            -destination "platform=iOS Simulator,name=$SIM_NAME" \
+            -configuration Release \
+            -derivedDataPath build/release \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            | xcpretty || \
+          xcodebuild build \
+            -project Jools.xcodeproj \
+            -scheme Jools \
+            -destination "platform=iOS Simulator,name=$SIM_NAME" \
+            -configuration Release \
+            -derivedDataPath build/release \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Package .app artifact
+        id: package
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          APP_PATH="build/release/Build/Products/Release-iphonesimulator/Jools.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "::error::$APP_PATH not found — build did not produce expected output."
+            exit 1
+          fi
+          ZIP_NAME="Jools-${TAG}-iphonesimulator.zip"
+          (cd "$(dirname "$APP_PATH")" && zip -ry "$RUNNER_TEMP/$ZIP_NAME" "$(basename "$APP_PATH")")
+          ls -lh "$RUNNER_TEMP/$ZIP_NAME"
+          echo "zip=$RUNNER_TEMP/$ZIP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          NOTES_FILE: ${{ steps.notes.outputs.notes-file }}
+          ZIP: ${{ steps.package.outputs.zip }}
+        run: |
+          # Skip creation if the release already exists (e.g. from a
+          # workflow_dispatch retry). Update assets in place instead.
+          if gh release view "$TAG" --json tagName >/dev/null 2>&1; then
+            echo "Release $TAG already exists; uploading asset to existing release."
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes-file "$NOTES_FILE" \
+              "$ZIP"
+          fi

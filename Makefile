@@ -65,6 +65,7 @@ HOOK_ICON        := 🪝
         kit-build kit-test kit-clean kit-update \
         ci pre-push hooks-install hooks-uninstall \
         ci-build-for-testing ci-test ci-test-unit ci-test-ui ci-package-build ci-unpack-build \
+        release \
         status diff log \
         sim-list sim-boot sim-build sim-run sim-install sim-launch sim-kill sim-logs sim-shutdown \
         sim-reload sim-screenshot ui-test sim-ui-smoke sim-screenshot-bundle verify-live-session
@@ -103,7 +104,10 @@ help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'kit-' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(CYAN)%-18s$(RESET) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(CYAN)  ─── CI/CD ────────────────────────────────────────────────────────$(RESET)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '(ci|pre-push)' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(CYAN)%-18s$(RESET) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '(^ci|^ci-|pre-push)' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(CYAN)%-18s$(RESET) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "$(BOLD)$(GREEN)  ─── Release ──────────────────────────────────────────────────────$(RESET)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E '^release:' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(CYAN)%-18s$(RESET) %s\n", $$1, $$2}'
 	@echo ""
 	@echo "$(BOLD)$(WHITE)  ─── Simulator ────────────────────────────────────────────────────$(RESET)"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E 'sim-' | awk 'BEGIN {FS = ":.*?## "}; {printf "    $(CYAN)%-18s$(RESET) %s\n", $$1, $$2}'
@@ -358,6 +362,94 @@ ci: lint kit-build kit-test build test-app ## Run full CI pipeline (lint → bui
 
 pre-push: ci ## Pre-push hook target (runs full CI)
 	@echo "$(GREEN)$(CHECK) Pre-push checks passed$(RESET)"
+
+# ─────────────────────────────────────────────────────────────────────────────────
+# Release
+#
+# `make release VERSION=1.2.3` prepares everything that has to be in
+# place BEFORE you tag a release:
+#
+#   1. Bump MARKETING_VERSION in project.yml
+#   2. Re-run xcodegen so the bump lands in Jools.xcodeproj
+#   3. Rename `## [Unreleased]` in CHANGELOG.md to `## [VERSION] — DATE`
+#      and add a fresh empty `## [Unreleased]` section above it
+#   4. Print the exact `git commit` / `git tag` / `git push` commands
+#      for you to run by hand
+#
+# This target deliberately does NOT auto-commit, auto-tag, or auto-push.
+# Tagging is destructive (you can't gracefully un-publish a tag from
+# GitHub once the release workflow runs against it), so the actual
+# hand-off step is yours.
+#
+# After you push the tag, `.github/workflows/release.yml` builds a
+# Release-configuration .app for the simulator, packages it as a zip,
+# and creates a GitHub Release with the matching CHANGELOG entry as
+# the body.
+#
+# Example:
+#   make release VERSION=1.0.1
+#   git diff                                  # eyeball the bump
+#   git add project.yml CHANGELOG.md
+#   git commit -m "chore(release): v1.0.1"
+#   git tag -a v1.0.1 -m "v1.0.1"
+#   git push origin main
+#   git push origin v1.0.1                   # this fires release.yml
+# ─────────────────────────────────────────────────────────────────────────────────
+
+release: ## Prepare a release: bump version + update CHANGELOG (use VERSION=x.y.z)
+ifndef VERSION
+	@echo "$(RED)$(CROSS) VERSION not set. Usage: make release VERSION=1.2.3$(RESET)" >&2
+	@exit 1
+endif
+	@# Validate semver shape: MAJOR.MINOR.PATCH with optional -prerelease.
+	@echo "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$$' || \
+		(echo "$(RED)$(CROSS) VERSION '$(VERSION)' is not valid semver (expected MAJOR.MINOR.PATCH[-prerelease]).$(RESET)" >&2 && exit 1)
+	@echo "$(BOLD)$(ROCKET) Preparing release v$(VERSION)$(RESET)"
+	@# Step 1: bump MARKETING_VERSION in project.yml.
+	@CURRENT=$$(awk '/MARKETING_VERSION:/ {gsub(/"/, "", $$2); print $$2; exit}' project.yml); \
+	if [ "$$CURRENT" = "$(VERSION)" ]; then \
+		echo "$(YELLOW)$(ARROW) project.yml MARKETING_VERSION is already $(VERSION) — leaving untouched$(RESET)"; \
+	else \
+		echo "$(CYAN)$(ARROW) project.yml: $$CURRENT → $(VERSION)$(RESET)"; \
+		/usr/bin/sed -i.bak -E 's/^([[:space:]]*MARKETING_VERSION:[[:space:]]*)\".*\"/\1"$(VERSION)"/' project.yml && rm project.yml.bak; \
+	fi
+	@# Step 2: regenerate the Xcode project so the bump propagates.
+	@$(MAKE) --no-print-directory generate >/dev/null
+	@# Step 3: roll the CHANGELOG. Insert "## [VERSION] — DATE" right
+	@# below the existing "## [Unreleased]" header, then re-add a fresh
+	@# empty Unreleased section above it. Idempotent: if the version
+	@# section already exists, leave the CHANGELOG alone.
+	@if grep -Eq '^## \[$(VERSION)\]' CHANGELOG.md; then \
+		echo "$(YELLOW)$(ARROW) CHANGELOG.md already has a [$(VERSION)] section — leaving untouched$(RESET)"; \
+	else \
+		echo "$(CYAN)$(ARROW) CHANGELOG.md: rolling [Unreleased] → [$(VERSION)] — $$(date -u +%Y-%m-%d)$(RESET)"; \
+		TODAY=$$(date -u +%Y-%m-%d); \
+		/usr/bin/awk -v ver="$(VERSION)" -v today="$$TODAY" '\
+			/^## \[Unreleased\]/ && !done { \
+				print; \
+				print ""; \
+				print "## [" ver "] — " today; \
+				done = 1; next \
+			} { print }' CHANGELOG.md > CHANGELOG.md.new && mv CHANGELOG.md.new CHANGELOG.md; \
+	fi
+	@# Step 4: walk the user through the publish steps. Print absolute
+	@# git commands they can copy-paste — no auto-execute.
+	@echo ""
+	@echo "$(BOLD)$(GREEN)Release prep complete.$(RESET)"
+	@echo ""
+	@echo "$(BOLD)Next steps (run by hand):$(RESET)"
+	@echo "  $(CYAN)1.$(RESET) Review the changes:"
+	@echo "       $(WHITE)git diff project.yml CHANGELOG.md$(RESET)"
+	@echo "  $(CYAN)2.$(RESET) Fill in the [$(VERSION)] CHANGELOG entry with anything"
+	@echo "     not already captured under [Unreleased]."
+	@echo "  $(CYAN)3.$(RESET) Commit and tag:"
+	@echo "       $(WHITE)git add project.yml CHANGELOG.md$(RESET)"
+	@echo "       $(WHITE)git commit -m \"chore(release): v$(VERSION)\"$(RESET)"
+	@echo "       $(WHITE)git tag -a v$(VERSION) -m \"v$(VERSION)\"$(RESET)"
+	@echo "  $(CYAN)4.$(RESET) Push (the tag push triggers .github/workflows/release.yml):"
+	@echo "       $(WHITE)git push origin HEAD$(RESET)"
+	@echo "       $(WHITE)git push origin v$(VERSION)$(RESET)"
+	@echo ""
 
 # ─────────────────────────────────────────────────────────────────────────────────
 # CI: build-for-testing + split test execution

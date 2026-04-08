@@ -68,6 +68,38 @@ For more, see [`docs/Remaining_Work_Plan_2026-04.md`](docs/Remaining_Work_Plan_2
 
 ---
 
+## Install
+
+### Option A — try the latest release in a simulator (no Xcode build)
+
+Each tagged release publishes a `Jools-vX.Y.Z-iphonesimulator.zip` asset on the [Releases page](https://github.com/indrasvat/jools/releases). The zip contains a Release-configuration `Jools.app` ready to drop onto a booted iPhone simulator.
+
+```bash
+# 1. Boot a simulator (any iPhone running iOS 26.0+).
+xcrun simctl boot "iPhone 17 Pro"
+open -a Simulator
+
+# 2. Grab the asset from the latest release.
+gh release download --repo indrasvat/jools --pattern '*-iphonesimulator.zip'
+
+# 3. Unzip and install.
+unzip Jools-v*-iphonesimulator.zip
+xcrun simctl install booted Jools.app
+xcrun simctl launch booted com.indrasvat.jools
+```
+
+This path doesn't require Xcode, signing, or any of the build dependencies — just a Mac with the iOS 26 simulator runtime installed.
+
+### Option B — build and run on a physical device
+
+Device builds need code signing with **your own** Apple Developer team. The project file ships pinned to the maintainer's team (`R65679C4F3`), so you'll need to override that the first time you open the project in Xcode (Signing & Capabilities → pick your team). Build via `make build-device`, then run from Xcode against a paired iPhone.
+
+### Option C — build from source
+
+For active development. See [Building from source](#building-from-source) below.
+
+---
+
 ## Building from source
 
 ### Requirements
@@ -96,6 +128,22 @@ make ci         # full CI pipeline (lint + JoolsKit + iOS build + tests)
 ```
 
 A pre-push git hook (Lefthook) runs lint and a JoolsKit build before every push.
+
+### Cutting a release
+
+Releases are tag-driven — `make release` prepares the working tree and the [`release.yml`](.github/workflows/release.yml) workflow does the rest once the tag lands on GitHub.
+
+```bash
+make release VERSION=1.2.3   # bumps project.yml + adds CHANGELOG section
+git diff                     # eyeball it
+git add project.yml CHANGELOG.md
+git commit -m "chore(release): v1.2.3"
+git tag -a v1.2.3 -m "v1.2.3"
+git push origin HEAD
+git push origin v1.2.3       # this fires release.yml → publishes the GitHub Release
+```
+
+The release workflow validates the tag, cross-checks `MARKETING_VERSION`, builds a Release-configuration simulator app with `CODE_SIGNING_ALLOWED=NO`, zips it, and creates a GitHub Release with the matching `[VERSION]` block from [`CHANGELOG.md`](CHANGELOG.md) as the body.
 
 ### Getting an API key
 
