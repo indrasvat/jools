@@ -12,15 +12,11 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # Pin the Xcode channel so cache keys stay stable across runs. Bumps
-  # safely invalidate DerivedData via the xcode-build hash below.
-  XCODE_VERSION: latest-stable
-
 jobs:
   # ────────────────────────────────────────────────────────────────────
   # Lint — fast feedback before the build/test jobs spin up.
-  # Runs in parallel with everything else.
+  # Uses `make lint` so the local dev workflow and CI run the exact
+  # same SwiftLint invocation.
   # ────────────────────────────────────────────────────────────────────
   lint:
     name: SwiftLint
@@ -38,7 +34,8 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────
   # JoolsKit — pure Swift package, no Xcode app dependency.
-  # Runs in parallel with lint and the iOS job.
+  # Runs in parallel with lint. Uses `make kit-build` + `make kit-test`
+  # so the package commands stay in lockstep with local dev.
   # ────────────────────────────────────────────────────────────────────
   joolskit:
     name: JoolsKit (build + test)
@@ -51,7 +48,7 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: ${{ env.XCODE_VERSION }}
+          xcode-version: latest-stable
 
       - name: Show toolchain
         run: |
@@ -75,20 +72,11 @@ jobs:
         run: make kit-test
 
   # ────────────────────────────────────────────────────────────────────
-  # iOS app — matches the original working pipeline: `make build`
-  # then `make test-app`. The only structural change versus the
-  # pre-release baseline is a cross-run DerivedData cache, keyed on
-  # source hash + Xcode build version so warm PRs skip most Swift
-  # compilation.
-  #
-  # Earlier experiments tried to split build/test/UI into parallel
-  # jobs with an artifact hand-off, or to use `test-without-building
-  # -xctestrun` as the test path. Both regressed wall time on CI:
-  # the split paid cold simulator boot twice and was dominated by
-  # per-test-host overhead, and `-xctestrun` ran ~4 min slower per
-  # test pass than the scheme-based `xcodebuild test` path on the
-  # macos-15 runner (while being equivalent locally). The Makefile
-  # still exposes those targets for anyone who wants them locally.
+  # iOS app — full build + xcodebuild test on a simulator.
+  # Picks the first available iPhone simulator at runtime so the job
+  # isn't pinned to a model name that might not ship with the runner.
+  # Drives the actual build/test through `make build` and
+  # `make test-app` (overriding SIMULATOR) so behaviour matches local.
   # ────────────────────────────────────────────────────────────────────
   ios:
     name: iOS app (build + test)
@@ -102,19 +90,10 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: ${{ env.XCODE_VERSION }}
+          xcode-version: latest-stable
 
       - name: Show toolchain
         run: xcodebuild -version
-
-      - name: Resolve Xcode build version
-        id: xcode-version
-        run: |
-          # Hash the Xcode build number into cache keys so an Xcode
-          # bump safely invalidates DerivedData. Otherwise stale
-          # module artifacts from the old compiler produce link errors.
-          XCODE_BUILD=$(xcodebuild -version | awk '/Build version/ {print $3}')
-          echo "build=$XCODE_BUILD" >> "$GITHUB_OUTPUT"
 
       - name: Install build tools
         # xcpretty is a Ruby gem (no longer in homebrew), xcodegen is
@@ -129,10 +108,9 @@ jobs:
       - name: Pick a simulator
         id: sim
         run: |
-          # Find the first available iPhone simulator. The runner
-          # image ships with whatever the bundled Xcode supports —
-          # we can't hard-code "iPhone 17 Pro" because the model
-          # lineup churns.
+          # Find the first available iPhone simulator. The runner image
+          # ships with whatever the bundled Xcode supports — we can't
+          # hard-code "iPhone 17 Pro" because the model lineup churns.
           DEST=$(xcrun simctl list devices available | \
             awk '/^-- iOS/{capture=1} /^--/{if (capture && !/^-- iOS/) capture=0} capture && /iPhone/{print; exit}')
           NAME=$(echo "$DEST" | sed -E 's/^[[:space:]]*//; s/ \([A-F0-9-]{36}\).*$//')
@@ -143,20 +121,6 @@ jobs:
           fi
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "Picked simulator: $NAME"
-
-      - name: Cache DerivedData (incremental Swift builds)
-        uses: actions/cache@v4
-        with:
-          # `make build` / `make test-app` use Xcode's default
-          # DerivedData location (~/Library/Developer/Xcode/
-          # DerivedData). Caching the Jools-* subtree lets a warm
-          # run skip ~90% of Swift compilation. The cache key is
-          # keyed on source hash + Xcode build version so stale
-          # module artifacts never linger after a compiler bump.
-          path: ~/Library/Developer/Xcode/DerivedData/Jools-*
-          key: ${{ runner.os }}-xcode${{ steps.xcode-version.outputs.build }}-dd-${{ hashFiles('Jools/**/*.swift', 'JoolsKit/Sources/**/*.swift', 'JoolsTests/**/*.swift', 'JoolsUITests/**/*.swift', 'JoolsKit/Package.resolved', 'project.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-xcode${{ steps.xcode-version.outputs.build }}-dd-
 
       - name: make build
         env:
