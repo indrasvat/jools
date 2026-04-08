@@ -64,7 +64,7 @@ HOOK_ICON        := 🪝
         xcode generate run \
         kit-build kit-test kit-clean kit-update \
         ci pre-push hooks-install hooks-uninstall \
-        ci-build-for-testing ci-test-unit ci-test-ui ci-package-build ci-unpack-build \
+        ci-build-for-testing ci-test ci-test-unit ci-test-ui ci-package-build ci-unpack-build \
         status diff log \
         sim-list sim-boot sim-build sim-run sim-install sim-launch sim-kill sim-logs sim-shutdown \
         sim-reload sim-screenshot ui-test sim-ui-smoke sim-screenshot-bundle verify-live-session
@@ -475,6 +475,29 @@ ci-test-ui: ## CI: test-without-building for JoolsUITests only
 	@echo "$(BOLD)$(TEST_ICON) [CI] test-without-building → JoolsUITests$(RESET)"
 	$(call CI_RUN_TEST,JoolsUITests)
 	@echo "$(GREEN)$(CHECK) [CI] JoolsUITests passed$(RESET)"
+
+ci-test: ## CI: test-without-building for ALL targets in one invocation (shared sim boot)
+	@echo "$(BOLD)$(TEST_ICON) [CI] test-without-building → all targets$(RESET)"
+	@XCTESTRUN=$$(ls $(CI_DERIVED_DATA)/Build/Products/*.xctestrun 2>/dev/null | head -1); \
+	if [ -z "$$XCTESTRUN" ]; then \
+	    echo "$(RED)$(CROSS) No .xctestrun found in $(CI_DERIVED_DATA)/Build/Products — run ci-build-for-testing first$(RESET)" >&2; \
+	    exit 1; \
+	fi; \
+	if [ -n "$(SIM_UDID)" ]; then \
+	    DEST="platform=iOS Simulator,id=$(SIM_UDID)"; \
+	elif [ -n "$(SIM_NAME)" ]; then \
+	    DEST="platform=iOS Simulator,name=$(SIM_NAME)"; \
+	else \
+	    UDID=$$($(CI_SIM_DISCOVERY)) || exit 1; \
+	    DEST="platform=iOS Simulator,id=$$UDID"; \
+	fi; \
+	echo "$(CYAN)$(ARROW) xctestrun: $$XCTESTRUN$(RESET)"; \
+	echo "$(CYAN)$(ARROW) destination: $$DEST$(RESET)"; \
+	set -o pipefail && xcodebuild test-without-building \
+		-xctestrun "$$XCTESTRUN" \
+		-destination "$$DEST" \
+		-quiet
+	@echo "$(GREEN)$(CHECK) [CI] all tests passed$(RESET)"
 
 # ─────────────────────────────────────────────────────────────────────────────────
 # Git Helpers

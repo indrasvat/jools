@@ -73,20 +73,27 @@ jobs:
         run: make kit-test
 
   # ────────────────────────────────────────────────────────────────────
-  # iOS build — compile app + tests ONCE, cache DerivedData across
-  # runs, upload the build products (including the `.xctestrun`) as
-  # an artifact that the two downstream test jobs consume.
+  # iOS app — single unified build + test job.
   #
-  # The build targets `generic/platform=iOS Simulator` so no specific
-  # device needs to exist or be picked here. Each test job picks its
-  # own concrete simulator via `scripts/ci-discover-sim` at runtime —
-  # nothing about the runner's simulator lineup is hardcoded in this
-  # workflow or in `Makefile`.
+  # Earlier iterations split this into `ios-build` + `ios-test-unit` +
+  # `ios-test-ui` with artifact hand-off, banking on parallelism
+  # between the two test targets. That lost wall-clock time, not won
+  # it: each test-job runner paid its own cold simulator boot (~1-2
+  # min) and test-runner bootstrap (~30 s) on top of re-discovering a
+  # valid simulator via simctl (which itself was 20-100 s on a cold
+  # GitHub runner). The per-split overhead ran to ~5 min, which is
+  # more than the JoolsTests tests take in total. Splitting iOS tests
+  # is only worthwhile when unit tests are much slower than sim
+  # overhead — not the case here.
+  #
+  # The keep here is the DerivedData cache across runs, which lets
+  # warm rebuilds skip ~90% of Swift compilation. Source-file hashing
+  # plus the Xcode build version guarantees cache safety.
   # ────────────────────────────────────────────────────────────────────
-  ios-build:
-    name: iOS (build-for-testing)
+  ios:
+    name: iOS (build + test)
     runs-on: macos-15
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -101,8 +108,9 @@ jobs:
         run: |
           xcodebuild -version
           # Hash the Xcode build number into cache keys so an Xcode
-          # bump safely invalidates DerivedData. Otherwise stale module
-          # artifacts from the old compiler produce link errors.
+          # bump safely invalidates DerivedData. Otherwise stale
+          # module artifacts from the old compiler produce link
+          # errors.
           XCODE_BUILD=$(xcodebuild -version | awk '/Build version/ {print $3}')
           echo "build=$XCODE_BUILD" >> "$GITHUB_OUTPUT"
 
@@ -126,74 +134,9 @@ jobs:
       - name: make ci-build-for-testing
         run: make ci-build-for-testing
 
-      - name: make ci-package-build
-        run: make ci-package-build
-
-      - name: Upload build-products artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build-products
-          path: build-products.tar
-          retention-days: 1
-          if-no-files-found: error
-
-  # ────────────────────────────────────────────────────────────────────
-  # iOS unit tests — downloads the shared build artifact and runs
-  # JoolsTests only. `make ci-test-unit` calls
-  # `scripts/ci-discover-sim` internally to pick a concrete iPhone
-  # simulator on this runner.
-  # ────────────────────────────────────────────────────────────────────
-  ios-test-unit:
-    name: iOS unit tests (JoolsTests)
-    runs-on: macos-15
-    timeout-minutes: 10
-    needs: [ios-build]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: Download build-products artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-build-products
-
-      - name: make ci-unpack-build
-        run: make ci-unpack-build
-
-      - name: make ci-test-unit
-        run: make ci-test-unit
-
-  # ────────────────────────────────────────────────────────────────────
-  # iOS UI tests — same shared artifact, targets JoolsUITests.
-  # Runs in parallel with ios-test-unit so wall time is
-  # max(unit, ui), not unit + ui.
-  # ────────────────────────────────────────────────────────────────────
-  ios-test-ui:
-    name: iOS UI tests (JoolsUITests)
-    runs-on: macos-15
-    timeout-minutes: 15
-    needs: [ios-build]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: Download build-products artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-build-products
-
-      - name: make ci-unpack-build
-        run: make ci-unpack-build
-
-      - name: make ci-test-ui
-        run: make ci-test-ui
+      - name: make ci-test
+        # Runs both JoolsTests and JoolsUITests in a single
+        # xcodebuild test-without-building invocation so the
+        # simulator is booted once (not twice) and the test runner
+        # bootstrap cost is paid once (not twice).
+        run: make ci-test
