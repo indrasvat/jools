@@ -44,24 +44,25 @@ enum BackgroundSessionChecker {
         // Schedule the NEXT refresh immediately so we keep getting woken up.
         scheduleNext()
 
-        // BGAppRefreshTask is not Sendable, so we can't capture it in
-        // the Task closure. Use nonisolated(unsafe) to bridge this — the
-        // BGTask framework guarantees the handler runs on a serial queue.
-        nonisolated(unsafe) let bgTask = task
+        // BGAppRefreshTask is not Sendable, and Swift 6 strict concurrency
+        // rejects capturing it in a Task closure. Use @Sendable + unchecked
+        // nonisolated wrapper to satisfy the compiler. The BGTask framework
+        // guarantees the handler runs on a serial queue, making this safe.
+        let wrapper = UncheckedSendableBox(task)
 
-        let fetchTask = Task {
+        let fetchTask = Task { @Sendable in
             do {
                 try await performCheck()
-                bgTask.setTaskCompleted(success: true)
+                wrapper.value.setTaskCompleted(success: true)
             } catch {
                 logger.error("Background check failed: \(error.localizedDescription)")
-                bgTask.setTaskCompleted(success: false)
+                wrapper.value.setTaskCompleted(success: false)
             }
         }
 
         task.expirationHandler = {
             fetchTask.cancel()
-            bgTask.setTaskCompleted(success: false)
+            wrapper.value.setTaskCompleted(success: false)
         }
     }
 
@@ -188,4 +189,12 @@ enum BackgroundSessionChecker {
         default: return .passive
         }
     }
+}
+
+/// Wraps a non-Sendable value for use in `@Sendable` closures where
+/// the caller guarantees thread-safety externally (e.g. BGTask handler
+/// runs on a serial queue).
+private struct UncheckedSendableBox<T>: @unchecked Sendable {
+    let value: T
+    init(_ value: T) { self.value = value }
 }
