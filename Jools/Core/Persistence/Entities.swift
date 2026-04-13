@@ -413,8 +413,8 @@ enum SessionStateMachine {
     /// friendly closers ("…just let me know. Have a great day!") as
     /// input-needed.
     private static func transition(from state: SessionDisplayState, with activity: ActivityEntity) -> SessionDisplayState {
-        // Terminal activities override everything.
-        if state == .cancelled { return .cancelled }
+        // API-terminal display states are sticky during activity replay.
+        if state == .cancelled || state == .paused { return state }
 
         switch activity.type {
         case .sessionCompleted:
