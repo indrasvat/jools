@@ -12,6 +12,8 @@
 		1003079A28DB81B732A25C31 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05CC0D643717615BFD25DF44 /* RootView.swift */; };
 		113E640740C7E211F8A01D88 /* CreateSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FECDD3C8EC5285EF98459C4B /* CreateSessionViewModel.swift */; };
 		1337F0AB31DCBF2AEAF64751 /* CommandCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9088B1547DB4E3F2573B726B /* CommandCardView.swift */; };
+		13C3A90B80995E108BB8A8D7 /* BackgroundSessionChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 144E45E85B01399C9AF0037A /* BackgroundSessionChecker.swift */; };
+		181347E1EDC8468A50AA3C96 /* NotificationPermissionPrimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E199C283A4B74F1F4280DF0 /* NotificationPermissionPrimer.swift */; };
 		18B6CD81257D2AD851AB420F /* JoolsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D34F6FC258683E2CC45CC5 /* JoolsUITests.swift */; };
 		18D2CB9BBD6B2EFACC2F4AB9 /* CompletionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E9101694FA23EE0C261EF2 /* CompletionCardView.swift */; };
 		22747F2A600A3192937C497A /* ActivitySnapshotRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F3AF3F90CFEF28F94DDDE8 /* ActivitySnapshotRow.swift */; };
@@ -28,20 +30,24 @@
 		5198CCAEDBF5F086B1B9FE35 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAAF4A8948E2B9D3ED24714 /* ChatViewModel.swift */; };
 		549EFAFF1C10E40C5BE8B1F9 /* AppDependency.swift in Sources */ = {isa = PBXBuildFile; fileRef = C48B25E1C01D41F2A82468D4 /* AppDependency.swift */; };
 		5AF12302F51A3369C9E8F734 /* Entities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D6623D9D0FC7D69F1C7144 /* Entities.swift */; };
+		606BA634631C23D2DE326B4F /* SessionStateTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233067743D0097DD4D75CAAD /* SessionStateTracker.swift */; };
 		694E2DC6F2E4B8C8623DA448 /* CreateSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898E0E608FDB38A8ADE72E15 /* CreateSessionView.swift */; };
 		720B07E20C9153A13E5E77F0 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D2A326FD5B525C349C7A1A7 /* Colors.swift */; };
 		760E7E0A6C13B4D7D527C7A1 /* ScheduledTaskComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CB0A370FBEEE4013D76774A /* ScheduledTaskComposerView.swift */; };
 		80CA19264A52480704CCC627 /* MarkdownText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55D1B924B4F57FB2E400B7B9 /* MarkdownText.swift */; };
 		88C3D472854ACB73136B6244 /* OnboardingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D2225EE84F7ED0D259A09D /* OnboardingViewModel.swift */; };
+		8FF80B9DE13462051B009E19 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C1E83A332CE24DCA09484D7 /* NotificationManager.swift */; };
 		932ED57E3B7FD8444726D063 /* PlanCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A3B30BFED7D0264ADE04BE4 /* PlanCardView.swift */; };
 		96B17DCA69761B8E29432453 /* Appearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1762997ED0E2F7DFFCDA8FFA /* Appearance.swift */; };
 		B56E5F823E44681CED001F72 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75EF4E3FF816718B4811F603 /* Haptics.swift */; };
 		B58C33D4DA434BE37D341EB8 /* SessionStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 425B67829FCDB7DCDECCB419 /* SessionStatusBanner.swift */; };
 		B5D192367B5E7EB83EDBE8CE /* JoolsKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1A7F80469173E19E5304563B /* JoolsKit */; };
 		C23BD34EAA8584E3406BA65D /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 944C302473B5E438F545CB89 /* OnboardingView.swift */; };
+		C26E049E1109A4BFD5D279A3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17CC1E102C0BFB22A7452903 /* AppDelegate.swift */; };
 		C27696D43AEDDCD4A047AFA8 /* JoolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16EE3148567DD030F1F8D620 /* JoolsTests.swift */; };
 		C28D44BC387F2DA225671D32 /* FlatMarkdownRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 210281369A237033F903AD81 /* FlatMarkdownRenderer.swift */; };
 		D4C915A14238F2FF8B3E6E34 /* ActivitySnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CC18A1BD8935EF879932F28 /* ActivitySnapshotBuilder.swift */; };
+		E11BCAF5BF81B05B9FDCB4DB /* jools-chime.caf in Resources */ = {isa = PBXBuildFile; fileRef = CA385BDCC0755463CDAE03A0 /* jools-chime.caf */; };
 		EBFF70E6B7DB3711F0B743D3 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 288FD2F8B8CECF645C9290DF /* DashboardViewModel.swift */; };
 		ECB31ECBBB363DF149E30721 /* SessionsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDDA2EFE4958BD6C81DFFD3D /* SessionsListView.swift */; };
 		EF11B0FB91A8B5AFC6F29ADD /* FilePillView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E8FC2819C3ADD06CE146BCF /* FilePillView.swift */; };
@@ -69,9 +75,14 @@
 		03D6623D9D0FC7D69F1C7144 /* Entities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entities.swift; sourceTree = "<group>"; };
 		05CC0D643717615BFD25DF44 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		0CB0A370FBEEE4013D76774A /* ScheduledTaskComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledTaskComposerView.swift; sourceTree = "<group>"; };
+		144E45E85B01399C9AF0037A /* BackgroundSessionChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundSessionChecker.swift; sourceTree = "<group>"; };
 		16EE3148567DD030F1F8D620 /* JoolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoolsTests.swift; sourceTree = "<group>"; };
 		1762997ED0E2F7DFFCDA8FFA /* Appearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Appearance.swift; sourceTree = "<group>"; };
+		17CC1E102C0BFB22A7452903 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		1C1E83A332CE24DCA09484D7 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		1E199C283A4B74F1F4280DF0 /* NotificationPermissionPrimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPermissionPrimer.swift; sourceTree = "<group>"; };
 		210281369A237033F903AD81 /* FlatMarkdownRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlatMarkdownRenderer.swift; sourceTree = "<group>"; };
+		233067743D0097DD4D75CAAD /* SessionStateTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStateTracker.swift; sourceTree = "<group>"; };
 		24D50484109E67C6A0DB04B9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		24E9101694FA23EE0C261EF2 /* CompletionCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionCardView.swift; sourceTree = "<group>"; };
 		252B8CDB945E2A635CC39074 /* BuildInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildInfo.swift; sourceTree = "<group>"; };
@@ -102,6 +113,7 @@
 		BA441F491D4B7A8A8B17794C /* Jools.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Jools.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBFC9588307A53A2002F8532 /* JoolsKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = JoolsKit; path = JoolsKit; sourceTree = SOURCE_ROOT; };
 		C48B25E1C01D41F2A82468D4 /* AppDependency.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependency.swift; sourceTree = "<group>"; };
+		CA385BDCC0755463CDAE03A0 /* jools-chime.caf */ = {isa = PBXFileReference; path = "jools-chime.caf"; sourceTree = "<group>"; };
 		D19268781A8710BBE00FCBFA /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		DCC578EDB6204DF44EF61C29 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		DDDA2EFE4958BD6C81DFFD3D /* SessionsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionsListView.swift; sourceTree = "<group>"; };
@@ -141,6 +153,25 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		435887963131653006E4D058 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				144E45E85B01399C9AF0037A /* BackgroundSessionChecker.swift */,
+				1C1E83A332CE24DCA09484D7 /* NotificationManager.swift */,
+				1E199C283A4B74F1F4280DF0 /* NotificationPermissionPrimer.swift */,
+				233067743D0097DD4D75CAAD /* SessionStateTracker.swift */,
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		56748DE69673D99EB2ED1980 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				73AFA260AE103BB1A96A0241 /* Sounds */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		5C5EC898958098FB5BC7922C /* Dashboard */ = {
 			isa = PBXGroup;
 			children = (
@@ -159,6 +190,14 @@
 				BBFC9588307A53A2002F8532 /* JoolsKit */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		73AFA260AE103BB1A96A0241 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				CA385BDCC0755463CDAE03A0 /* jools-chime.caf */,
+			);
+			path = Sounds;
 			sourceTree = "<group>";
 		};
 		746C61647C154D3F024A67F3 /* Products */ = {
@@ -182,6 +221,7 @@
 		8DBE9228B3B98327C1EE70DA /* App */ = {
 			isa = PBXGroup;
 			children = (
+				17CC1E102C0BFB22A7452903 /* AppDelegate.swift */,
 				C48B25E1C01D41F2A82468D4 /* AppDependency.swift */,
 				2A89CE8F6A2B11FF71A6CACD /* JoolsApp.swift */,
 			);
@@ -194,6 +234,7 @@
 				252B8CDB945E2A635CC39074 /* BuildInfo.swift */,
 				C2E897CE94D4F0E08C63906E /* DesignSystem */,
 				F24448F1C49E7CD537FC762E /* Navigation */,
+				435887963131653006E4D058 /* Notifications */,
 				7F218BCC65662E942A4073B7 /* Persistence */,
 			);
 			path = Core;
@@ -206,6 +247,7 @@
 				8DBE9228B3B98327C1EE70DA /* App */,
 				8E4A2B0F831E7978FE20CEDD /* Core */,
 				B0BEAF7B929C228E8C03AD44 /* Features */,
+				56748DE69673D99EB2ED1980 /* Resources */,
 			);
 			path = Jools;
 			sourceTree = "<group>";
@@ -430,6 +472,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				46052E6C181403303FBE536F /* Assets.xcassets in Resources */,
+				E11BCAF5BF81B05B9FDCB4DB /* jools-chime.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -453,7 +496,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "INFO_PLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nGIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo \"unknown\")\n# Detached-HEAD-safe branch lookup. CI builds check out a\n# specific commit (detached HEAD) where `git rev-parse\n# --abbrev-ref HEAD` returns literal \"HEAD\", which ends up\n# baked into the Info.plist as the branch name. Prefer\n# $GITHUB_REF_NAME when it's set (GitHub Actions supplies it\n# with the real branch/tag), otherwise fall back to the git\n# query, and finally to \"unknown\". (CodeRabbit review.)\nif [ -n \"${GITHUB_REF_NAME:-}\" ]; then\n  GIT_BRANCH=\"${GITHUB_REF_NAME}\"\nelse\n  BRANCH_RAW=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo \"unknown\")\n  if [ \"${BRANCH_RAW}\" = \"HEAD\" ]; then\n    GIT_BRANCH=\"detached\"\n  else\n    GIT_BRANCH=\"${BRANCH_RAW}\"\n  fi\nfi\nBUILD_DATE=$(date -u +\"%Y-%m-%d %H:%M UTC\")\n\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_SHA\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_BRANCH\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_BUILD_DATE\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_SHA string $GIT_SHA\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_BRANCH string $GIT_BRANCH\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_BUILD_DATE string $BUILD_DATE\" \"$INFO_PLIST\"\n";
+			shellScript = "INFO_PLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nGIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo \"unknown\")\n# Detached-HEAD-safe branch lookup. CI builds check out a\n# specific commit (detached HEAD) where `git rev-parse\n# --abbrev-ref HEAD` returns literal \"HEAD\", which ends up\n# baked into the Info.plist as the branch name. Prefer\n# $GITHUB_REF_NAME when it's set (GitHub Actions supplies it\n# with the real branch/tag), otherwise fall back to the git\n# query, and finally to \"unknown\". (CodeRabbit review.)\nif [ -n \"${GITHUB_REF_NAME:-}\" ]; then\n  GIT_BRANCH=\"${GITHUB_REF_NAME}\"\nelse\n  BRANCH_RAW=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo \"unknown\")\n  if [ \"${BRANCH_RAW}\" = \"HEAD\" ]; then\n    GIT_BRANCH=\"detached\"\n  else\n    GIT_BRANCH=\"${BRANCH_RAW}\"\n  fi\nfi\nBUILD_DATE=$(date -u +\"%Y-%m-%d %H:%M UTC\")\n\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_SHA\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_GIT_BRANCH\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Delete :JOOLS_BUILD_DATE\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_SHA string $GIT_SHA\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_GIT_BRANCH string $GIT_BRANCH\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :JOOLS_BUILD_DATE string $BUILD_DATE\" \"$INFO_PLIST\"\n\n# BGTaskScheduler permitted identifiers for background session polling\n/usr/libexec/PlistBuddy -c \"Delete :BGTaskSchedulerPermittedIdentifiers\" \"$INFO_PLIST\" >/dev/null 2>&1 || true\n/usr/libexec/PlistBuddy -c \"Add :BGTaskSchedulerPermittedIdentifiers array\" \"$INFO_PLIST\"\n/usr/libexec/PlistBuddy -c \"Add :BGTaskSchedulerPermittedIdentifiers:0 string com.indrasvat.jools.session-check\" \"$INFO_PLIST\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -466,8 +509,10 @@
 				D4C915A14238F2FF8B3E6E34 /* ActivitySnapshotBuilder.swift in Sources */,
 				22747F2A600A3192937C497A /* ActivitySnapshotRow.swift in Sources */,
 				0CA7E6DE0147F5D21EB9137F /* AppCoordinator.swift in Sources */,
+				C26E049E1109A4BFD5D279A3 /* AppDelegate.swift in Sources */,
 				549EFAFF1C10E40C5BE8B1F9 /* AppDependency.swift in Sources */,
 				96B17DCA69761B8E29432453 /* Appearance.swift in Sources */,
+				13C3A90B80995E108BB8A8D7 /* BackgroundSessionChecker.swift in Sources */,
 				26233A483DE4A601894F389B /* BuildInfo.swift in Sources */,
 				2DB352505475C540E2B938EA /* ChatView.swift in Sources */,
 				5198CCAEDBF5F086B1B9FE35 /* ChatViewModel.swift in Sources */,
@@ -487,11 +532,14 @@
 				31A3B26995C0A1A927AB1EE3 /* JoolsApp.swift in Sources */,
 				379A4C97F5AFADA4798685DD /* JulesAvatarView.swift in Sources */,
 				80CA19264A52480704CCC627 /* MarkdownText.swift in Sources */,
+				8FF80B9DE13462051B009E19 /* NotificationManager.swift in Sources */,
+				181347E1EDC8468A50AA3C96 /* NotificationPermissionPrimer.swift in Sources */,
 				C23BD34EAA8584E3406BA65D /* OnboardingView.swift in Sources */,
 				88C3D472854ACB73136B6244 /* OnboardingViewModel.swift in Sources */,
 				932ED57E3B7FD8444726D063 /* PlanCardView.swift in Sources */,
 				1003079A28DB81B732A25C31 /* RootView.swift in Sources */,
 				760E7E0A6C13B4D7D527C7A1 /* ScheduledTaskComposerView.swift in Sources */,
+				606BA634631C23D2DE326B4F /* SessionStateTracker.swift in Sources */,
 				B58C33D4DA434BE37D341EB8 /* SessionStatusBanner.swift in Sources */,
 				ECB31ECBBB363DF149E30721 /* SessionsListView.swift in Sources */,
 				2B7042B5F7BEB6633A3B23D8 /* SettingsView.swift in Sources */,
@@ -720,6 +768,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = fetch;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -763,6 +812,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIBackgroundModes = fetch;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

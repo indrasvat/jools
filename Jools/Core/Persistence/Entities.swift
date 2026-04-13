@@ -336,6 +336,7 @@ enum SessionDisplayState: Equatable {
     case awaitingUserInput
     case completed
     case failed
+    case paused
     case cancelled
 
     var sessionState: SessionState {
@@ -354,6 +355,8 @@ enum SessionDisplayState: Equatable {
             return .completed
         case .failed:
             return .failed
+        case .paused:
+            return .paused
         case .cancelled:
             return .cancelled
         }
@@ -385,12 +388,14 @@ enum SessionStateMachine {
             return .working
         case .awaitingPlanApproval:
             return .awaitingPlanApproval
-        case .awaitingUserInput:
+        case .awaitingUserInput, .awaitingUserFeedback:
             return .awaitingUserInput
         case .completed:
             return .completed
         case .failed:
             return .failed
+        case .paused:
+            return .paused
         case .cancelled:
             return .cancelled
         }
@@ -408,8 +413,8 @@ enum SessionStateMachine {
     /// friendly closers ("…just let me know. Have a great day!") as
     /// input-needed.
     private static func transition(from state: SessionDisplayState, with activity: ActivityEntity) -> SessionDisplayState {
-        // Terminal activities override everything.
-        if state == .cancelled { return .cancelled }
+        // API-terminal display states are sticky during activity replay.
+        if state == .cancelled || state == .paused { return state }
 
         switch activity.type {
         case .sessionCompleted:

@@ -102,6 +102,7 @@ struct ChatView: View {
         }
         .onAppear {
             configureViewModel()
+            dependencies.notificationManager?.currentlyViewedSessionId = session.id
             guard !dependencies.isUITestMode else { return }
 
             dependencies.pollingService.startPolling(
@@ -128,6 +129,11 @@ struct ChatView: View {
             }
         }
         .onDisappear {
+            // Only clear if this view's session is still the tracked one
+            // (prevents race during fast session switches)
+            if dependencies.notificationManager?.currentlyViewedSessionId == session.id {
+                dependencies.notificationManager?.currentlyViewedSessionId = nil
+            }
             dependencies.pollingService.stopPolling()
             viewModel.teardown()
         }
@@ -406,7 +412,7 @@ struct LiveChatChrome: View {
         switch state {
         case .awaitingPlanApproval:
             return latestPlanStep?.title ?? "Review the generated plan"
-        case .awaitingUserInput:
+        case .awaitingUserInput, .awaitingUserFeedback:
             return "Jules is waiting for your input"
         case .running, .inProgress, .queued:
             return latestProgressActivity?.progressTitle ?? latestProgressActivity?.messageContent
@@ -414,7 +420,7 @@ struct LiveChatChrome: View {
             return "Session completed"
         case .failed:
             return "Session failed"
-        case .cancelled:
+        case .paused, .cancelled:
             return "Session cancelled"
         case .unspecified:
             return nil
@@ -425,11 +431,11 @@ struct LiveChatChrome: View {
         switch state {
         case .awaitingPlanApproval:
             return latestPlanStep?.description
-        case .awaitingUserInput:
+        case .awaitingUserInput, .awaitingUserFeedback:
             return "Open the latest Jules message below and reply to continue."
         case .running, .inProgress, .queued:
             return latestProgressActivity?.progressDescription
-        case .completed, .failed, .cancelled, .unspecified:
+        case .completed, .failed, .paused, .cancelled, .unspecified:
             return nil
         }
     }
@@ -948,13 +954,13 @@ struct SessionStateBadge: View {
             return .joolsRunning
         case .queued:
             return .joolsQueued
-        case .awaitingUserInput, .awaitingPlanApproval:
+        case .awaitingUserInput, .awaitingUserFeedback, .awaitingPlanApproval:
             return .joolsAwaiting
         case .completed:
             return .joolsCompleted
         case .failed:
             return .joolsFailed
-        case .cancelled:
+        case .paused, .cancelled:
             return .joolsCancelled
         case .unspecified:
             return .secondary

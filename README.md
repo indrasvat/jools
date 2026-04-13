@@ -48,6 +48,7 @@ These are flows that work end-to-end against the real public Jules API:
 - **Watch live progress** via adaptive polling that uses the API's `createTime` filter for incremental fetches (with graceful fallback if the backend rejects it)
 - **See PR output** when Jules opens a pull request, including the title and description
 - **Schedule** repeating tasks via a native composer that hands off to the official Jules web flow when needed
+- **Get notified** when a session needs plan approval, needs your input, completes, or fails — local notifications with a custom chime, driven by background app refresh when the app is suspended
 - **Switch themes** in Settings (System / Light / Dark) — preferences persist across app launches
 
 ---
@@ -62,7 +63,7 @@ Most of these are upstream constraints, not code we're avoiding writing.
 | No suggestions feed | Same — no public endpoint |
 | No CI Fixer / Render / MCP integration management | No public endpoints for any of these |
 | No media-artifact viewer | The DTOs we model only cover `bashOutput` and `changeSet` artifact types |
-| No remote push notifications | Would require either a Jools-owned backend or upstream webhook support |
+| No real-time push notifications | Local notifications via background refresh (~15-60 min intervals); sub-minute delivery would require a Jools-owned backend or upstream webhook support |
 
 For more, see [`docs/Remaining_Work_Plan_2026-04.md`](docs/Remaining_Work_Plan_2026-04.md) and [`docs/Jools_Implementation_Plan_v3.md`](docs/Jools_Implementation_Plan_v3.md).
 
@@ -163,6 +164,7 @@ Jools/                        SwiftUI app
 ├── Core/
 │   ├── DesignSystem/         Pixel-J brand glyph, colors, typography, spacing, theme settings
 │   ├── Navigation/           Root view, tab coordinator
+│   ├── Notifications/        Local notification manager, state tracker (actor), background refresh, permission primer
 │   └── Persistence/          SwiftData entities (Source, Session, Activity)
 └── Features/                 Onboarding, Dashboard, Chat, CreateSession, Settings
 

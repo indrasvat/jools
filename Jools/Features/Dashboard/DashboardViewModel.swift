@@ -39,6 +39,10 @@ final class DashboardViewModel: ObservableObject {
             // Save changes
             try modelContext.save()
 
+            // Check for state transitions that should trigger notifications.
+            // Inline await (not detached) preserves cancellation propagation.
+            await dependencies.notificationManager?.checkForTransitions(allSessions)
+
         } catch is CancellationError {
             // Pull-to-refresh interrupted by another pull, navigation
             // away, or scene phase change. Not a failure — leave the

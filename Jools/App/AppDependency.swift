@@ -11,6 +11,7 @@ final class AppDependency: ObservableObject {
     let apiClient: APIClient
     let pollingService: PollingService
     let modelContainer: ModelContainer
+    let notificationManager: NotificationManager?
     let isUITestMode: Bool
 
     // MARK: - State
@@ -34,6 +35,9 @@ final class AppDependency: ObservableObject {
 
         // Initialize polling service
         self.pollingService = PollingService(api: apiClient)
+
+        // Initialize notification manager (skip in UI test mode)
+        self.notificationManager = isUITestMode ? nil : NotificationManager(apiClient: apiClient)
 
         // Initialize SwiftData container
         do {
@@ -90,6 +94,17 @@ final class AppDependency: ObservableObject {
         try keychainManager.deleteAPIKey()
         isAuthenticated = false
         pollingService.stopPolling()
+        // Synchronous cleanup of notification state to prevent stale
+        // data leaking across account switches.
+        notificationManager?.pendingSessionId = nil
+        notificationManager?.currentlyViewedSessionId = nil
+        // Clear UNUserNotificationCenter synchronously (these are safe
+        // to call from the main actor without awaiting).
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        // Clear the state tracker via its actor to avoid bypassing
+        // its serialization and causing a read-after-clear race.
+        Task { await SessionStateTracker.shared.clearAll() }
     }
 
     /// Wipe every locally cached `SessionEntity`, `SourceEntity`, and

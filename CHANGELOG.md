@@ -13,6 +13,23 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ### Added
 
+- **Local notifications for session state changes.** Jools now posts
+  iOS notifications when a session needs plan approval, needs user
+  input, completes, or fails. Custom "duo" chime sound. Foreground
+  suppression when you're already viewing the session.
+  `UNUserNotificationCenterDelegate` handles tap-to-navigate (warm
+  and cold launch). Background App Refresh polls the Jules API when
+  the app is suspended (~15-60 min intervals).
+- **Notification permission primer.** On the first notifiable session
+  transition, a branded "Stay in the loop" sheet asks for permission
+  instead of a cold system dialog on first launch.
+- **Enhanced notification settings.** Permission status indicator
+  (green/red), per-category toggles (Plan & Input, Completed,
+  Failed), and a link to system Settings when permission is denied.
+- **Keychain accessibility upgraded** from `kSecAttrAccessibleWhenUnlocked`
+  to `kSecAttrAccessibleAfterFirstUnlock` so background refresh can
+  authenticate on locked devices. Transparent one-time migration.
+
 - **Animated in-bubble Jules avatar.** The mascot next to agent
   message bubbles now gently bobs with a time-driven sine wave
   (±2pt amplitude, 2.4s period) that matches the Jules web UI

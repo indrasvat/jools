@@ -147,6 +147,9 @@ struct SessionsListView: View {
             syncSessions(allSessions)
             try modelContext.save()
             lastRefreshAt = Date()
+
+            // Check for state transitions that should trigger notifications.
+            await dependencies.notificationManager?.checkForTransitions(allSessions)
         } catch is CancellationError {
             // Pull-to-refresh interrupted by another pull or scene
             // change. Not a failure — silently keep the cached data.

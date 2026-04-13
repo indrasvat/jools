@@ -75,6 +75,11 @@ targets:
           /usr/libexec/PlistBuddy -c "Add :JOOLS_GIT_SHA string $GIT_SHA" "$INFO_PLIST"
           /usr/libexec/PlistBuddy -c "Add :JOOLS_GIT_BRANCH string $GIT_BRANCH" "$INFO_PLIST"
           /usr/libexec/PlistBuddy -c "Add :JOOLS_BUILD_DATE string $BUILD_DATE" "$INFO_PLIST"
+
+          # BGTaskScheduler permitted identifiers for background session polling
+          /usr/libexec/PlistBuddy -c "Delete :BGTaskSchedulerPermittedIdentifiers" "$INFO_PLIST" >/dev/null 2>&1 || true
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers array" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:0 string com.indrasvat.jools.session-check" "$INFO_PLIST"
         basedOnDependencyAnalysis: false
     settings:
       base:
@@ -96,6 +101,7 @@ targets:
         DEVELOPMENT_TEAM: R65679C4F3
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_UIBackgroundModes: fetch
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
         INFOPLIST_KEY_UILaunchScreen_Generation: true

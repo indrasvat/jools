@@ -5,6 +5,7 @@ import UIKit
 /// Main entry point for the Jools iOS app
 @main
 struct JoolsApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var dependencies = AppDependency()
     @StateObject private var themeSettings = ThemeSettings()
 

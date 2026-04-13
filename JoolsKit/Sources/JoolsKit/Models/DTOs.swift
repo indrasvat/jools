@@ -430,9 +430,11 @@ public enum SessionState: String, Codable, Sendable, CaseIterable {
     case running = "RUNNING"
     case inProgress = "IN_PROGRESS"  // API uses IN_PROGRESS instead of RUNNING
     case awaitingUserInput = "AWAITING_USER_INPUT"
+    case awaitingUserFeedback = "AWAITING_USER_FEEDBACK"
     case awaitingPlanApproval = "AWAITING_PLAN_APPROVAL"
     case completed = "COMPLETED"
     case failed = "FAILED"
+    case paused = "PAUSED"
     case cancelled = "CANCELLED"
 
     public var displayName: String {
@@ -440,17 +442,18 @@ public enum SessionState: String, Codable, Sendable, CaseIterable {
         case .unspecified: return "Starting"
         case .queued: return "Queued"
         case .running, .inProgress: return "Running"
-        case .awaitingUserInput: return "Needs Input"
+        case .awaitingUserInput, .awaitingUserFeedback: return "Needs Input"
         case .awaitingPlanApproval: return "Needs Approval"
         case .completed: return "Completed"
         case .failed: return "Failed"
+        case .paused: return "Paused"
         case .cancelled: return "Cancelled"
         }
     }
 
     public var isActive: Bool {
         switch self {
-        case .unspecified, .queued, .running, .inProgress, .awaitingUserInput, .awaitingPlanApproval:
+        case .unspecified, .queued, .running, .inProgress, .awaitingUserInput, .awaitingUserFeedback, .awaitingPlanApproval:
             return true
         default:
             return false

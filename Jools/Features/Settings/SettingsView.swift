@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 /// Settings view
 struct SettingsView: View {
@@ -227,12 +228,42 @@ struct AppearanceSettingsView: View {
 struct NotificationSettingsView: View {
     @AppStorage("notifyOnComplete") private var notifyOnComplete = true
     @AppStorage("notifyOnNeedsInput") private var notifyOnNeedsInput = true
+    @AppStorage("notifyOnFailed") private var notifyOnFailed = true
+    @State private var authorizationStatus: UNAuthorizationStatus = .notDetermined
 
     var body: some View {
         List {
-            Section("Session Notifications") {
+            Section {
+                HStack {
+                    Image(systemName: permissionIcon)
+                        .foregroundStyle(permissionColor)
+                    Text(permissionLabel)
+                    Spacer()
+                    if authorizationStatus == .denied {
+                        Button("Open Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .font(.joolsCaption)
+                    }
+                }
+            } header: {
+                Text("Permission")
+            } footer: {
+                if authorizationStatus == .denied {
+                    Text("Notifications are disabled in system settings. Tap \"Open Settings\" to enable them.")
+                }
+            }
+
+            Section {
+                Toggle("Plan Approvals & Input", isOn: $notifyOnNeedsInput)
                 Toggle("Session Completed", isOn: $notifyOnComplete)
-                Toggle("Needs Your Input", isOn: $notifyOnNeedsInput)
+                Toggle("Session Failed", isOn: $notifyOnFailed)
+            } header: {
+                Text("Notify me when...")
+            } footer: {
+                Text("These preferences apply when notifications are enabled in system settings.")
             }
 
             Section {
@@ -242,6 +273,37 @@ struct NotificationSettingsView: View {
             }
         }
         .navigationTitle("Notifications")
+        .task {
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            authorizationStatus = settings.authorizationStatus
+        }
+    }
+
+    private var permissionIcon: String {
+        switch authorizationStatus {
+        case .authorized: return "checkmark.circle.fill"
+        case .denied: return "xmark.circle.fill"
+        case .provisional: return "circle.dashed"
+        default: return "circle"
+        }
+    }
+
+    private var permissionColor: Color {
+        switch authorizationStatus {
+        case .authorized: return .joolsSuccess
+        case .denied: return .joolsFailed
+        case .provisional: return .joolsAwaiting
+        default: return .secondary
+        }
+    }
+
+    private var permissionLabel: String {
+        switch authorizationStatus {
+        case .authorized: return "Enabled"
+        case .denied: return "Disabled"
+        case .provisional: return "Provisional"
+        default: return "Not asked yet"
+        }
     }
 }
 

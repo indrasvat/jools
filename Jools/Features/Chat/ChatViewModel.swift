@@ -603,9 +603,9 @@ final class ChatViewModel: PollingServiceDelegate {
         }
 
         switch state {
-        case .running, .inProgress, .awaitingPlanApproval, .awaitingUserInput, .completed:
+        case .running, .inProgress, .awaitingPlanApproval, .awaitingUserInput, .awaitingUserFeedback, .completed:
             return true
-        case .queued, .failed, .cancelled, .unspecified:
+        case .queued, .failed, .paused, .cancelled, .unspecified:
             return false
         }
     }

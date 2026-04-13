@@ -154,6 +154,7 @@ struct DashboardView: View {
 
                     Button(action: { viewModel.refresh(using: dependencies, modelContext: modelContext) }) {
                         Image(systemName: "arrow.clockwise")
+                            .symbolEffect(.rotate, options: .repeating, isActive: viewModel.isLoading)
                     }
                     .accessibilityIdentifier("home.refresh")
                 }

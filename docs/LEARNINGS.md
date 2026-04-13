@@ -357,3 +357,76 @@ simctl gotcha, an animation recipe, a failed CI approach — add it
 here under the relevant section. Terse entries are better than
 verbose ones. The goal is "future Claude reads this and saves 30
 minutes".
+
+---
+
+## Notifications
+
+### `SessionStateTracker` must be an `actor`, not a class
+
+Three concurrent writers (dashboard refresh, BGAppRefreshTask,
+potential future foreground paths) all call `processTransitions`,
+which does `read map → diff → update map → write map` on
+UserDefaults. UserDefaults is individually thread-safe but that
+compound operation is NOT atomic. Without actor serialization you
+get duplicate notifications, missed notifications, and lost state.
+
+### Don't add a second foreground polling owner
+
+The app has one carefully tuned polling loop (`PollingService` →
+`ChatViewModel`). Adding a second "all sessions" polling timer
+(even at 5-min intervals) contends with the single `APIClient`
+actor, serializing background fetches with foreground chat updates.
+Result: delayed chat polling, stale banners, potential UI freeze
+regression. Use dashboard refresh + BGAppRefreshTask only.
+
+### Keychain accessibility matters for background tasks
+
+`kSecAttrAccessibleWhenUnlocked` blocks keychain reads when the
+device is locked. `BGAppRefreshTask` frequently runs while locked.
+Use `kSecAttrAccessibleAfterFirstUnlock` for any credential that
+background tasks need. Add a transparent migration in
+`KeychainManager.init`.
+
+### Time-based pruning of notification state creates zombie notifications
+
+If you prune "completed" sessions from the state map after 24h, but
+those sessions still appear in the `listAllSessions` API response,
+the next poll sees `previous: nil` → `current: completed` and
+re-notifies. Prune only sessions that are absent from the API
+response (absence-based pruning).
+
+### `UNUserNotificationCenterDelegate` must be set in AppDelegate
+
+The delegate must be wired before `application(_:didFinishLaunching:)`
+returns to catch cold-launch notification taps. SwiftUI's `App.body`
+runs after that, so the delegate can't be set from the SwiftUI
+lifecycle. Use `@UIApplicationDelegateAdaptor` and bridge state via
+a singleton (`NotificationBridge`) since AppDelegate can't access
+`@EnvironmentObject`.
+
+### Swift 6 concurrency: `BGAppRefreshTask` is not Sendable
+
+The `BGTask` handler closure captures `task` which isn't `Sendable`.
+Using `nonisolated(unsafe) let bgTask = task` is the correct bridge
+— the BGTask framework guarantees the handler runs on a serial
+queue. Similarly, `UNUserNotificationCenterDelegate` methods need
+`nonisolated` with explicit `MainActor.run {}` hops for accessing
+main-actor-isolated state.
+
+### `project.yml` with `GENERATE_INFOPLIST_FILE: true` — no `info.properties`
+
+XcodeGen's `info.properties` block generates a physical Info.plist
+that conflicts with `GENERATE_INFOPLIST_FILE: true` (which tells
+Xcode to auto-generate one). For plist entries like
+`UIBackgroundModes`, use `INFOPLIST_KEY_*` build settings. For
+entries that don't have an `INFOPLIST_KEY_` equivalent (like
+`BGTaskSchedulerPermittedIdentifiers`), inject via PlistBuddy in a
+post-build script.
+
+### Custom notification sounds: Python `wave` → `.wav`, then `afconvert` → `.caf`
+
+iOS notification sounds must be ≤30s in `.caf`, `.aiff`, or `.wav`.
+Python's `wave` module only writes `.wav`. Convert with:
+`afconvert input.wav output.caf -d LEI16 -f caff`. Apply -12dB gain
+to synthesized sine waves — raw amplitude 1.0 is painfully loud.
