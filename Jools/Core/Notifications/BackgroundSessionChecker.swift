@@ -9,7 +9,7 @@ import os
 /// notifiable transitions (plan approval needed, input needed,
 /// completed, failed).
 enum BackgroundSessionChecker {
-    static let taskIdentifier = "com.indrasvat.jools.session-check"
+    static let taskIdentifier = "com.indrasvat.jataayu.session-check"
     private static let logger = Logger(subsystem: "com.indrasvat.jools", category: "BackgroundSessionChecker")
 
     /// Register the background task handler. Must be called in
@@ -119,9 +119,9 @@ enum BackgroundSessionChecker {
         // Batch cap: 1 summary if 4+
         if filtered.count >= 4 {
             let content = UNMutableNotificationContent()
-            content.title = "Jools"
+            content.title = "Jataayu"
             content.body = "\(filtered.count) sessions need your attention."
-            content.sound = UNNotificationSound(named: UNNotificationSoundName("jools-chime.caf"))
+            content.sound = UNNotificationSound(named: UNNotificationSoundName("jataayu-chime.caf"))
             content.interruptionLevel = .active
             content.userInfo = ["summary": true, "action": "openSessions"]
             let request = UNNotificationRequest(
@@ -138,7 +138,7 @@ enum BackgroundSessionChecker {
             let content = UNMutableNotificationContent()
             content.title = notificationTitle(for: transition)
             content.body = notificationBody(for: transition)
-            content.sound = UNNotificationSound(named: UNNotificationSoundName("jools-chime.caf"))
+            content.sound = UNNotificationSound(named: UNNotificationSoundName("jataayu-chime.caf"))
             content.threadIdentifier = "session-\(transition.sessionId)"
             content.categoryIdentifier = notificationCategory(for: transition.toState)
             content.interruptionLevel = interruptionLevel(for: transition.toState)

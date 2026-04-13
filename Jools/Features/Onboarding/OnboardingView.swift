@@ -54,13 +54,13 @@ struct OnboardingView: View {
                 VStack(spacing: JoolsSpacing.md) {
                     AppIconView()
 
-                    Text("Jools")
+                    Text("Jataayu")
                         .font(.system(size: 44, weight: .bold))
                         .tracking(-1.5)
                         .foregroundStyle(titleGradient)
 
                     VStack(spacing: 4) {
-                        Text("Jules, in your pocket.")
+                        Text("Watch over Jules.")
                             .font(.system(size: 20, weight: .medium))
                             .foregroundStyle(secondaryTextColor)
 

@@ -89,7 +89,7 @@ struct MadeWithJoolsFooter: View {
         .frame(maxWidth: .infinity)
         .padding(.top, style == .scroll ? JoolsSpacing.xl : JoolsSpacing.md)
         .padding(.bottom, style == .scroll ? JoolsSpacing.xxl : JoolsSpacing.lg)
-        .accessibilityIdentifier("made-with-jools-footer")
+        .accessibilityIdentifier("made-with-jataayu-footer")
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Made with love by indrasvat")
     }
@@ -128,13 +128,13 @@ struct PixelJoolsLogotype: View {
                 .frame(width: glyphWidth, height: glyphHeight)
                 .accessibilityHidden(true)
 
-            Text("ools")
+            Text("ataayu")
                 .font(.system(size: fontSize, weight: weight, design: design))
                 .tracking(resolvedTracking)
                 .foregroundStyle(color)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Jools")
+        .accessibilityLabel("Jataayu")
     }
 }
 

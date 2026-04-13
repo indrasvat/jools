@@ -212,12 +212,12 @@ struct ScheduledTaskComposerView: View {
             Label("Continue in Jules", systemImage: "safari")
                 .font(.joolsHeadline)
 
-            Text("Jools prepares the schedule, branch, and prompt here. Jules web still has to create the recurring task because the public API does not expose scheduled-task creation yet.")
+            Text("Jataayu prepares the schedule, branch, and prompt here. Jules web still has to create the recurring task because the public API does not expose scheduled-task creation yet.")
                 .font(.joolsBody)
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
-                ContinuationStep(number: 1, text: "Jools opens \(source.repo) directly in Jules web.")
+                ContinuationStep(number: 1, text: "Jataayu opens \(source.repo) directly in Jules web.")
                 ContinuationStep(number: 2, text: "The prompt is copied automatically before the handoff.")
                 ContinuationStep(number: 3, text: "In Jules, switch to Scheduled, pick \(template.name), and keep the same cadence and branch.")
             }
@@ -258,7 +258,7 @@ struct ScheduledTaskComposerView: View {
                 }
             }
 
-            Text("Opens \(source.displayName) inside an in-app browser so you can return to Jools without context switching.")
+            Text("Opens \(source.displayName) inside an in-app browser so you can return to Jataayu without context switching.")
                 .font(.joolsCaption)
                 .foregroundStyle(.secondary)
         }
@@ -347,9 +347,9 @@ private struct ScheduledReturnSheet: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: JoolsSpacing.lg) {
                 VStack(alignment: .leading, spacing: JoolsSpacing.sm) {
-                    Text("Back in Jools")
+                    Text("Back in Jataayu")
                         .font(.joolsTitle2)
-                    Text("If the schedule was created in Jules, you’re done. If not, Jools can reopen the repo with the prepared prompt still ready.")
+                    Text("If the schedule was created in Jules, you’re done. If not, Jataayu can reopen the repo with the prepared prompt still ready.")
                         .font(.joolsBody)
                         .foregroundStyle(.secondary)
                 }

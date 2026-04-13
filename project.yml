@@ -1,4 +1,4 @@
-name: Jools
+name: Jataayu
 options:
   bundleIdPrefix: com.indrasvat
   deploymentTarget:
@@ -79,7 +79,7 @@ targets:
           # BGTaskScheduler permitted identifiers for background session polling
           /usr/libexec/PlistBuddy -c "Delete :BGTaskSchedulerPermittedIdentifiers" "$INFO_PLIST" >/dev/null 2>&1 || true
           /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers array" "$INFO_PLIST"
-          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:0 string com.indrasvat.jools.session-check" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:0 string com.indrasvat.jataayu.session-check" "$INFO_PLIST"
         basedOnDependencyAnalysis: false
     settings:
       base:
@@ -88,7 +88,9 @@ targets:
         # JoolsTests and JoolsUITests keep the sandboxed-scripts
         # default. (CodeRabbit review.)
         ENABLE_USER_SCRIPT_SANDBOXING: false
-        PRODUCT_BUNDLE_IDENTIFIER: com.indrasvat.jools
+        PRODUCT_BUNDLE_IDENTIFIER: com.indrasvat.jataayu
+        PRODUCT_NAME: Jataayu
+        PRODUCT_MODULE_NAME: Jools
         MARKETING_VERSION: "1.1.0"
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -120,7 +122,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: true
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Jools.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Jools"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Jataayu.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Jataayu"
         BUNDLE_LOADER: "$(TEST_HOST)"
 
   JoolsUITests:
