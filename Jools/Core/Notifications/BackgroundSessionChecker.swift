@@ -102,7 +102,7 @@ enum BackgroundSessionChecker {
 
         let filtered = transitions.filter { t in
             switch t.toState {
-            case .awaitingPlanApproval, .awaitingUserInput: return notifyOnNeedsInput
+            case .awaitingPlanApproval, .awaitingUserInput, .awaitingUserFeedback: return notifyOnNeedsInput
             case .completed: return notifyOnComplete
             case .failed: return notifyOnFailed
             default: return false
@@ -170,7 +170,7 @@ enum BackgroundSessionChecker {
 
     private static func notificationCategory(for state: SessionState) -> String {
         switch state {
-        case .awaitingPlanApproval, .awaitingUserInput: return "SESSION_NEEDS_ACTION"
+        case .awaitingPlanApproval, .awaitingUserInput, .awaitingUserFeedback: return "SESSION_NEEDS_ACTION"
         case .completed: return "SESSION_COMPLETED"
         case .failed: return "SESSION_FAILED"
         default: return ""
@@ -179,7 +179,7 @@ enum BackgroundSessionChecker {
 
     private static func interruptionLevel(for state: SessionState) -> UNNotificationInterruptionLevel {
         switch state {
-        case .awaitingPlanApproval, .awaitingUserInput: return .timeSensitive
+        case .awaitingPlanApproval, .awaitingUserInput, .awaitingUserFeedback: return .timeSensitive
         case .completed, .failed: return .active
         default: return .passive
         }

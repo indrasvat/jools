@@ -385,13 +385,13 @@ enum SessionStateMachine {
             return .working
         case .awaitingPlanApproval:
             return .awaitingPlanApproval
-        case .awaitingUserInput:
+        case .awaitingUserInput, .awaitingUserFeedback:
             return .awaitingUserInput
         case .completed:
             return .completed
         case .failed:
             return .failed
-        case .cancelled:
+        case .paused, .cancelled:
             return .cancelled
         }
     }

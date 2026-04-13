@@ -105,7 +105,7 @@ final class NotificationManager: ObservableObject {
             if transition.sessionId == currentlyViewedSessionId { return false }
 
             switch transition.toState {
-            case .awaitingPlanApproval, .awaitingUserInput:
+            case .awaitingPlanApproval, .awaitingUserInput, .awaitingUserFeedback:
                 return notifyOnNeedsInput
             case .completed:
                 return notifyOnComplete
@@ -225,7 +225,7 @@ final class NotificationManager: ObservableObject {
     private func notificationTitle(for transition: NotifiableTransition) -> String {
         switch transition.toState {
         case .awaitingPlanApproval: return "Plan approval needed"
-        case .awaitingUserInput: return "Jules needs your input"
+        case .awaitingUserInput, .awaitingUserFeedback: return "Jules needs your input"
         case .completed: return "Session complete"
         case .failed: return "Session failed"
         default: return "Session update"
@@ -237,7 +237,7 @@ final class NotificationManager: ObservableObject {
         switch transition.toState {
         case .awaitingPlanApproval:
             return "\(name) is waiting for approval before it continues."
-        case .awaitingUserInput:
+        case .awaitingUserInput, .awaitingUserFeedback:
             return "\(name) paused until you respond in chat."
         case .completed:
             return "\"\(transition.sessionTitle)\" finished successfully."
@@ -250,7 +250,7 @@ final class NotificationManager: ObservableObject {
 
     private func notificationCategory(for state: SessionState) -> String {
         switch state {
-        case .awaitingPlanApproval, .awaitingUserInput: return "SESSION_NEEDS_ACTION"
+        case .awaitingPlanApproval, .awaitingUserInput, .awaitingUserFeedback: return "SESSION_NEEDS_ACTION"
         case .completed: return "SESSION_COMPLETED"
         case .failed: return "SESSION_FAILED"
         default: return ""
@@ -259,7 +259,7 @@ final class NotificationManager: ObservableObject {
 
     private func interruptionLevel(for state: SessionState) -> UNNotificationInterruptionLevel {
         switch state {
-        case .awaitingPlanApproval, .awaitingUserInput: return .timeSensitive
+        case .awaitingPlanApproval, .awaitingUserInput, .awaitingUserFeedback: return .timeSensitive
         case .completed, .failed: return .active
         default: return .passive
         }

@@ -183,7 +183,7 @@ struct SessionStatusBanner: View {
                 animateDots: true
             )
 
-        case .awaitingUserInput:
+        case .awaitingUserInput, .awaitingUserFeedback:
             return BannerConfig(
                 message: "Jules needs your input",
                 icon: "bubble.left.fill",
@@ -213,6 +213,14 @@ struct SessionStatusBanner: View {
                 icon: "exclamationmark.triangle.fill",
                 backgroundColor: Color.joolsError.opacity(0.15),
                 foregroundColor: Color.joolsError
+            )
+
+        case .paused:
+            return BannerConfig(
+                message: "Session is paused",
+                icon: "pause.circle.fill",
+                backgroundColor: Color.secondary.opacity(0.15),
+                foregroundColor: Color.secondary
             )
 
         case .cancelled:

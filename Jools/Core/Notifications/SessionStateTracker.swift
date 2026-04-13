@@ -30,6 +30,7 @@ actor SessionStateTracker {
     private static let notifiableStates: Set<SessionState> = [
         .awaitingPlanApproval,
         .awaitingUserInput,
+        .awaitingUserFeedback,
         .completed,
         .failed,
     ]
@@ -61,6 +62,8 @@ actor SessionStateTracker {
 
         var stateMap = (defaults.dictionary(forKey: Self.stateMapKey) as? [String: String]) ?? [:]
         var transitions: [NotifiableTransition] = []
+
+        logger.info("State map has \(stateMap.count) entries")
 
         let currentSessionIds = Set(sessions.map(\.id))
 
