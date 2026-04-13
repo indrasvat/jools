@@ -94,7 +94,17 @@ final class AppDependency: ObservableObject {
         try keychainManager.deleteAPIKey()
         isAuthenticated = false
         pollingService.stopPolling()
-        Task { await notificationManager?.clearAllState() }
+        // Synchronous cleanup of notification state to prevent stale
+        // data leaking across account switches. The async clearAllState
+        // handles UNUserNotificationCenter calls; we also clear the
+        // UserDefaults-backed state tracker synchronously here.
+        notificationManager?.pendingSessionId = nil
+        notificationManager?.currentlyViewedSessionId = nil
+        UserDefaults.standard.removeObject(forKey: "jools.stateTracker.stateMap")
+        UserDefaults.standard.removeObject(forKey: "jools.stateTracker.hasSeeded")
+        UserDefaults.standard.removeObject(forKey: "jools.stateTracker.pendingTransitions")
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
     }
 
     /// Wipe every locally cached `SessionEntity`, `SourceEntity`, and

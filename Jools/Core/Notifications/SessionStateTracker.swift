@@ -16,6 +16,8 @@ struct NotifiableTransition: Sendable {
 /// safe to call from dashboard refresh, background tasks, or any
 /// other concurrent path.
 actor SessionStateTracker {
+    static let shared = SessionStateTracker()
+
     private let logger = Logger(subsystem: "com.indrasvat.jools", category: "SessionStateTracker")
 
     // MARK: - Storage Keys
@@ -109,6 +111,8 @@ actor SessionStateTracker {
 
     /// Queue transitions to be posted after the user grants permission.
     func queuePendingTransitions(_ transitions: [NotifiableTransition]) {
+        let defaults = UserDefaults.standard
+        var existing = (defaults.array(forKey: Self.pendingTransitionsKey) as? [[String: String]]) ?? []
         let encoded = transitions.map { t in
             [
                 "sessionId": t.sessionId,
@@ -117,7 +121,8 @@ actor SessionStateTracker {
                 "toState": t.toState.rawValue,
             ]
         }
-        UserDefaults.standard.set(encoded, forKey: Self.pendingTransitionsKey)
+        existing.append(contentsOf: encoded)
+        defaults.set(existing, forKey: Self.pendingTransitionsKey)
     }
 
     /// Drain and return any queued transitions (after permission granted).

@@ -61,6 +61,7 @@ enum BackgroundSessionChecker {
 
         task.expirationHandler = {
             fetchTask.cancel()
+            bgTask.setTaskCompleted(success: false)
         }
     }
 
@@ -76,21 +77,24 @@ enum BackgroundSessionChecker {
             return
         }
 
+        // Check authorization BEFORE consuming transitions from the
+        // state tracker. processTransitions mutates persisted state, so
+        // running it when we can't post burns the transition silently.
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard settings.authorizationStatus == .authorized ||
+              settings.authorizationStatus == .provisional else {
+            logger.info("Notifications not authorized — skipping background check entirely")
+            return
+        }
+
         let apiClient = APIClient(keychain: keychain)
         let sessions = try await apiClient.listAllSessions(pageSize: 100)
 
-        let stateTracker = SessionStateTracker()
+        let stateTracker = SessionStateTracker.shared
         let transitions = await stateTracker.processTransitions(sessions)
 
         guard !transitions.isEmpty else {
             logger.debug("No notifiable transitions in background check")
-            return
-        }
-
-        // Check authorization
-        let settings = await UNUserNotificationCenter.current().notificationSettings()
-        guard settings.authorizationStatus == .authorized else {
-            logger.info("Notifications not authorized — skipping background posting")
             return
         }
 
@@ -117,7 +121,7 @@ enum BackgroundSessionChecker {
             content.title = "Jools"
             content.body = "\(filtered.count) sessions need your attention."
             content.sound = UNNotificationSound(named: UNNotificationSoundName("jools-chime.caf"))
-            content.interruptionLevel = .timeSensitive
+            content.interruptionLevel = .active
             let request = UNNotificationRequest(
                 identifier: "jools-bg-summary",
                 content: content,
@@ -150,7 +154,7 @@ enum BackgroundSessionChecker {
     private static func notificationTitle(for transition: NotifiableTransition) -> String {
         switch transition.toState {
         case .awaitingPlanApproval: return "Plan approval needed"
-        case .awaitingUserInput: return "Jules needs your input"
+        case .awaitingUserInput, .awaitingUserFeedback: return "Jules needs your input"
         case .completed: return "Session complete"
         case .failed: return "Session failed"
         default: return "Session update"
@@ -161,7 +165,7 @@ enum BackgroundSessionChecker {
         let name = transition.repoName ?? transition.sessionTitle
         switch transition.toState {
         case .awaitingPlanApproval: return "\(name) is waiting for approval before it continues."
-        case .awaitingUserInput: return "\(name) paused until you respond in chat."
+        case .awaitingUserInput, .awaitingUserFeedback: return "\(name) paused until you respond in chat."
         case .completed: return "\"\(transition.sessionTitle)\" finished successfully."
         case .failed: return "\(name) hit an error and needs inspection."
         default: return "\(name) has been updated."

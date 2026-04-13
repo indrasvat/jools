@@ -97,11 +97,6 @@ struct MainTabView: View {
             }
             .environmentObject(dependencies)
         }
-        .onChange(of: dependencies.notificationManager?.pendingSessionId) { _, sessionId in
-            guard let sessionId else { return }
-            dependencies.notificationManager?.pendingSessionId = nil
-            Task { await navigateToSession(id: sessionId) }
-        }
         .sheet(isPresented: $showNotificationPrimer) {
             NotificationPermissionPrimer(
                 onEnable: {
@@ -128,6 +123,14 @@ struct MainTabView: View {
             guard let sessionId = notification.userInfo?["sessionId"] as? String else { return }
             NotificationBridge.shared.pendingSessionId = nil
             Task { await navigateToSession(id: sessionId) }
+        }
+        .onAppear {
+            // Cold-launch: the notification tap may have fired before
+            // this view existed. Consume any pending bridge state.
+            if let sessionId = NotificationBridge.shared.pendingSessionId {
+                NotificationBridge.shared.pendingSessionId = nil
+                Task { await navigateToSession(id: sessionId) }
+            }
         }
     }
 

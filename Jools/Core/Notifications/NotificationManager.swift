@@ -34,7 +34,7 @@ final class NotificationManager: ObservableObject {
 
     init(apiClient: APIClient) {
         self.apiClient = apiClient
-        self.stateTracker = SessionStateTracker()
+        self.stateTracker = SessionStateTracker.shared
         registerCategories()
     }
 
@@ -68,8 +68,7 @@ final class NotificationManager: ObservableObject {
 
         switch status {
         case .notDetermined:
-            // Queue the transitions — the primer will be shown, and
-            // after granting, the queued transitions will be posted.
+            guard await stateTracker.shouldShowPrimer() else { return }
             await stateTracker.queuePendingTransitions(transitions)
             await MainActor.run {
                 NotificationCenter.default.post(
@@ -77,16 +76,22 @@ final class NotificationManager: ObservableObject {
                     object: nil
                 )
             }
-        case .authorized:
+        case .authorized, .provisional:
             await postNotifications(for: transitions)
         default:
-            // .denied or .provisional — don't post
+            // .denied — don't post
             break
         }
     }
 
     /// Post queued transitions after the user grants permission.
+    /// Post queued transitions only if the user actually granted permission.
     func postQueuedTransitions() async {
+        let status = await authorizationStatus()
+        guard status == .authorized || status == .provisional else {
+            logger.info("Permission not granted — keeping queued transitions for next attempt")
+            return
+        }
         let queued = await stateTracker.drainPendingTransitions()
         await postNotifications(for: queued)
     }
@@ -158,7 +163,7 @@ final class NotificationManager: ObservableObject {
         content.title = "Jools"
         content.body = "\(count) sessions need your attention."
         content.sound = UNNotificationSound(named: UNNotificationSoundName("jools-chime.caf"))
-        content.interruptionLevel = .timeSensitive
+        content.interruptionLevel = .active
         content.userInfo = ["summary": true]
 
         let request = UNNotificationRequest(
