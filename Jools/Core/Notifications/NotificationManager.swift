@@ -59,7 +59,9 @@ final class NotificationManager: ObservableObject {
     /// Called by DashboardViewModel after syncing all sessions. Detects
     /// state transitions and posts notifications for notifiable ones.
     func checkForTransitions(_ sessions: [SessionDTO]) async {
+        logger.info("checkForTransitions: \(sessions.count) sessions")
         let transitions = await stateTracker.processTransitions(sessions)
+        logger.info("checkForTransitions: \(transitions.count) transitions")
         guard !transitions.isEmpty else { return }
 
         let status = await authorizationStatus()

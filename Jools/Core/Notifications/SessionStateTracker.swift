@@ -1,5 +1,6 @@
 import Foundation
 import JoolsKit
+import os
 
 /// A state transition worth notifying the user about.
 struct NotifiableTransition: Sendable {
@@ -15,6 +16,8 @@ struct NotifiableTransition: Sendable {
 /// safe to call from dashboard refresh, background tasks, or any
 /// other concurrent path.
 actor SessionStateTracker {
+    private let logger = Logger(subsystem: "com.indrasvat.jools", category: "SessionStateTracker")
+
     // MARK: - Storage Keys
 
     private static let stateMapKey = "jools.stateTracker.stateMap"
@@ -40,9 +43,9 @@ actor SessionStateTracker {
     func processTransitions(_ sessions: [SessionDTO]) -> [NotifiableTransition] {
         let defaults = UserDefaults.standard
 
+        logger.info("processTransitions called with \(sessions.count) sessions")
+
         // First-launch seed: record all current states without notifying.
-        // This prevents a flood of notifications for pre-existing sessions
-        // when the user first installs.
         let hasSeeded = defaults.bool(forKey: Self.hasSeededKey)
         if !hasSeeded {
             var map: [String: String] = [:]
@@ -52,6 +55,7 @@ actor SessionStateTracker {
             }
             defaults.set(map, forKey: Self.stateMapKey)
             defaults.set(true, forKey: Self.hasSeededKey)
+            logger.info("Initial seed: recorded \(map.count) session states")
             return []
         }
 
@@ -68,6 +72,8 @@ actor SessionStateTracker {
 
             // Only notify if the state actually changed
             guard previousRaw != rawState else { continue }
+
+            logger.info("State change: \(session.title ?? "?", privacy: .public) \(previousRaw ?? "nil", privacy: .public) → \(rawState, privacy: .public)")
 
             // Only notify for states that require attention or confirm completion
             guard Self.notifiableStates.contains(state) else {
@@ -88,14 +94,13 @@ actor SessionStateTracker {
             stateMap[session.id] = rawState
         }
 
-        // Absence-based pruning: remove sessions that are no longer
-        // in the API response. This is safe because those sessions
-        // won't appear in future responses to trigger zombie notifications.
+        // Absence-based pruning
         for existingId in stateMap.keys where !currentSessionIds.contains(existingId) {
             stateMap.removeValue(forKey: existingId)
         }
 
         defaults.set(stateMap, forKey: Self.stateMapKey)
+        logger.info("processTransitions: \(transitions.count) notifiable transitions")
         return transitions
     }
 
