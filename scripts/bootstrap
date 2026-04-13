@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║                           Jools Bootstrap Script                              ║
+# ║                          Jataayu Bootstrap Script                              ║
 # ║                                                                               ║
 # ║  This script sets up the development environment for new contributors.        ║
 # ║  Run this once after cloning the repository.                                  ║
@@ -29,7 +29,7 @@ ROCKET="🚀"
 print_header() {
     echo ""
     echo -e "${BOLD}${MAGENTA}╔═══════════════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${BOLD}${MAGENTA}║${RESET}${BOLD}                    ${CYAN}Jools Bootstrap${RESET}${BOLD}                           ${MAGENTA}║${RESET}"
+    echo -e "${BOLD}${MAGENTA}║${RESET}${BOLD}                    ${CYAN}Jataayu Bootstrap${RESET}${BOLD}                           ${MAGENTA}║${RESET}"
     echo -e "${BOLD}${MAGENTA}║${RESET}       ${WHITE}Setting up your development environment${RESET}            ${MAGENTA}║${RESET}"
     echo -e "${BOLD}${MAGENTA}╚═══════════════════════════════════════════════════════════════╝${RESET}"
     echo ""

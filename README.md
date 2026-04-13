@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/jools-icon.png" alt="Jools" width="160" />
+  <img src="docs/jataayu-icon.png" alt="Jataayu" width="160" />
 </p>
 
-<h1 align="center">Jools</h1>
+<h1 align="center">Jataayu</h1>
 
 <p align="center">
   <a href="https://github.com/indrasvat/jools/actions/workflows/ci.yml">
@@ -11,13 +11,13 @@
 </p>
 
 <p align="center">
-  <strong>Jules, in your pocket.</strong><br/>
+  <strong>Watch over Jules.</strong><br/>
   An unofficial iOS client for <a href="https://jules.google/">Google's Jules</a> — the autonomous coding agent.
 </p>
 
 ---
 
-Jools is a SwiftUI app that turns the public [Jules REST API](https://jules.google/docs/api/reference/) into a calm, mobile-first control plane. Triage what needs you, approve plans, watch progress, follow up in chat, and check the PR — all from your phone, while the actual coding work happens on Jules's Cloud VMs in the background.
+Jataayu is a SwiftUI app that turns the public [Jules REST API](https://jules.google/docs/api/reference/) into a calm, mobile-first control plane. Triage what needs you, approve plans, watch progress, follow up in chat, and check the PR — all from your phone, while the actual coding work happens on Jules's Cloud VMs in the background.
 
 This is **not** affiliated with Google. It's a side project that talks to the same public API any third-party Jules client would.
 
@@ -63,7 +63,7 @@ Most of these are upstream constraints, not code we're avoiding writing.
 | No suggestions feed | Same — no public endpoint |
 | No CI Fixer / Render / MCP integration management | No public endpoints for any of these |
 | No media-artifact viewer | The DTOs we model only cover `bashOutput` and `changeSet` artifact types |
-| No real-time push notifications | Local notifications via background refresh (~15-60 min intervals); sub-minute delivery would require a Jools-owned backend or upstream webhook support |
+| No real-time push notifications | Local notifications via background refresh (~15-60 min intervals); sub-minute delivery would require a Jataayu-owned backend or upstream webhook support |
 
 For more, see [`docs/Remaining_Work_Plan_2026-04.md`](docs/Remaining_Work_Plan_2026-04.md) and [`docs/Jools_Implementation_Plan_v3.md`](docs/Jools_Implementation_Plan_v3.md).
 
@@ -73,7 +73,7 @@ For more, see [`docs/Remaining_Work_Plan_2026-04.md`](docs/Remaining_Work_Plan_2
 
 ### Option A — try the latest release in a simulator (no Xcode build)
 
-Each tagged release publishes a `Jools-vX.Y.Z-iphonesimulator.zip` asset on the [Releases page](https://github.com/indrasvat/jools/releases). The zip contains a Release-configuration `Jools.app` ready to drop onto a booted iPhone simulator.
+Each tagged release publishes a `Jataayu-vX.Y.Z-iphonesimulator.zip` asset on the [Releases page](https://github.com/indrasvat/jools/releases). The zip contains a Release-configuration `Jataayu.app` ready to drop onto a booted iPhone simulator.
 
 ```bash
 # 1. Boot a simulator (any iPhone running iOS 26.0+) and wait for it to
@@ -86,9 +86,9 @@ open -a Simulator
 gh release download --repo indrasvat/jools --pattern '*-iphonesimulator.zip'
 
 # 3. Unzip and install.
-unzip Jools-v*-iphonesimulator.zip
-xcrun simctl install booted Jools.app
-xcrun simctl launch booted com.indrasvat.jools
+unzip Jataayu-v*-iphonesimulator.zip
+xcrun simctl install booted Jataayu.app
+xcrun simctl launch booted com.indrasvat.jataayu
 ```
 
 > **Installing a pre-release (e.g. alpha / rc)?** `gh release download` without an explicit tag only matches stable releases. For pre-releases, pass the tag by hand: `gh release download v1.0.0-alpha.1 --repo indrasvat/jools --pattern '*-iphonesimulator.zip'`.
@@ -152,7 +152,7 @@ The release workflow validates the tag, cross-checks `MARKETING_VERSION`, builds
 
 ### Getting an API key
 
-The first launch shows the Onboarding screen. Tap **Connect to Jules** to open the Jules API key page in an in-app browser, copy the key, and Jools will offer to use it when you return to the app. You can also paste it manually via **I already have a key**.
+The first launch shows the Onboarding screen. Tap **Connect to Jules** to open the Jules API key page in an in-app browser, copy the key, and Jataayu will offer to use it when you return to the app. You can also paste it manually via **I already have a key**.
 
 ---
 
@@ -186,7 +186,7 @@ JoolsKit/                     Swift package — pure networking + models
 
 ## Disclaimer
 
-Jools is an independent third-party client. It is not built, sponsored, or endorsed by Google. *Jules* is a Google product and trademark; Jools talks to Jules's public REST API the same way any third-party client would. If you're looking for the official experience, that lives at [jules.google.com](https://jules.google.com).
+Jataayu is an independent third-party client. It is not built, sponsored, or endorsed by Google. *Jules* is a Google product and trademark; Jataayu talks to Jules's public REST API the same way any third-party client would. If you're looking for the official experience, that lives at [jules.google.com](https://jules.google.com).
 
 ## License
 
