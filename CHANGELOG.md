@@ -11,6 +11,16 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+## [1.2.2] — 2026-04-14
+
+### Fixed
+
+- **Onboarding "Connect to Jules" now works reliably.** The in-app
+  Safari browser had no Google session, so the Jules landing page
+  hid the sign-in button below the fold. Now opens in system Safari
+  via Google AccountChooser, landing directly on the API settings
+  page when already signed in.
+
 ## [1.2.1] — 2026-04-14
 
 ### Fixed
