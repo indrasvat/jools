@@ -1,5 +1,5 @@
 # ╔══════════════════════════════════════════════════════════════════════════════╗
-# ║                                  Jools                                        ║
+# ║                                Jataayu                                       ║
 # ║                    iOS Client for Google's Jules Coding Agent                 ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -7,7 +7,7 @@
 # Configuration
 # ─────────────────────────────────────────────────────────────────────────────────
 
-PRODUCT_NAME     := Jools
+PRODUCT_NAME     := Jataayu
 SCHEME           := Jools
 JOOLSKIT_PATH    := JoolsKit
 PROJECT          := $(PRODUCT_NAME).xcodeproj
@@ -19,7 +19,7 @@ DERIVED_DATA     := $(HOME)/Library/Developer/Xcode/DerivedData
 BUILD_DIR        := .build
 COVERAGE_DIR     := $(BUILD_DIR)/coverage
 # Screenshot output path - override with: make sim-screenshot SCREENSHOT=/path/to/file.png
-SCREENSHOT       ?= /tmp/jools_screenshot.png
+SCREENSHOT       ?= /tmp/jataayu_screenshot.png
 SCREENSHOT_DIR   ?= $(BUILD_DIR)/screenshots
 AXE              := $(shell command -v axe 2>/dev/null)
 
@@ -79,7 +79,7 @@ HOOK_ICON        := 🪝
 help: ## Show this help
 	@echo ""
 	@echo "$(BOLD)$(MAGENTA)  ╔═══════════════════════════════════════════════════════════════╗$(RESET)"
-	@echo "$(BOLD)$(MAGENTA)  ║$(RESET)$(BOLD)                         $(CYAN)Jools$(RESET)$(BOLD)                                 $(MAGENTA)║$(RESET)"
+	@echo "$(BOLD)$(MAGENTA)  ║$(RESET)$(BOLD)                       $(CYAN)Jataayu$(RESET)$(BOLD)                               $(MAGENTA)║$(RESET)"
 	@echo "$(BOLD)$(MAGENTA)  ║$(RESET)       $(WHITE)iOS Client for Google's Jules Coding Agent$(RESET)          $(MAGENTA)║$(RESET)"
 	@echo "$(BOLD)$(MAGENTA)  ╚═══════════════════════════════════════════════════════════════╝$(RESET)"
 	@echo ""
@@ -609,7 +609,7 @@ log: ## Show recent commits
 # ─────────────────────────────────────────────────────────────────────────────────
 
 # Simulator configuration
-BUNDLE_ID := com.indrasvat.jools
+BUNDLE_ID := com.indrasvat.jataayu
 BUILD_OUTPUT := build/Build/Products/Debug-iphonesimulator/$(PRODUCT_NAME).app
 
 sim-list: ## List available iOS simulators
@@ -727,7 +727,7 @@ endif
 sim-screenshot-bundle: ## Capture a timestamped screenshot bundle into SCREENSHOT_DIR
 	@mkdir -p "$(SCREENSHOT_DIR)"
 	@STAMP=$$(date +%Y%m%d-%H%M%S); \
-	OUT="$(SCREENSHOT_DIR)/jools-$$STAMP.png"; \
+	OUT="$(SCREENSHOT_DIR)/jataayu-$$STAMP.png"; \
 	echo "$(BOLD)📸 Saving screenshot to $$OUT$(RESET)"; \
 	xcrun simctl io booted screenshot "$$OUT" >/dev/null; \
 	echo "$(GREEN)$(CHECK) Screenshot saved to $$OUT$(RESET)"

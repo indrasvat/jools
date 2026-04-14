@@ -12,7 +12,7 @@ name: Release
 #   1. parse + verify    — sanity-check the tag against project.yml
 #   2. notes             — extract CHANGELOG section for the tag
 #   3. build             — Release-configuration simulator .app
-#   4. package           — zip it as Jools-<tag>-iphonesimulator.zip
+#   4. package           — zip it as Jataayu-<tag>-iphonesimulator.zip
 #   5. publish           — create the GitHub Release with asset
 #
 # Device builds are intentionally out of scope — the project pins
@@ -135,7 +135,7 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          ZIP="$RUNNER_TEMP/Jools-${TAG}-iphonesimulator.zip"
+          ZIP="$RUNNER_TEMP/Jataayu-${TAG}-iphonesimulator.zip"
           scripts/ci-release package build/release "$TAG" "$ZIP"
           echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
 

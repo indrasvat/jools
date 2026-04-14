@@ -160,7 +160,7 @@ final class JoolsUITests: XCTestCase {
         )
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["Jools"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Jataayu"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Connect to Jules"].exists)
         XCTAssertTrue(app.buttons["I already have a key"].exists)
     }

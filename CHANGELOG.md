@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Jools are recorded in this file.
+All notable changes to Jataayu are recorded in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -10,6 +10,11 @@ notice. The "Internal" subsection captures architectural and infrastructure
 work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
+
+### Changed
+
+- Renamed app from Jools to **Jataayu** — after the sentinel eagle of the Ramayana. New tagline: "Watch over Jules."
+- Updated bundle identifier from `com.indrasvat.jools` to `com.indrasvat.jataayu`
 
 ## [1.1.0] — 2026-04-13
 
@@ -263,5 +268,5 @@ work in Jools:
 - Media-artifact viewer covers only `bashOutput` and `changeSet` types.
 - No remote push notifications.
 
-[Unreleased]: https://github.com/indrasvat/jools/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/indrasvat/jools/releases/tag/v1.0.0
+[Unreleased]: https://github.com/indrasvat/jataayu/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/indrasvat/jataayu/releases/tag/v1.0.0

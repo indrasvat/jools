@@ -31,9 +31,9 @@
 #                               code signing disabled. Writes into
 #                               <out-dir>.
 #
-#   package <derived-data>      Zip the `Jools.app` inside the given
+#   package <derived-data>      Zip the `Jataayu.app` inside the given
 #           <tag> <out-zip>     DerivedData path as
-#                               `Jools-<tag>-iphonesimulator.zip`.
+#                               `Jataayu-<tag>-iphonesimulator.zip`.
 #
 #   publish <tag> <zip>         Create (or update) a GitHub Release
 #           <notes-file>        for <tag>, attach <zip>, use
@@ -44,7 +44,7 @@
 #   scripts/ci-release <command> [args...]
 #
 # Environment variables:
-#   CI_RELEASE_PROJECT          Xcode project path        (default: Jools.xcodeproj)
+#   CI_RELEASE_PROJECT          Xcode project path        (default: Jataayu.xcodeproj)
 #   CI_RELEASE_SCHEME           Xcode scheme              (default: Jools)
 #   CI_RELEASE_CHANGELOG        CHANGELOG file path       (default: CHANGELOG.md)
 #   CI_RELEASE_PROJECT_YML      Project YAML path         (default: project.yml)
@@ -56,7 +56,7 @@ set -euo pipefail
 # Configuration
 # ─────────────────────────────────────────────────────────────────────
 
-: "${CI_RELEASE_PROJECT:=Jools.xcodeproj}"
+: "${CI_RELEASE_PROJECT:=Jataayu.xcodeproj}"
 : "${CI_RELEASE_SCHEME:=Jools}"
 : "${CI_RELEASE_CHANGELOG:=CHANGELOG.md}"
 : "${CI_RELEASE_PROJECT_YML:=project.yml}"
@@ -245,7 +245,7 @@ cmd_build() {
         -derivedDataPath "$out_dir" \
         CODE_SIGNING_ALLOWED=NO \
         CODE_SIGNING_REQUIRED=NO
-    ok "build complete → $out_dir/Build/Products/Release-iphonesimulator/Jools.app"
+    ok "build complete → $out_dir/Build/Products/Release-iphonesimulator/Jataayu.app"
 }
 
 # ─────────────────────────────────────────────────────────────────────
@@ -259,8 +259,8 @@ cmd_package() {
     [ -n "$derived" ] && [ -n "$tag" ] && [ -n "$out_zip" ] || die "usage: $0 package <derived-data> <tag> <out-zip>"
     _validate_tag "$tag"
 
-    local app_path="$derived/Build/Products/Release-iphonesimulator/Jools.app"
-    [ -d "$app_path" ] || die "no Jools.app found at $app_path — run 'build' first"
+    local app_path="$derived/Build/Products/Release-iphonesimulator/Jataayu.app"
+    [ -d "$app_path" ] || die "no Jataayu.app found at $app_path — run 'build' first"
 
     log "zipping $app_path → $out_zip"
     # Use an absolute path for the output so `cd` inside the subshell

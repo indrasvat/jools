@@ -138,7 +138,7 @@ final class NotificationManager: ObservableObject {
         let content = UNMutableNotificationContent()
         content.title = notificationTitle(for: transition)
         content.body = notificationBody(for: transition)
-        content.sound = UNNotificationSound(named: UNNotificationSoundName("jools-chime.caf"))
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("jataayu-chime.caf"))
         content.threadIdentifier = "session-\(transition.sessionId)"
         content.categoryIdentifier = notificationCategory(for: transition.toState)
         content.interruptionLevel = interruptionLevel(for: transition.toState)
@@ -160,9 +160,9 @@ final class NotificationManager: ObservableObject {
 
     private func postSummaryNotification(count: Int) async {
         let content = UNMutableNotificationContent()
-        content.title = "Jools"
+        content.title = "Jataayu"
         content.body = "\(count) sessions need your attention."
-        content.sound = UNNotificationSound(named: UNNotificationSoundName("jools-chime.caf"))
+        content.sound = UNNotificationSound(named: UNNotificationSoundName("jataayu-chime.caf"))
         content.interruptionLevel = .active
         content.userInfo = ["summary": true, "action": "openSessions"]
 
