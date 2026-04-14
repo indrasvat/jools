@@ -11,6 +11,29 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-04-14
+
+### Fixed
+
+- **Session progress events now visible.** Intermediate events (file
+  updates, test results, code reviews) that were rendering as blank
+  gaps in the timeline now show as compact expandable cards with
+  markdown-formatted descriptions.
+- **PR link displayed in completion card.** Sessions that produce a
+  pull request now show a "View PR" button and "Copy URL" action in
+  the completion card. Root cause: the app only checked the first
+  API output; the PR was in the second.
+- **Completion card redesigned.** Layout now matches the Jules web UI
+  "Ready for review" card: header with diff stats, commit message,
+  scrollable file pills, approximate duration, and PR section.
+- **Plan steps are expandable.** Each step in the Proposed Plan card
+  now shows a chevron to reveal the full description.
+- **Nested markdown renders correctly.** Bold, code, and links inside
+  list items no longer show as literal `**text**` markers.
+- **Faster notification delivery.** Background polling interval
+  reduced from 15 to 5 minutes, and the app now checks for session
+  transitions immediately on returning to foreground.
+
 ## [1.2.0] — 2026-04-14
 
 ### Changed
