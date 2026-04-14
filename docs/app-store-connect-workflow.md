@@ -104,12 +104,15 @@ xcodebuild -exportArchive \
 
 Wait for "Upload succeeded" + "Uploaded package is processing."
 
-### 3. Handle encryption compliance
+### 3. Encryption compliance (automatic)
 
-After processing completes (~2-5 min), App Store Connect may
-prompt for export compliance (encryption). Answer via the web UI
-or `asc` CLI. Jataayu uses HTTPS only (no custom encryption), so
-the answer is typically "No" for proprietary encryption.
+`project.yml` sets `ITSAppUsesNonExemptEncryption: false` in the
+Info.plist, which tells ASC that the app only uses standard HTTPS.
+This skips the "Missing Compliance" prompt automatically on every
+upload. No manual action needed.
+
+If you ever add custom encryption beyond HTTPS/ATS, remove this
+flag and answer the compliance questionnaire manually.
 
 ### 4. Verify
 
