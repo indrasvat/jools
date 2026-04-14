@@ -186,6 +186,8 @@ tree: bumps `MARKETING_VERSION` in `project.yml`, regenerates
 Jools.xcodeproj, rolls `[Unreleased]` in `CHANGELOG.md` into a
 dated `[X.Y.Z]` section. It does NOT auto-commit, auto-tag, or
 auto-push — tagging is destructive and stays under human control.
+The release commit must include all three changed files:
+`git add project.yml CHANGELOG.md Jataayu.xcodeproj/project.pbxproj`.
 
 **All shell logic lives in `scripts/ci-release`**, not in YAML
 `run:` blocks. It has subcommand dispatch: `parse`, `verify`,

@@ -389,7 +389,7 @@ pre-push: ci ## Pre-push hook target (runs full CI)
 # Example:
 #   make release VERSION=1.0.1
 #   git diff                                  # eyeball the bump
-#   git add project.yml CHANGELOG.md
+#   git add project.yml CHANGELOG.md Jataayu.xcodeproj/project.pbxproj
 #   git commit -m "chore(release): v1.0.1"
 #   git tag -a v1.0.1 -m "v1.0.1"
 #   git push origin main
@@ -443,7 +443,7 @@ endif
 	@echo "  $(CYAN)2.$(RESET) Fill in the [$(VERSION)] CHANGELOG entry with anything"
 	@echo "     not already captured under [Unreleased]."
 	@echo "  $(CYAN)3.$(RESET) Commit and tag:"
-	@echo "       $(WHITE)git add project.yml CHANGELOG.md$(RESET)"
+	@echo "       $(WHITE)git add project.yml CHANGELOG.md Jataayu.xcodeproj/project.pbxproj$(RESET)"
 	@echo "       $(WHITE)git commit -m \"chore(release): v$(VERSION)\"$(RESET)"
 	@echo "       $(WHITE)git tag -a v$(VERSION) -m \"v$(VERSION)\"$(RESET)"
 	@echo "  $(CYAN)4.$(RESET) Push (the tag push triggers .github/workflows/release.yml):"

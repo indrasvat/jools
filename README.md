@@ -141,7 +141,7 @@ Releases are tag-driven — `make release` prepares the working tree and the [`r
 ```bash
 make release VERSION=1.2.3   # bumps project.yml + adds CHANGELOG section
 git diff                     # eyeball it
-git add project.yml CHANGELOG.md
+git add project.yml CHANGELOG.md Jataayu.xcodeproj/project.pbxproj
 git commit -m "chore(release): v1.2.3"
 git tag -a v1.2.3 -m "v1.2.3"
 git push origin HEAD
