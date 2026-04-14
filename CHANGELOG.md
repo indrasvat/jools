@@ -11,6 +11,20 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+## [1.2.3] — 2026-04-14
+
+### Internal
+
+- **Export compliance auto-handled.** Added
+  `ITSAppUsesNonExemptEncryption=false` to Info.plist so App Store
+  Connect uploads no longer prompt for "Missing Compliance".
+- **Release process fixed.** Generated `project.pbxproj` is now
+  included in release commits (was causing dirty working tree after
+  every tag).
+- **Main branch protected.** Required status checks (SwiftLint,
+  JoolsKit, iOS app) must pass before merging. Force pushes and
+  branch deletion blocked.
+
 ## [1.2.2] — 2026-04-14
 
 ### Fixed
