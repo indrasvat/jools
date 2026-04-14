@@ -41,6 +41,50 @@ what was actually requested — no drive-by refactors.
 
 ---
 
+## Verification protocol: Jules web UI is the reference
+
+The Jules web UI (`jules.google.com`) is the ground truth for how
+sessions, activities, plans, and completion data should look. Every
+feature or fix to Jataayu's session surface **must** be verified
+against the web UI for the same session.
+
+**Tools:**
+
+- **AXe CLI** (`axe`) — drives the iOS simulator: tap, swipe,
+  screenshot, describe-ui. Use for navigating the app, taking
+  verification screenshots, and confirming tap targets.
+- **Chrome DevTools MCP** — connects to Chrome via autoConnect.
+  Use to inspect the Jules web UI: scrape rendered DOM content,
+  extract Angular component state, intercept button actions
+  (`window.open` patching), and compare what the web UI shows
+  against what Jataayu shows.
+
+**Protocol for feature/fix work on the session surface:**
+
+1. **Open the same session** in both Jataayu (simulator) and the
+   Jules web UI (Chrome). Use Chrome DevTools MCP to inspect what
+   the web UI renders — DOM elements, CSS classes, data bindings.
+2. **Compare every visible element.** Progress events, plan steps,
+   completion card, PR link, diff stats, timestamps, expandable
+   sections. If the web UI shows it and Jataayu doesn't, that's a
+   gap to investigate.
+3. **When the REST API falls short**, document it. The web UI uses
+   Google's internal batch RPC (`batchexecute`) which returns
+   richer data than the public REST API. Known gaps:
+   - Runtime duration is server-computed (we approximate with `~`)
+   - `changeSet` artifacts on progress events lack patch content
+     (file names not extractable for "Updated X, Y, Z" display)
+   - `outputs` array ordering is not guaranteed (search all, never
+     `.first`)
+4. **Screenshot every state** after a fix with `axe screenshot` and
+   visually compare to the web UI. Don't claim "verified" from
+   code review alone.
+5. **If a feature can't be replicated** due to REST API limitations,
+   note it explicitly in the PR/commit and in `docs/LEARNINGS.md`
+   rather than silently omitting it.
+
+---
+
 ## When touching the chat surface
 
 <details>
