@@ -87,7 +87,16 @@ struct OnboardingView: View {
                     // to a marketing page where the sign-in button
                     // is below the fold and easy to miss.
                     Button(action: {
-                        if let url = URL(string: "https://jules.google.com/settings/api") {
+                        // Go through Google AccountChooser with a
+                        // continue URL to the Jules API settings page.
+                        // This bypasses the Jules landing page entirely
+                        // (which has a viewport bug hiding the sign-in
+                        // button on mobile Safari). If the user is
+                        // already signed in, Google skips the chooser
+                        // and redirects straight to /settings/api.
+                        let settingsURL = "https://jules.google.com/settings/api"
+                        let encodedContinue = settingsURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? settingsURL
+                        if let url = URL(string: "https://accounts.google.com/AccountChooser?continue=\(encodedContinue)") {
                             UIApplication.shared.open(url)
                             waitingForSafariReturn = true
                         }
