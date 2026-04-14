@@ -82,6 +82,8 @@ struct ProgressSnapshot: Equatable, Sendable {
     let descriptionText: String?
     let bashCommands: [BashCommandSnapshot]
     let messageSegments: [MarkdownSegment]
+    /// File paths changed in this progress step (from changeSet artifacts).
+    let changedFiles: [String]
 }
 
 struct BashCommandSnapshot: Equatable, Sendable, Identifiable {
@@ -105,6 +107,12 @@ struct CompletionSnapshot: Equatable, Sendable {
     /// Empty when the session produced no unified-diff patch.
     let diffFiles: [DiffFile]
     let duration: TimeInterval
+    /// Pull request URL from the session outputs. `nil` when the
+    /// session didn't produce a PR (repoless sessions, or sessions
+    /// that failed before creating a PR).
+    let prURL: String?
+    let prTitle: String?
+    let prDescription: String?
 }
 
 // MARK: - MarkdownSegment

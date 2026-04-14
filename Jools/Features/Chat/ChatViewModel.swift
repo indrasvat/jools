@@ -503,17 +503,20 @@ final class ChatViewModel: PollingServiceDelegate {
             didMutate = true
         }
 
-        if let output = dto.outputs?.first?.pullRequest {
-            if output.url != session.prURL {
-                session.prURL = output.url
+        // Search ALL outputs for a pullRequest — the API can return
+        // multiple outputs (e.g. changeSet + pullRequest) and the PR
+        // is not guaranteed to be first.
+        if let pr = dto.outputs?.lazy.compactMap({ $0.pullRequest }).first {
+            if pr.url != session.prURL {
+                session.prURL = pr.url
                 didMutate = true
             }
-            if output.title != session.prTitle {
-                session.prTitle = output.title
+            if pr.title != session.prTitle {
+                session.prTitle = pr.title
                 didMutate = true
             }
-            if output.description != session.prDescription {
-                session.prDescription = output.description
+            if pr.description != session.prDescription {
+                session.prDescription = pr.description
                 didMutate = true
             }
         }

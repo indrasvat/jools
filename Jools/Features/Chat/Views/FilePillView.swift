@@ -101,7 +101,10 @@ struct FilePill: View {
 
 // MARK: - File Update View
 
-/// Shows "Updated" label with file pill badges
+/// Shows "Updated" label with a horizontally scrollable row of file
+/// pills. The previous `HStack` layout squeezed pills to 3-4 chars
+/// on phone screens because the "Updated" label, 3 pills, and the
+/// overflow text competed for space in a non-scrollable row.
 struct FileUpdateView: View {
     let files: [String]
     let maxVisible: Int
@@ -114,24 +117,32 @@ struct FileUpdateView: View {
     }
 
     var body: some View {
-        HStack(spacing: JoolsSpacing.xs) {
-            // "Updated" label
-            Text("Updated")
-                .font(.joolsCaption)
-                .foregroundStyle(.secondary)
-
-            // Visible file pills
-            ForEach(files.prefix(maxVisible), id: \.self) { file in
-                FilePill(filename: file) {
-                    onFileTap(file)
+        VStack(alignment: .leading, spacing: JoolsSpacing.xxs) {
+            HStack(spacing: JoolsSpacing.xs) {
+                Text("Updated")
+                    .font(.joolsCaption)
+                    .foregroundStyle(.secondary)
+                if files.count > maxVisible {
+                    Text("\(files.count) files")
+                        .font(.joolsCaption)
+                        .foregroundStyle(.tertiary)
                 }
             }
 
-            // Overflow indicator
-            if files.count > maxVisible {
-                Text("and \(files.count - maxVisible) more")
-                    .font(.joolsCaption)
-                    .foregroundStyle(.tertiary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: JoolsSpacing.xs) {
+                    ForEach(files.prefix(maxVisible), id: \.self) { file in
+                        FilePill(filename: file) {
+                            onFileTap(file)
+                        }
+                    }
+                    if files.count > maxVisible {
+                        Text("+\(files.count - maxVisible)")
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.tertiary)
+                            .padding(.horizontal, JoolsSpacing.xs)
+                    }
+                }
             }
         }
         .padding(.horizontal, JoolsSpacing.md)

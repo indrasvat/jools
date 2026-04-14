@@ -430,3 +430,57 @@ iOS notification sounds must be ≤30s in `.caf`, `.aiff`, or `.wav`.
 Python's `wave` module only writes `.wav`. Convert with:
 `afconvert input.wav output.caf -d LEI16 -f caff`. Apply -12dB gain
 to synthesized sine waves — raw amplitude 1.0 is painfully loud.
+
+---
+
+## Jules REST API vs web UI
+
+### API `outputs` array: never assume `.first`
+
+The `SessionDTO.outputs` array can contain multiple items (e.g. a
+`changeSet` output AND a `pullRequest` output). The PR is not
+guaranteed to be first. Use
+`dto.outputs?.lazy.compactMap({ $0.pullRequest }).first` to search
+all outputs. This bit us in 4 places (ChatViewModel, DashboardViewModel,
+SessionsListView, Entities.swift).
+
+### Web UI uses batch RPC, not the REST API
+
+The Jules web UI calls `/_/Swebot/data/batchexecute` (Google's
+internal batch RPC) which returns richer data than the public REST
+API. The "Ready for review" card's runtime ("Time: 47 mins") is a
+server-computed field not exposed in the REST API. We approximate
+with `sessionCompleted.createTime - session.createTime` and prefix
+with `~`.
+
+### `changeSet` artifacts on progress events have no patch content
+
+Progress-event `changeSet` artifacts only carry `baseCommitId` — no
+`unidiffPatch` or `patch`. The "Updated config.go, tests.go and 8
+more" display in the web UI derives file names from the batch RPC,
+not from the activity's changeSet. Our `changedFiles` extraction
+from progress events is correct code but will often be empty.
+
+---
+
+## SwiftUI List row gotchas
+
+### `Link` inside a `List` row expands its tap target to the full row
+
+SwiftUI `Link` registers as a navigation destination at the `List`
+infrastructure level. No amount of `.fixedSize()` or
+`.contentShape()` constrains it. Replace with `Button` +
+`@Environment(\.openURL)` when the link needs a bounded tap target
+(e.g. a "View PR" button alongside a "Copy URL" button).
+
+---
+
+## FlatMarkdownRenderer
+
+### Nested lists fall back to raw text
+
+When a list item contains a sub-list (e.g. `- **bold:** text` inside
+a numbered list), the renderer's fallback path used
+`block.format()` which returns literal markdown (`**bold**`). Fixed
+by adding `appendNestedList()` and routing non-paragraph blocks
+through `InlineAttributedStringBuilder` instead of `format()`.

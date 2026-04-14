@@ -147,10 +147,10 @@ final class SessionEntity {
             updatedAt: dto.updateTime ?? Date()
         )
 
-        if let output = dto.outputs?.first?.pullRequest {
-            self.prURL = output.url
-            self.prTitle = output.title
-            self.prDescription = output.description
+        if let pr = dto.outputs?.lazy.compactMap({ $0.pullRequest }).first {
+            self.prURL = pr.url
+            self.prTitle = pr.title
+            self.prDescription = pr.description
         }
     }
 

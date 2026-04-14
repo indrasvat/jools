@@ -30,7 +30,11 @@ enum BackgroundSessionChecker {
     /// each background task completes.
     static func scheduleNext() {
         let request = BGAppRefreshTaskRequest(identifier: taskIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
+        // Request the shortest practical interval. iOS won't guarantee
+        // this cadence — the system schedules based on battery, usage
+        // patterns, and resource pressure — but 5 min is the lowest
+        // value the OS respects at all (below that it clamps silently).
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 5 * 60)
         do {
             try BGTaskScheduler.shared.submit(request)
             logger.debug("Scheduled next background refresh")

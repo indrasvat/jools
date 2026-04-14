@@ -20,10 +20,15 @@ enum ActivitySnapshotBuilder {
     /// as the primary source and falls back to the SwiftData
     /// relationship array if the `@Query` hasn't yet observed
     /// freshly inserted rows (brief race during initial load).
+    ///
+    /// The optional `session` parameter supplies PR data for
+    /// `CompletionSnapshot`. It lives on `SessionEntity`, not
+    /// `ActivityEntity`, so we thread it through here.
     @MainActor
     static func build(
         from query: [ActivityEntity],
-        fallback: [ActivityEntity]
+        fallback: [ActivityEntity],
+        session: SessionEntity? = nil
     ) -> [ActivitySnapshot] {
         let source: [ActivityEntity]
         if !query.isEmpty {
@@ -31,7 +36,7 @@ enum ActivitySnapshotBuilder {
         } else {
             source = fallback.sorted { $0.createdAt < $1.createdAt }
         }
-        return source.compactMap { ActivitySnapshot(entity: $0) }
+        return source.compactMap { ActivitySnapshot(entity: $0, session: session) }
     }
 }
 
@@ -40,8 +45,8 @@ enum ActivitySnapshotBuilder {
 extension ActivitySnapshot {
 
     @MainActor
-    init?(entity: ActivityEntity) {
-        guard let kind = Kind(entity: entity) else { return nil }
+    init?(entity: ActivityEntity, session: SessionEntity? = nil) {
+        guard let kind = Kind(entity: entity, session: session) else { return nil }
         self.id = entity.id
         self.type = entity.type
         self.createdAt = entity.createdAt
@@ -54,7 +59,7 @@ extension ActivitySnapshot {
 extension ActivitySnapshot.Kind {
 
     @MainActor
-    init?(entity: ActivityEntity) {
+    init?(entity: ActivityEntity, session: SessionEntity? = nil) {
         switch entity.type {
         case .userMessaged:
             self = .userMessage(text: entity.messageContent ?? "")
@@ -89,11 +94,30 @@ extension ActivitySnapshot.Kind {
                     success: !dto.isLikelyFailure
                 )
             }
+            // Extract changed file names from changeSet artifacts
+            let changedFiles = entity.decodedContent?.artifacts?
+                .compactMap { $0.changeSet?.gitPatch?.changedFiles }
+                .flatMap { $0 } ?? []
+
+            // Normalize blank/whitespace-only strings to nil so the
+            // emptiness check below and the view layer don't need to
+            // handle "" vs nil separately.
+            let title = entity.progressTitle?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            let desc = entity.progressDescription?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+
+            // Filter out completely empty progress events that would
+            // render as invisible zero-height rows in the list.
+            if bash.isEmpty && segments.isEmpty && changedFiles.isEmpty
+                && title == nil && desc == nil {
+                return nil
+            }
+
             self = .progressUpdated(snapshot: ProgressSnapshot(
-                title: entity.progressTitle,
-                descriptionText: entity.progressDescription,
+                title: title,
+                descriptionText: desc,
                 bashCommands: bash,
-                messageSegments: segments
+                messageSegments: segments,
+                changedFiles: changedFiles
             ))
 
         case .planApproved:
@@ -117,7 +141,10 @@ extension ActivitySnapshot.Kind {
                 diffDeletions: entity.diffDeletions,
                 changedFiles: entity.changedFiles,
                 diffFiles: parsedDiffFiles,
-                duration: 0
+                duration: session.map { entity.createdAt.timeIntervalSince($0.createdAt) } ?? 0,
+                prURL: session?.prURL,
+                prTitle: session?.prTitle,
+                prDescription: session?.prDescription
             ))
 
         case .sessionFailed:
@@ -127,4 +154,8 @@ extension ActivitySnapshot.Kind {
             self = .unsupported(rawType: "UNKNOWN")
         }
     }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }

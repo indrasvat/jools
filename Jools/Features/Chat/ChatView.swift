@@ -234,7 +234,8 @@ struct ChatMessagesList: View {
 
         let snapshots = ActivitySnapshotBuilder.build(
             from: activities,
-            fallback: session.activities
+            fallback: session.activities,
+            session: session
         )
         let effectiveState = session.effectiveState
         let canRespondToPlan = effectiveState == .awaitingPlanApproval

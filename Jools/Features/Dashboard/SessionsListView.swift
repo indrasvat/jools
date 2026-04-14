@@ -198,10 +198,10 @@ struct SessionsListView: View {
                 existing.stateRaw = dto.state ?? SessionState.unspecified.rawValue
                 existing.updatedAt = dto.updateTime ?? Date()
 
-                if let output = dto.outputs?.first?.pullRequest {
-                    existing.prURL = output.url
-                    existing.prTitle = output.title
-                    existing.prDescription = output.description
+                if let pr = dto.outputs?.lazy.compactMap({ $0.pullRequest }).first {
+                    existing.prURL = pr.url
+                    existing.prTitle = pr.title
+                    existing.prDescription = pr.description
                 }
             } else {
                 let entity = SessionEntity(from: dto)

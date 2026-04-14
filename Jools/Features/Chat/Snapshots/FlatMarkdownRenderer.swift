@@ -144,16 +144,51 @@ enum FlatMarkdownRenderer {
                         var run = InlineAttributedStringBuilder.build(from: paragraph)
                         run.mergeAttributes(paragraphStyleAttributes(indent: 16))
                         currentText.append(run)
+                    } else if let nestedUL = block as? UnorderedList {
+                        // Nested unordered list — render each sub-item
+                        // with deeper indent and inline formatting.
+                        appendNewline()
+                        appendNestedList(nestedUL, indent: 32)
+                    } else if let nestedOL = block as? OrderedList {
+                        appendNewline()
+                        appendNestedList(nestedOL, indent: 32)
                     } else {
-                        // Nested list or blockquote inside a list
-                        // item — fall back to a flat text run.
-                        var run = AttributedString(block.format().trimmingCharacters(in: .whitespacesAndNewlines))
-                        run.font = .joolsBody
+                        // Other nested blocks — render with inline
+                        // formatting so bold/code/links are preserved.
+                        var run = InlineAttributedStringBuilder.build(from: block as Markup)
                         run.mergeAttributes(paragraphStyleAttributes(indent: 32))
                         currentText.append(run)
                     }
                     if blockIndex < itemBlocks.count - 1 {
                         appendNewline()
+                    }
+                }
+                appendNewline()
+            }
+        }
+
+        /// Render a nested list (inside a parent list item) with
+        /// proper indentation and inline formatting (bold, code, etc).
+        private mutating func appendNestedList(_ list: any ListItemContainer, indent: CGFloat) {
+            let items = Array(list.listItems)
+            let ordered = list is OrderedList
+            for (index, item) in items.enumerated() {
+                let prefix: String = ordered ? "\(index + 1). " : "– "
+                var prefixRun = AttributedString(prefix)
+                prefixRun.font = .joolsBody
+                prefixRun.foregroundColor = .secondary
+                prefixRun.mergeAttributes(paragraphStyleAttributes(indent: indent))
+                currentText.append(prefixRun)
+
+                for block in item.blockChildren {
+                    if let paragraph = block as? Paragraph {
+                        var run = InlineAttributedStringBuilder.build(from: paragraph)
+                        run.mergeAttributes(paragraphStyleAttributes(indent: indent))
+                        currentText.append(run)
+                    } else {
+                        var run = InlineAttributedStringBuilder.build(from: block as Markup)
+                        run.mergeAttributes(paragraphStyleAttributes(indent: indent + 16))
+                        currentText.append(run)
                     }
                 }
                 appendNewline()

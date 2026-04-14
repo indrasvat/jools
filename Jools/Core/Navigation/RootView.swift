@@ -32,9 +32,11 @@ struct RootView: View {
 struct MainTabView: View {
     @EnvironmentObject private var dependencies: AppDependency
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedTab: Tab = .home
     @State private var deepLinkedSession: SessionEntity?
     @State private var showNotificationPrimer = false
+    @State private var foregroundCheckTask: Task<Void, Never>?
 
     enum Tab: String, CaseIterable {
         case home
@@ -134,6 +136,31 @@ struct MainTabView: View {
             if let sessionId = NotificationBridge.shared.pendingSessionId {
                 NotificationBridge.shared.pendingSessionId = nil
                 Task { await navigateToSession(id: sessionId) }
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .active:
+                // Returning to foreground: immediately check for
+                // session state transitions so notifications fire
+                // without waiting for a tab refresh or background
+                // task. Cancel any in-flight check to avoid stale
+                // responses racing with the new one.
+                foregroundCheckTask?.cancel()
+                foregroundCheckTask = Task {
+                    guard let manager = dependencies.notificationManager else { return }
+                    let sessions = try? await dependencies.apiClient.listAllSessions(pageSize: 100)
+                    guard !Task.isCancelled else { return }
+                    if let sessions {
+                        await manager.checkForTransitions(sessions)
+                    }
+                }
+            case .background:
+                // Ensure the next background task is queued every
+                // time we enter background, not just at launch.
+                BackgroundSessionChecker.scheduleNext()
+            default:
+                break
             }
         }
     }
