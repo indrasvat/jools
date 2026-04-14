@@ -201,6 +201,12 @@ falls back to the numeric version entry if no dedicated
 pre-release entry exists. The resulting GitHub Release is marked
 `--prerelease`.
 
+**After tagging, upload to TestFlight** via `xcodebuild archive` +
+`xcodebuild -exportArchive`. The `asc` CLI manages builds and
+TestFlight groups from the terminal. See
+[`docs/app-store-connect-workflow.md`](docs/app-store-connect-workflow.md)
+for the full archive/upload/verify flow and one-time setup.
+
 </details>
 
 ## When touching CI
