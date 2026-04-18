@@ -9,6 +9,32 @@ when a task touches them.**
 
 ---
 
+## 🚨 CRITICAL — BRANCH FIRST, ALWAYS
+
+> **NEVER commit or push directly to `main`.**
+> **Before the first edit of any task, create an appropriately-named
+> Conventional-Commits-style branch off `main`.**
+>
+> ```bash
+> git checkout -b fix/<slug>     # bug fixes
+> git checkout -b feat/<slug>    # features
+> git checkout -b chore/<slug>   # tooling / deps / docs
+> git checkout -b refactor/<slug>
+> ```
+>
+> The only things that land on `main` are merged PRs and annotated
+> release tags (the tag itself, not the commit it points at — the
+> commit arrived via a merged PR). Even release bumps go through a
+> `chore/release-vX.Y.Z` branch + PR; tag `main` only after the
+> merge lands. If you notice you've already edited files on `main`,
+> stop and move the work to a branch before anything else.
+>
+> This rule has no exceptions. Not "small fix". Not "one-line
+> typo". Not "release commit, the workflow expects it on main"
+> (it doesn't — it expects the tag). **Branch first.**
+
+---
+
 ## The essentials (always read)
 
 **Stack:** SwiftUI, Swift 6 strict concurrency, SwiftData, iOS 26+,
@@ -34,10 +60,11 @@ re-paying tuition.
 `docs/LEARNINGS.md`.** That's how the knowledge compounds. Terse
 entries are better than verbose ones.
 
-**Commit-and-push discipline:** never commit unless explicitly
-asked. Never force-push to `main`. Never `rm -rf` DerivedData or
-the keychain without asking. Match the scope of your actions to
-what was actually requested — no drive-by refactors.
+**Commit-and-push discipline:** branch first (see the critical
+block above). Never commit unless explicitly asked. Never
+force-push to `main`. Never `rm -rf` DerivedData or the keychain
+without asking. Match the scope of your actions to what was
+actually requested — no drive-by refactors.
 
 ---
 
@@ -186,8 +213,28 @@ tree: bumps `MARKETING_VERSION` in `project.yml`, regenerates
 Jools.xcodeproj, rolls `[Unreleased]` in `CHANGELOG.md` into a
 dated `[X.Y.Z]` section. It does NOT auto-commit, auto-tag, or
 auto-push — tagging is destructive and stays under human control.
-The release commit must include all three changed files:
-`git add project.yml CHANGELOG.md Jataayu.xcodeproj/project.pbxproj`.
+
+**The release commit goes on a branch, not `main`.** Per BRANCH
+FIRST, even release bumps need a PR. Flow:
+
+```bash
+git switch main && git pull
+git checkout -b chore/release-vX.Y.Z
+make release VERSION=X.Y.Z
+git add project.yml CHANGELOG.md Jataayu.xcodeproj/project.pbxproj
+git commit -m "chore(release): vX.Y.Z"
+git push -u origin chore/release-vX.Y.Z
+gh pr create --title "chore(release): vX.Y.Z" --body ...
+# review + CI green, then squash-merge
+gh pr merge --squash --delete-branch
+# only now, on main, tag the merge commit:
+git switch main && git pull
+git tag -a vX.Y.Z -m "vX.Y.Z"
+git push origin vX.Y.Z
+```
+
+The `release.yml` workflow triggers on the tag push, not on any
+commit — so the "release commit on main" path never needs to exist.
 
 **All shell logic lives in `scripts/ci-release`**, not in YAML
 `run:` blocks. It has subcommand dispatch: `parse`, `verify`,

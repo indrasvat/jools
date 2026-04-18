@@ -88,3 +88,6 @@ docs/mocks/explorations/
 
 # Codemap tooling state (per-machine context cache, not for sharing)
 .codemap/
+
+# Claude Code runtime state (lockfiles, scheduled-task bookkeeping)
+.claude/*.lock

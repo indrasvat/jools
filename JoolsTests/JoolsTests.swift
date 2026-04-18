@@ -97,6 +97,42 @@ struct JoolsTests {
     // deliberately removed in favor of trusting the API's own
     // `AWAITING_USER_INPUT` state.
 
+    @Test("Snapshot builder collapses adjacent planApproved duplicates")
+    @MainActor
+    func snapshotBuilderCollapsesAdjacentPlanApproved() throws {
+        let base = Date()
+        let activities = [
+            makeActivity(id: "a1", type: .planApproved, createdAt: base, content: ActivityContentDTO()),
+            makeActivity(id: "a2", type: .planApproved, createdAt: base.addingTimeInterval(30), content: ActivityContentDTO())
+        ]
+
+        let snapshots = ActivitySnapshotBuilder.build(from: activities, fallback: [])
+
+        #expect(snapshots.count == 1)
+        #expect(snapshots.first?.kind == .planApproved)
+    }
+
+    @Test("Snapshot builder preserves non-adjacent planApproved entries")
+    @MainActor
+    func snapshotBuilderPreservesNonAdjacentPlanApproved() throws {
+        let base = Date()
+        let activities = [
+            makeActivity(id: "a1", type: .planApproved, createdAt: base, content: ActivityContentDTO()),
+            makeActivity(
+                id: "a2",
+                type: .planGenerated,
+                createdAt: base.addingTimeInterval(10),
+                content: ActivityContentDTO(plan: PlanDTO(id: "p1", steps: []))
+            ),
+            makeActivity(id: "a3", type: .planApproved, createdAt: base.addingTimeInterval(20), content: ActivityContentDTO())
+        ]
+
+        let snapshots = ActivitySnapshotBuilder.build(from: activities, fallback: [])
+
+        #expect(snapshots.count == 3)
+        #expect(snapshots.filter { $0.kind == .planApproved }.count == 2)
+    }
+
     private func makeActivity(
         id: String,
         type: ActivityType,

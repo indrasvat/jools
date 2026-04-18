@@ -11,6 +11,22 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Duplicate "Plan approved" row in chat history.** The Jules REST
+  API emits two `planApproved` activities per approval (same
+  `planId`, ~30s apart); the web UI shows only one. Adjacent
+  duplicates are now collapsed at the snapshot layer so Jataayu
+  matches the web UI.
+
+### Internal
+
+- **Release discipline.** Release bumps now go through a
+  `chore/release-vX.Y.Z` branch + PR like every other change; the
+  annotated tag is pushed to `main` only after the merge lands.
+  `CLAUDE.md` updated to remove the old "release commit on main"
+  carve-out.
+
 ## [1.2.3] — 2026-04-14
 
 ### Internal
