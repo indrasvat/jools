@@ -9,6 +9,28 @@ when a task touches them.**
 
 ---
 
+## 🚨 CRITICAL — BRANCH FIRST, ALWAYS
+
+> **NEVER commit or push directly to `main`.**
+> **Before the first edit of any task, create an appropriately-named
+> Conventional-Commits-style branch off `main`.**
+>
+> ```bash
+> git checkout -b fix/<slug>     # bug fixes
+> git checkout -b feat/<slug>    # features
+> git checkout -b chore/<slug>   # tooling / deps / docs
+> git checkout -b refactor/<slug>
+> ```
+>
+> The only things that land on `main` are merged PRs and release
+> tags. If you notice you've already edited files on `main`, stop
+> and move the work to a branch before anything else.
+>
+> This rule has no exceptions. Not "small fix". Not "one-line
+> typo". Not "I'll branch after I see if it works." **Branch first.**
+
+---
+
 ## The essentials (always read)
 
 **Stack:** SwiftUI, Swift 6 strict concurrency, SwiftData, iOS 26+,
@@ -34,10 +56,11 @@ re-paying tuition.
 `docs/LEARNINGS.md`.** That's how the knowledge compounds. Terse
 entries are better than verbose ones.
 
-**Commit-and-push discipline:** never commit unless explicitly
-asked. Never force-push to `main`. Never `rm -rf` DerivedData or
-the keychain without asking. Match the scope of your actions to
-what was actually requested — no drive-by refactors.
+**Commit-and-push discipline:** branch first (see the critical
+block above). Never commit unless explicitly asked. Never
+force-push to `main`. Never `rm -rf` DerivedData or the keychain
+without asking. Match the scope of your actions to what was
+actually requested — no drive-by refactors.
 
 ---
 
