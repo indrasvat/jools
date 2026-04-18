@@ -11,6 +11,14 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Duplicate "Plan approved" row in chat history.** The Jules REST
+  API emits two `planApproved` activities per approval (same
+  `planId`, ~30s apart); the web UI shows only one. Adjacent
+  duplicates are now collapsed at the snapshot layer so Jataayu
+  matches the web UI.
+
 ## [1.2.3] — 2026-04-14
 
 ### Internal

@@ -289,6 +289,19 @@ awk -F= '/^JULES_API_KEY=/ {print $2}' .env \
 Then automate the paste via `axe tap --label "Paste from Clipboard"`
 + `axe tap --label "Connect"`.
 
+### Product rename leaves stale bundles on the sim — verify the bundle id
+
+When the product was renamed Jools → Jataayu, the simulator kept
+the old `com.indrasvat.jools` install alongside the new
+`com.indrasvat.jataayu` build. `xcrun simctl launch ... com.indrasvat.jools`
+silently ran the stale binary, so a just-built fix looked broken.
+
+**Fix pattern:** after any rename, `xcrun simctl uninstall $UDID
+<old-bundle-id>` before relaunching, and sanity-check the current
+bundle id with `awk -F= '/PRODUCT_BUNDLE_IDENTIFIER/ {print $2;
+exit}' Jataayu.xcodeproj/project.pbxproj`. If the footer you see
+in-app doesn't match the branch you just built, suspect this.
+
 ---
 
 ## iOS platform quirks
@@ -460,6 +473,17 @@ Progress-event `changeSet` artifacts only carry `baseCommitId` — no
 more" display in the web UI derives file names from the batch RPC,
 not from the activity's changeSet. Our `changedFiles` extraction
 from progress events is correct code but will often be empty.
+
+### API emits duplicate `planApproved` activities per approval
+
+A single plan approval yields two `planApproved` entries in
+`/v1alpha/sessions/{id}/activities`, same `planId`, ~30s apart, no
+events between them (see `docs/api-examples/list-activities-with-plan.json`).
+The web UI renders exactly one pill — dedupe happens client-side.
+We collapse adjacent `.planApproved` snapshots in
+`ActivitySnapshotBuilder.build` (not planId-based, because `planId`
+isn't persisted on `ActivityEntity` and adjacency is sufficient for
+the observed pattern).
 
 ---
 

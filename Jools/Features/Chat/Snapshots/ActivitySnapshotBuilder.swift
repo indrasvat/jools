@@ -36,7 +36,17 @@ enum ActivitySnapshotBuilder {
         } else {
             source = fallback.sorted { $0.createdAt < $1.createdAt }
         }
-        return source.compactMap { ActivitySnapshot(entity: $0, session: session) }
+        let snapshots = source.compactMap { ActivitySnapshot(entity: $0, session: session) }
+        // The Jules API emits two `planApproved` activities (same planId,
+        // ~30s apart) for a single approval — verified against the web UI
+        // which renders exactly one pill per approval. Collapse adjacent
+        // duplicates to match.
+        return snapshots.reduce(into: []) { acc, snap in
+            if snap.kind == .planApproved, acc.last?.kind == .planApproved {
+                return
+            }
+            acc.append(snap)
+        }
     }
 }
 
