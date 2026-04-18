@@ -28,13 +28,6 @@ work that doesn't change behaviour but matters for future maintenance.
   was advertising an unreachable gesture. The banner is now
   tappable when idle (and says "Tap or pull to refresh"), calling
   the same `manualRefresh()` path as pull-to-refresh.
-- **Refresh no longer stalls the UI on large sessions.** A manual
-  refresh on a 100-activity session previously called
-  `modelContext.save()` twice (once in `updateSession`, once in
-  `syncActivities`) and JSON-encoded every incoming DTO on the
-  main actor. Now one save commits both mutation passes and the
-  DTO content encoding happens on a background executor before the
-  main-actor SwiftData loop.
 
 ## [1.2.4] — 2026-04-18
 

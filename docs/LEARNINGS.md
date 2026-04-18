@@ -29,26 +29,6 @@ for code blocks and tables. See `Jools/Features/Chat/Snapshots/`.
 views, flatten it. The Jules web UI emits ~3 flat HTML elements per
 block — that's the target.
 
-### One `modelContext.save()` per refresh pass, not per helper
-
-Each `modelContext.save()` on SwiftData walks the dirty-object
-graph. On a session with many activities, two back-to-back saves
-(one from `updateSession`, one from `syncActivities`) is a
-multi-hundred-ms main-actor stall even though the underlying
-deltas are small. Collect mutations across both helpers, then
-call `save()` once at the end of `performRefresh`. Pass a
-`save: Bool = true` flag so the PollingService delegate call sites
-(which only do one mutation set) keep the old shape.
-
-### JSON-encode DTO bodies off the main actor
-
-`syncActivities` runs `JSONEncoder().encode(dto.content)` in a
-hot loop to compare against persisted `contentJSON`. Pure work,
-cheap to detach: run it ahead of time in a `Task.detached(priority:
-.userInitiated)` and hand the pre-encoded `[Data?]` back to the
-main-actor sync pass. On a hard refresh (100 activities) this
-measurably drops the main-thread window.
-
 ### @PersistedProperty reads from view bodies are a freeze vector
 
 SwiftData entities are `@Model` reference types. Reading their
