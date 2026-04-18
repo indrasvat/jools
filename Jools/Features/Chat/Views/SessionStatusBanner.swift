@@ -139,7 +139,7 @@ struct SessionStatusBanner: View {
             }
             .accessibilityIdentifier("chat.status-banner")
             .accessibilityAddTraits(syncState == .idle ? .isButton : [])
-            .accessibilityHint(syncState == .idle ? "Tap to refresh" : "")
+            .accessibilityHint(accessibilityHintText)
             .onReceive(timer) { _ in
                 if config.animateDots {
                     dotCount = (dotCount % 3) + 1
@@ -157,6 +157,18 @@ struct SessionStatusBanner: View {
             return config.message + String(repeating: ".", count: dotCount)
         }
         return config.message
+    }
+
+    /// VoiceOver hint string. Mirrors `syncFooterText` so sighted
+    /// and VO users get the same feedback: "Refreshing" while
+    /// syncing, "Tap to refresh" when idle, empty for stale/failed
+    /// (the visible "Tap to retry" button's own hint covers it).
+    private var accessibilityHintText: String {
+        switch syncState {
+        case .idle: return "Tap to refresh"
+        case .syncing: return "Refreshing"
+        case .stale, .failed: return ""
+        }
     }
 
     private var syncFooterText: String {
