@@ -37,6 +37,69 @@ struct APIClientTests {
         try await client.sendMessage(sessionId: "123", message: "hello")
     }
 
+    @Test("listActivities sends compact fields= mask by default")
+    func listActivitiesSendsCompactFieldsMask() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        MockURLProtocol.requestCount = 0
+
+        let keychain = KeychainManager(service: "com.indrasvat.jools.tests.\(UUID().uuidString)")
+        try keychain.saveAPIKey("test-key")
+        defer { try? keychain.deleteAPIKey() }
+
+        MockURLProtocol.requestHandler = { request in
+            MockURLProtocol.requestCount += 1
+            let query = request.url?.query ?? ""
+            #expect(query.contains("fields="))
+            // The mask MUST omit unidiffPatch — that's the bloat field
+            // we measured at 94 MB per activity on real sessions.
+            #expect(query.contains("unidiffPatch") == false)
+            return (
+                HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                Data("{\"activities\":[]}".utf8)
+            )
+        }
+
+        let client = APIClient(
+            keychain: keychain,
+            session: URLSession(configuration: configuration),
+            baseURL: URL(string: "https://example.com/v1alpha/")!
+        )
+
+        _ = try await client.listAllActivities(sessionId: "s1")
+        #expect(MockURLProtocol.requestCount >= 1)
+    }
+
+    @Test("listActivities sends no fields= when mask is nil (getActivity lazy-fetch path)")
+    func listActivitiesOmitsFieldsWhenNil() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        MockURLProtocol.requestCount = 0
+
+        let keychain = KeychainManager(service: "com.indrasvat.jools.tests.\(UUID().uuidString)")
+        try keychain.saveAPIKey("test-key")
+        defer { try? keychain.deleteAPIKey() }
+
+        MockURLProtocol.requestHandler = { request in
+            MockURLProtocol.requestCount += 1
+            let query = request.url?.query ?? ""
+            #expect(query.contains("fields=") == false)
+            return (
+                HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!,
+                Data("{\"activities\":[]}".utf8)
+            )
+        }
+
+        let client = APIClient(
+            keychain: keychain,
+            session: URLSession(configuration: configuration),
+            baseURL: URL(string: "https://example.com/v1alpha/")!
+        )
+
+        _ = try await client.listAllActivities(sessionId: "s1", fields: nil)
+        #expect(MockURLProtocol.requestCount >= 1)
+    }
+
     @Test("Falls back when activity createTime filtering is unsupported")
     func listActivitiesFallsBackWhenCreateTimeIsRejected() async throws {
         let configuration = URLSessionConfiguration.ephemeral
