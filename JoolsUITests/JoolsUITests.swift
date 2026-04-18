@@ -86,7 +86,7 @@ final class JoolsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["chat.refresh"].exists)
         XCTAssertTrue(
             staticText(containing: "Updated", in: app).waitForExistence(timeout: 5) ||
-            staticText(containing: "Pull to refresh", in: app).exists
+            staticText(containing: "to refresh", in: app).exists
         )
     }
 

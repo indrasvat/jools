@@ -474,6 +474,32 @@ more" display in the web UI derives file names from the batch RPC,
 not from the activity's changeSet. Our `changedFiles` extraction
 from progress events is correct code but will often be empty.
 
+### Completed is NOT terminal — Jules resumes on user follow-up
+
+A `sessionCompleted` activity looks terminal but Jules genuinely
+re-enters working state when the user sends a follow-up message.
+The state machine must NOT mark `.completed` as sticky: a later
+`progressUpdated` / `planGenerated` / `userMessaged` / `planApproved`
+activity in the timeline is by definition (sorted by `createdAt`)
+a re-entry, not replay. Only `.failed` / `.cancelled` / `.paused`
+are true terminal states.
+
+Symptom when wrong: the green "Session completed" banner stays up
+while new `Updated <file>` rows render underneath — confusing
+because pull-to-refresh does fetch fresh data but the derived
+display state is frozen.
+
+### SwiftUI `.refreshable` only covers its own scroll region
+
+Attaching `.refreshable` to a `List` means pull-to-refresh works
+only while the pull gesture originates *inside* the list's scroll
+view. Any sibling view above the list (status banners, custom
+chrome) is NOT a pull target, even if it says "Pull to refresh".
+If a non-list affordance advertises refresh, wire a tap gesture
+on the affordance that calls the same refresh closure.
+
+---
+
 ### API emits duplicate `planApproved` activities per approval
 
 A single plan approval yields two `planApproved` entries in

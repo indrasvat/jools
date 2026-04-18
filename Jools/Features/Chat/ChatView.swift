@@ -464,6 +464,11 @@ struct LiveSessionStatusBanner: View {
                 Task {
                     await viewModel.manualRefresh()
                 }
+            },
+            onRefresh: {
+                Task {
+                    await viewModel.manualRefresh()
+                }
             }
         )
     }

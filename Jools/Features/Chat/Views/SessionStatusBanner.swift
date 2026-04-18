@@ -10,6 +10,11 @@ struct SessionStatusBanner: View {
     let currentStepTitle: String?
     let currentStepDescription: String?
     let onRetry: () -> Void
+    // The banner sits above the refreshable `List` in chrome, so a
+    // pull gesture originating on the banner never reaches the
+    // scroll region. `onRefresh` wires a tap affordance directly on
+    // the banner so the "Tap or pull to refresh" tagline is honest.
+    let onRefresh: () -> Void
 
     @State private var dotCount = 1
     private let timer = Timer.publish(every: 0.4, on: .main, in: .common).autoconnect()
@@ -124,7 +129,17 @@ struct SessionStatusBanner: View {
                         .frame(height: 0.5)
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                // Only offer tap-to-refresh while the sync state
+                // advertises it (.idle). During .syncing we're
+                // already refreshing; .stale/.failed surfaces the
+                // explicit "Tap to retry" button which handles it.
+                if case .idle = syncState { onRefresh() }
+            }
             .accessibilityIdentifier("chat.status-banner")
+            .accessibilityAddTraits(syncState == .idle ? .isButton : [])
+            .accessibilityHint(syncState == .idle ? "Tap to refresh" : "")
             .onReceive(timer) { _ in
                 if config.animateDots {
                     dotCount = (dotCount % 3) + 1
@@ -148,9 +163,9 @@ struct SessionStatusBanner: View {
         switch syncState {
         case .idle:
             if let lastUpdatedAt {
-                return "\(freshnessLabel(for: lastUpdatedAt)) • Pull to refresh"
+                return "\(freshnessLabel(for: lastUpdatedAt)) • Tap or pull to refresh"
             }
-            return "Pull to refresh"
+            return "Tap or pull to refresh"
         case .syncing:
             if let lastUpdatedAt {
                 return "Syncing… \(freshnessLabel(for: lastUpdatedAt))"
@@ -517,7 +532,8 @@ struct PixelJulesMascot: View {
             lastUpdatedAt: .now.addingTimeInterval(-10),
             currentStepTitle: "Provide the summary to the user",
             currentStepDescription: "Reply to the user directly in chat with the latest findings.",
-            onRetry: {}
+            onRetry: {},
+            onRefresh: {}
         )
         SessionStatusBanner(
             state: .awaitingPlanApproval,
@@ -526,7 +542,8 @@ struct PixelJulesMascot: View {
             lastUpdatedAt: .now.addingTimeInterval(-42),
             currentStepTitle: "Review the generated plan",
             currentStepDescription: "Approve the plan to let Jules continue.",
-            onRetry: {}
+            onRetry: {},
+            onRefresh: {}
         )
         SessionStatusBanner(
             state: .completed,
@@ -535,7 +552,8 @@ struct PixelJulesMascot: View {
             lastUpdatedAt: .now.addingTimeInterval(-120),
             currentStepTitle: "Session completed",
             currentStepDescription: nil,
-            onRetry: {}
+            onRetry: {},
+            onRefresh: {}
         )
     }
     .background(Color.joolsBackground)

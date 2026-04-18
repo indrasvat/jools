@@ -112,6 +112,97 @@ struct JoolsTests {
         #expect(snapshots.first?.kind == .planApproved)
     }
 
+    @Test("State machine re-enters working when progress arrives after completion")
+    func stateMachineReentersWorkingAfterCompletion() throws {
+        let base = Date()
+        let activities = [
+            makeActivity(id: "a1", type: .sessionCompleted, createdAt: base, content: ActivityContentDTO(summary: "Done")),
+            makeActivity(
+                id: "a2",
+                type: .progressUpdated,
+                createdAt: base.addingTimeInterval(60),
+                content: ActivityContentDTO(progress: "Resuming work", progressTitle: "Fixing", progressDescription: nil)
+            )
+        ]
+
+        let resolvedState = SessionStateMachine.resolve(apiState: .completed, activities: activities)
+
+        #expect(resolvedState == .working)
+    }
+
+    @Test("State machine re-enters plan approval when plan regenerated after completion")
+    func stateMachineReentersAwaitingApprovalAfterCompletion() throws {
+        let base = Date()
+        let activities = [
+            makeActivity(id: "a1", type: .sessionCompleted, createdAt: base, content: ActivityContentDTO(summary: "Done")),
+            makeActivity(
+                id: "a2",
+                type: .planGenerated,
+                createdAt: base.addingTimeInterval(90),
+                content: ActivityContentDTO(plan: PlanDTO(id: "p1", steps: []))
+            )
+        ]
+
+        let resolvedState = SessionStateMachine.resolve(apiState: .completed, activities: activities)
+
+        #expect(resolvedState == .awaitingPlanApproval)
+    }
+
+    @Test("State machine stays completed when no activities follow")
+    func stateMachineStaysCompletedAtTail() throws {
+        let base = Date()
+        let activities = [
+            makeActivity(id: "a1", type: .planApproved, createdAt: base, content: ActivityContentDTO()),
+            makeActivity(
+                id: "a2",
+                type: .progressUpdated,
+                createdAt: base.addingTimeInterval(10),
+                content: ActivityContentDTO(progress: "Working", progressTitle: "Working", progressDescription: nil)
+            ),
+            makeActivity(id: "a3", type: .sessionCompleted, createdAt: base.addingTimeInterval(20), content: ActivityContentDTO(summary: "Done"))
+        ]
+
+        let resolvedState = SessionStateMachine.resolve(apiState: .completed, activities: activities)
+
+        #expect(resolvedState == .completed)
+    }
+
+    @Test("State machine keeps failed sticky even if progress follows")
+    func stateMachineFailedStaysSticky() throws {
+        let base = Date()
+        let activities = [
+            makeActivity(id: "a1", type: .sessionFailed, createdAt: base, content: ActivityContentDTO(message: "Boom")),
+            makeActivity(
+                id: "a2",
+                type: .progressUpdated,
+                createdAt: base.addingTimeInterval(30),
+                content: ActivityContentDTO(progress: "noise", progressTitle: "noise", progressDescription: nil)
+            )
+        ]
+
+        let resolvedState = SessionStateMachine.resolve(apiState: .failed, activities: activities)
+
+        #expect(resolvedState == .failed)
+    }
+
+    @Test("State machine re-enters working when user follows up after completion")
+    func stateMachineUserFollowupReentersWorking() throws {
+        let base = Date()
+        let activities = [
+            makeActivity(id: "a1", type: .sessionCompleted, createdAt: base, content: ActivityContentDTO(summary: "Done")),
+            makeActivity(
+                id: "a2",
+                type: .userMessaged,
+                createdAt: base.addingTimeInterval(30),
+                content: ActivityContentDTO(message: "actually, wait — can you also...")
+            )
+        ]
+
+        let resolvedState = SessionStateMachine.resolve(apiState: .completed, activities: activities)
+
+        #expect(resolvedState == .working)
+    }
+
     @Test("Snapshot builder preserves non-adjacent planApproved entries")
     @MainActor
     func snapshotBuilderPreservesNonAdjacentPlanApproved() throws {

@@ -413,7 +413,19 @@ enum SessionStateMachine {
     /// friendly closers ("…just let me know. Have a great day!") as
     /// input-needed.
     private static func transition(from state: SessionDisplayState, with activity: ActivityEntity) -> SessionDisplayState {
-        // API-terminal display states are sticky during activity replay.
+        // API-terminal display states are sticky during activity replay:
+        // `.cancelled` and `.paused` are user/API-driven hard stops —
+        // Jules doesn't resume from them.
+        //
+        // `.failed` stays sticky (no evidence Jules resumes from a failed
+        // session). `.completed`, however, is NOT sticky: when a user
+        // follows up on a completed session, Jules re-enters working
+        // state and emits new `progressUpdated` / `planGenerated`
+        // activities. Those arrive with `createdAt` later than the
+        // `.sessionCompleted` marker and (thanks to the sort at
+        // line 370) are folded in after it, so flipping the display
+        // state back to `.working` / `.awaitingPlanApproval` is
+        // genuine re-entry, not replay noise.
         if state == .cancelled || state == .paused { return state }
 
         switch activity.type {
@@ -424,21 +436,23 @@ enum SessionStateMachine {
         case .planGenerated:
             // A plan was (re)generated. Unless the session is already
             // in a terminal state, this means Jules is waiting on the
-            // user to approve.
-            return state == .completed || state == .failed ? state : .awaitingPlanApproval
+            // user to approve. `.completed` is NOT terminal here — a
+            // fresh plan after completion is a re-entry cycle.
+            return state == .failed ? state : .awaitingPlanApproval
         case .planApproved:
             // User approved the plan — session is now actively running.
-            return state == .completed || state == .failed ? state : .working
+            return state == .failed ? state : .working
         case .progressUpdated:
             // Jules shipped a progress update — definitely working.
-            return state == .completed || state == .failed ? state : .working
+            return state == .failed ? state : .working
         case .userMessaged:
             // A user message cancels any "awaiting user input" status
-            // and advances starting/queued to working.
+            // and advances starting/queued/completed to working (a
+            // follow-up message after completion is re-entry).
             switch state {
-            case .completed, .failed:
+            case .failed:
                 return state
-            case .starting, .queued, .awaitingUserInput:
+            case .starting, .queued, .awaitingUserInput, .completed:
                 return .working
             default:
                 return state

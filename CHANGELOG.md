@@ -11,6 +11,24 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Completed-session re-entry now updates the banner.** When a
+  user's follow-up message caused Jules to resume work, Jataayu
+  kept the green "Session completed" banner and header pill while
+  quietly rendering the new `Updated <file>` rows underneath. The
+  session-state machine now treats `.completed` as non-sticky: a
+  later `progressUpdated` / `planGenerated` / `userMessaged` /
+  `planApproved` activity transitions the display back to
+  Working / Awaiting approval. `.failed`, `.cancelled`, and
+  `.paused` remain sticky.
+- **Banner "Pull to refresh" is now tappable.** The
+  `.refreshable` modifier was only attached to the chat list, so
+  pulling on the status banner above it did nothing — the tagline
+  was advertising an unreachable gesture. The banner is now
+  tappable when idle (and says "Tap or pull to refresh"), calling
+  the same `manualRefresh()` path as pull-to-refresh.
+
 ## [1.2.4] — 2026-04-18
 
 ### Fixed
