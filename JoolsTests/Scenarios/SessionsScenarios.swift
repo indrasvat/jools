@@ -3,16 +3,15 @@ import Testing
 @testable import Jools
 @testable import JoolsKit
 
-/// Scenario: initial load times out (like the 874 MB response on
-/// dorikin's perf session), banner goes `.stale`, user taps retry,
-/// the cursor-always path fetches the delta and succeeds, banner
-/// returns to `.idle`, new activities render.
-///
-/// This is the scenario that PR #20 closed. Running it against the
-/// pre-PR code would fail at `awaitSyncState(.idle)` because every
-/// retry would time out on the same 60 s budget.
+/// Sessions scenarios — multi-step integration tests that drive the
+/// real `ChatViewModel` + `APIClient` + SwiftData stack through the
+/// flows that have caused user-visible bugs. One `@Suite(.serialized)`
+/// to keep the shared `ScenarioURLProtocol.queue` deterministic
+/// across scenarios; new scenarios go here rather than in separate
+/// suites so swift-testing's per-suite parallelism doesn't stomp the
+/// queue.
 @Suite("Sessions scenarios", .serialized)
-struct StalenessRecoveryScenario {
+struct SessionsScenarios {
 
     @Test("Staleness recovery: timeout → retry via cursor → idle")
     @MainActor
@@ -111,6 +110,70 @@ struct StalenessRecoveryScenario {
         try await harness.awaitActivityCount(3)
         #expect(cursorFlag.value)
     }
+
+    // MARK: - Completion re-entry (PR #20 state-machine fix)
+
+    @Test("Completion re-entry: sessionCompleted → user follow-up → working")
+    @MainActor
+    func completionReentry() async throws {
+        let harness = try ScenarioHarness(
+            sessionId: "reentry-session",
+            initialState: .inProgress
+        )
+
+        // Initial load: session + single sessionCompleted activity.
+        harness.responses.respond(json: sessionJSON(id: "reentry-session", state: "COMPLETED"))
+        harness.responses.respond(json: completedActivityJSON(
+            id: "done-1",
+            createTime: "2026-04-18T20:00:00Z",
+            summary: "Done"
+        ))
+        await harness.loadActivities()
+        try await harness.awaitActivityCount(1)
+        #expect(harness.session.effectiveDisplayState == .completed)
+
+        // Follow-up refresh: server reports back to IN_PROGRESS and
+        // two new activities (user message + progress update).
+        harness.responses.respond(json: sessionJSON(id: "reentry-session", state: "IN_PROGRESS"))
+        harness.responses.respond(json: activitiesJSON(activities: [
+            ActivityFixture(id: "user-1", type: "USER_MESSAGED", message: "one more thing", createTime: "2026-04-18T20:01:00Z"),
+            ActivityFixture(id: "prog-1", type: "PROGRESS_UPDATED", message: "Reopening", createTime: "2026-04-18T20:01:10Z"),
+        ]))
+        await harness.manualRefresh()
+        try await harness.awaitActivityCount(3)
+
+        // State machine must move .completed → .working because
+        // later progressUpdated arrived.
+        #expect(harness.session.effectiveDisplayState == .working)
+    }
+
+    @Test("Failed stays sticky even if new progress arrives")
+    @MainActor
+    func failedStickyOnReentry() async throws {
+        let harness = try ScenarioHarness(
+            sessionId: "failed-session",
+            initialState: .failed
+        )
+
+        harness.responses.respond(json: sessionJSON(id: "failed-session", state: "FAILED"))
+        harness.responses.respond(json: failedActivityJSON(
+            id: "fail-1",
+            createTime: "2026-04-18T20:00:00Z",
+            error: "Boom"
+        ))
+        await harness.loadActivities()
+        try await harness.awaitActivityCount(1)
+        #expect(harness.session.effectiveDisplayState == .failed)
+
+        // Stray progress after a failure must NOT unstick .failed.
+        harness.responses.respond(json: sessionJSON(id: "failed-session", state: "FAILED"))
+        harness.responses.respond(json: activitiesJSON(activities: [
+            ActivityFixture(id: "p-1", type: "PROGRESS_UPDATED", message: "noise", createTime: "2026-04-18T20:01:00Z"),
+        ]))
+        await harness.manualRefresh()
+        try await harness.awaitActivityCount(2)
+        #expect(harness.session.effectiveDisplayState == .failed)
+    }
 }
 
 // MARK: - Helpers
@@ -143,6 +206,44 @@ struct ActivityFixture {
     let type: String
     let message: String
     let createTime: String
+}
+
+private func sessionJSON(id: String, state: String) -> String {
+    """
+    {
+      "name": "sessions/\(id)",
+      "id": "\(id)",
+      "title": "Scenario session",
+      "prompt": "p",
+      "state": "\(state)",
+      "createTime": "2026-04-18T19:00:00Z",
+      "updateTime": "2026-04-18T20:00:00Z"
+    }
+    """
+}
+
+private func completedActivityJSON(id: String, createTime: String, summary: String) -> String {
+    """
+    {"activities":[{
+      "name": "sessions/s/activities/\(id)",
+      "id": "\(id)",
+      "createTime": "\(createTime)",
+      "originator": "agent",
+      "sessionCompleted": {"summary": "\(summary)"}
+    }]}
+    """
+}
+
+private func failedActivityJSON(id: String, createTime: String, error: String) -> String {
+    """
+    {"activities":[{
+      "name": "sessions/s/activities/\(id)",
+      "id": "\(id)",
+      "createTime": "\(createTime)",
+      "originator": "agent",
+      "sessionFailed": {"error": "\(error)"}
+    }]}
+    """
 }
 
 private func activitiesJSON(activities: [ActivityFixture]) -> String {
