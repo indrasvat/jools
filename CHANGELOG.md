@@ -11,6 +11,8 @@ work that doesn't change behaviour but matters for future maintenance.
 
 ## [Unreleased]
 
+## [1.2.5] — 2026-04-19
+
 ### Fixed
 
 - **Completed-session re-entry now updates the banner.** When a
